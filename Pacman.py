@@ -173,7 +173,7 @@ VELOCIDAD = 2
 
 clock = pygame.time.Clock()
 
-# Bucle principal del juego
+# Bucle principal
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -184,6 +184,9 @@ while True:
                 paused = not paused
 
     if not paused:
+        current_image = animar_pacman(direction, frame_count)
+        screen.blit(current_image, (int(pacman_x) - CELL_SIZE, int(pacman_y)))
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             next_direction = 0
@@ -200,26 +203,25 @@ while True:
         if abs(center_x - (pacman_col + 0.5) * CELL_SIZE) < VELOCIDAD and \
            abs(center_y - (pacman_row + 0.5) * CELL_SIZE) < VELOCIDAD:
             dx, dy = direcciones[next_direction]
-            new_row, new_col = pacman_row + dx, pacman_col + dy
+            new_row, new_col = int(pacman_row + dx), int(pacman_col + dy)
 
             if puede_moverse(new_row, new_col, mapa):
                 direction = next_direction
                 pacman_row, pacman_col = new_row, new_col
             else:
                 dx, dy = direcciones[direction]
-                new_row, new_col = pacman_row + dx, pacman_col + dy
+                new_row, new_col = int(pacman_row + dx), int(pacman_col + dy)
                 if puede_moverse(new_row, new_col, mapa):
                     pacman_row, pacman_col = new_row, new_col
 
-        # Manejo del túnel
-        if pacman_col <= 0 and direction == 0:
-            pacman_col = MAP_WIDTH - 1
-            pacman_x = (MAP_WIDTH - 1) * CELL_SIZE
-        elif pacman_col >= MAP_WIDTH - 1 and direction == 1:
-            pacman_col = 0
-            pacman_x = 0
-
         target_x, target_y = pacman_col * CELL_SIZE, pacman_row * CELL_SIZE
+
+        if pacman_col <= 0 and direction == 0:
+            pacman_col = len(mapa[0]) - 2
+            pacman_x = (len(mapa[0]) - 3) * CELL_SIZE
+        elif pacman_col >= len(mapa[0]) - 1 and direction == 1:
+            pacman_col = 1
+            pacman_x = 0
 
         dx = target_x - pacman_x
         dy = target_y - pacman_y
@@ -231,9 +233,18 @@ while True:
 
         frame_count += 1
 
-    # Dibujar el juego
     screen.fill(COLOR_FONDO)
-    dibujar_mapa(mapa)
+
+    # Dibujar el tablero de juego
+    for y, fila in enumerate(mapa):
+        for x, celda in enumerate(fila):
+            rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+            if celda == 1:  # Pared
+                dibujar_pared_redondeada(screen, rect)
+            elif celda == 2:  # Punto
+                pygame.draw.circle(screen, COLOR_PUNTO, rect.center, CELL_SIZE // 8)
+            elif celda == 3:  # Power Pellet
+                pygame.draw.circle(screen, COLOR_POWER_PELLET, rect.center, CELL_SIZE // 3)
 
     if not paused:
         current_image = animar_pacman(direction, frame_count)
