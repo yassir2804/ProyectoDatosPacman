@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 from Constantes import *
+from Grafo import Grafo
 from Pacman import *
 
 class Controladora(object):
@@ -10,6 +11,8 @@ class Controladora(object):
         self.fondo = None
         self.clock = pygame.time.Clock()
         self.pacman = Pacman()
+        self.grafo = Grafo()
+        self.grafo.setup_nodos_prueba()
 
     def setFondo(self ):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
@@ -31,6 +34,7 @@ class Controladora(object):
 
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
+        self.grafo.render(self.pantalla)
         self.pacman.render(self.pantalla)
         pygame.display.update()
 

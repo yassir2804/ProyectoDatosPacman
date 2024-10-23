@@ -35,3 +35,9 @@ class Vector1(object):
         return int(self.x), int(self.y)
     def __str__(self):
         return "<"+str(self.x) + "," + str(self.y)+">"
+    def __hash__(self):
+        return hash((self.x, self.y))
+    def __eq__(self, other):
+        if not isinstance(other, Vector1):
+            return False
+        return self.x == other.x and self.y == other.y
