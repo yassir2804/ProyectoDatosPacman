@@ -26,7 +26,7 @@ class Controladora(object):
         self.setFondo()
 
     def actualizar(self):
-        dt= self.clock.tick(30)/1000
+        dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
         self.verificarEventos()
         self.render()
