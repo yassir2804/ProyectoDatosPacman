@@ -1,26 +1,30 @@
 
+from Pacman import *
+
 class fantasma:
-    def __init__(self, nodo, pacman=None, blinky=None):
+    def __init__(self, nodo, Pacman=None, blinky=None):
         Entity.__init__(self, nodo)
         self.nombre = GHOST
-        self.puntos = 200
+        self.puntos = 150
         self.objetivo = Vector2()
         self.directionMethod = self.goalDirection
-        self.pacman = pacman
+        self.pacman = Pacman
         self.modo = ModoController(self)
         self.blinky = blinky
         self.NodoCasa = node
 
-    def reset(self):
+    def resetear(self):
         Entity.reset(self)
         self.puntos= 200
         self.directionMethod = self.goalDirection
 
-    def update(self, dt):
+    def actualizar(self, dt):
         self.sprites.update(dt)
         self.modo.update(dt)
-        if self.modo .current is SCATTER:
+        if self.modo.current is SCATTER:
             self.scatter()
+        elif self.modo.current is FRIGHTENED:
+            self.frihtened()
         elif self.modo.current is CHASE:
             self.chase()
         Entity.update(self, dt)
@@ -31,6 +35,9 @@ class fantasma:
     def chase(self):
         self.objetivo = self.pacman.position
 
+    def frihtened(self):
+        self.objetivo= 0
+
     def spawn(self):
         self.objetivo = self.NodoDeSpawn.position
 
@@ -40,18 +47,18 @@ class fantasma:
     def startSpawn(self):
         self.modo.setSpawnMode()
         if self.modo.current == SPAWN:
-            self.setSpeed(150)
+            self.setVelocidad(150)
             self.directionMethod = self.goalDirection
             self.spawn()
 
     def startFreight(self):
         self.modo.setFreightMode()
         if self.modo.current == FREIGHT:
-            self.setSpeed(50)
+            self.setVelocidad(50)
             self.directionMethod = self.randomDirection
 
-    def normalMode(self):
-        self.setSpeed(100)
+    def modoNormal(self):
+        self.setVelocidad(100)
         self.directionMethod = self.goalDirectio
 
 class Blinky(fantasma):
@@ -60,20 +67,22 @@ class Blinky(fantasma):
         self.nombre=Blinky
         self.color= Red
 
-    def update(self, dt):
-        self.mode.update(dt)
-        if self.mode.current is SCATTER:
+    def actualizar(self, dt):
+        self.modo.update(dt)
+        if self.modo.current is SCATTER:
             self.scatter()
-        elif self.mode.current is CHASE:
+        elif self.modo.current is CHASE:
             self.chase()
         Entity.update(self, dt)
 
     def scatter(self):
-        self.objetivo= Vector2()
+        self.objetivo= 0
 
     def chase(self):
         self.objetivo= 0
 
+    def frihtened(self):
+        self.objetivo= 0
 
 
 
@@ -83,11 +92,11 @@ class Pinky(fantasma):
         self.nombre = Blinky
         self.color = Pinky
 
-    def update(self, dt):
-        self.mode.update(dt)
-        if self.mode.current is SCATTER:
+    def actualizar(self, dt):
+        self.modo.update(dt)
+        if self.modo.current is SCATTER:
             self.scatter()
-        elif self.mode.current is CHASE:
+        elif self.modo.current is CHASE:
             self.chase()
         Entity.update(self, dt)
 
@@ -97,6 +106,8 @@ class Pinky(fantasma):
     def chase(self):
         self.objetivo = 0
 
+    def frihtened(self):
+        self.objetivo= 0
 
 class Inky(fantasma):
     def __init__(self, nodo, pacman=None, blinky=None):
@@ -104,11 +115,11 @@ class Inky(fantasma):
         self.nombre = Inky
         self.color = Teal
 
-    def update(self, dt):
-        self.mode.update(dt)
-        if self.mode.current is SCATTER:
+    def actualizar(self, dt):
+        self.modo.update(dt)
+        if self.modo.current is SCATTER:
             self.scatter()
-        elif self.mode.current is CHASE:
+        elif self.modo.current is CHASE:
             self.chase()
         Entity.update(self, dt)
 
@@ -118,6 +129,8 @@ class Inky(fantasma):
     def chase(self):
         self.objetivo = 0
 
+    def frihtened(self):
+        self.objetivo= 0
 
 class Clyde(fantasma):
     def __init__(self, nodo, pacman=None, blinky=None):
@@ -125,11 +138,11 @@ class Clyde(fantasma):
         self.nombre = Clyde
         self.color = Orange
 
-    def update(self, dt):
-        self.mode.update(dt)
-        if self.mode.current is SCATTER:
+    def actualizar(self, dt):
+        self.modo.update(dt)
+        if self.modo.current is SCATTER:
             self.scatter()
-        elif self.mode.current is CHASE:
+        elif self.modo.current is CHASE:
             self.chase()
         Entity.update(self, dt)
 
@@ -139,6 +152,8 @@ class Clyde(fantasma):
     def chase(self):
         self.objetivo = 0
 
+    def frihtened(self):
+        self.objetivo= 0
 
 
 class GrupoFantasma(Object):
@@ -147,44 +162,44 @@ class GrupoFantasma(Object):
         self.Pinky = Pinky(nodo,pacman)
         self.Inky = Inky(nodo,pacman)
         self.Clyde = Clyde(nodo,pacman)
-        self.fantasmas = [self.blinky,self.Pinky,self.Inky,self.Clyde]
+        self.fantasma = [self.blinky,self.Pinky,self.Inky,self.Clyde]
 
     def __iter__(self):
         return iter(self.ghosts)
 
-    def update(self, dt):
-        for ghost in self:
-            ghost.update(dt)
+    def actualizar(self, dt):
+        for fantasma in self:
+            fantasma.actualizar(dt)
 
     def startFreight(self):
-        for ghost in self:
-            ghost.startFreight()
-        self.resetPoints()
+        for fantasma in self:
+            fantasma.startFreight()
+        self.resetearPuntos()
 
-    def setSpawnNode(self, node):
-        for ghost in self:
-            ghost.setSpawnNode(node)
+    def setSpawnNodo(self, node):
+        for fantasma in self:
+            fantasma.setSpawnNodo(node)
 
-    def updatePoints(self):
-        for ghost in self:
-            ghost.points *= 2
+    def actualizarPuntos(self):
+        for fantasma in self:
+            fantasma.puntos *= 2
 
-    def resetPoints(self):
-        for ghost in self:
-            ghost.points = 200
+    def resetearPuntos(self):
+        for fantasma in self:
+            fantasma.puntos = 200
 
-    def reset(self):
-        for ghost in self:
-            ghost.reset()
+    def resetear(self):
+        for fantasma in self:
+            fantasma.resetear()
 
     def hide(self):
-        for ghost in self:
-            ghost.visible = False
+        for fantasma in self:
+            fantasma.visible = False
 
-    def show(self):
-        for ghost in self:
-            ghost.visible = True
+    def mostrar(self):
+        for fantasma in self:
+            fantasma.visible = True
 
     def render(self, screen):
-        for ghost in self:
-            ghost.render(screen)
+        for fantasma in self:
+            fantasma.render(screen)
