@@ -57,14 +57,14 @@ class Grafo(object):
             for col in range(datos.shape[1]):
                 if datos[fila][col] in self.simbolosNodos:
                     if key is None:
-                        key = (col * ANCHOCELDA, fila * ALTURACELDA)
+                        key = self.construir_clave(col+0, fila+0)  # Clave inicial
                     else:
-                        nueva_clave = (col * ANCHOCELDA, fila * ALTURACELDA)
-                        self.nodosLUT[key].vecinos[DERECHA] = self.nodosLUT[nueva_clave]
-                        self.nodosLUT[nueva_clave].vecinos[IZQUIERDA] = self.nodosLUT[key]
-                        key = nueva_clave
-                else:
-                    key = None
+                        otrallave = self.construir_clave(col+0, fila)  # Nueva clave
+                        self.nodosLUT[key].vecinos[DERECHA] = self.nodosLUT[otrallave]
+                        self.nodosLUT[otrallave].vecinos[IZQUIERDA] = self.nodosLUT[key]
+                        key = otrallave
+                elif datos[fila][col] not in self.simbolosCaminos:
+                    key = None  # Reinicia key si no es un nodo
 
     def conectar_vertical(self, datos):
         datos_transpuestos = datos.transpose()
@@ -73,14 +73,16 @@ class Grafo(object):
             for fila in range(datos_transpuestos.shape[1]):
                 if datos_transpuestos[col][fila] in self.simbolosNodos:
                     if key is None:
-                        key = (col * ANCHOCELDA, fila * ALTURACELDA)
+                        key = self.construir_clave(col+0, fila+0)  # Creación de clave inicial
                     else:
-                        nueva_clave = (col * ANCHOCELDA, fila * ALTURACELDA)
-                        self.nodosLUT[key].vecinos[ABAJO] = self.nodosLUT[nueva_clave]
-                        self.nodosLUT[nueva_clave].vecinos[ARRIBA] = self.nodosLUT[key]
-                        key = nueva_clave
-                else:
-                    key = None
+                        otrallave = self.construir_clave(col+0, fila+0)  # Creación de nueva clave
+                        self.nodosLUT[key].vecinos[ABAJO] = self.nodosLUT[otrallave]
+                        self.nodosLUT[otrallave].vecinos[ARRIBA] = self.nodosLUT[key]
+
+                    # Actualiza 'key' para el próximo nodo en la columna
+                        key = otrallave
+                elif datos[col][fila] not in self.simbolosCaminos:
+                    key = None  # Reinicia 'key' si no es un nodo
 
     def obtener_nodo_desde_pixeles(self, pixel_x, pixel_y):
         if (pixel_x, pixel_y) in self.nodosLUT.keys():

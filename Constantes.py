@@ -22,5 +22,11 @@ ABAJO = 2
 IZQUIERDA = 3
 DERECHA = 4
 
+#Pacman
 PACMAN = 0
+
+#Constantes
+PARED = 'X'
+CAMINO = '.'
+NODO = '+'
 
