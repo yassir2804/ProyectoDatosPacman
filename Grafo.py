@@ -26,8 +26,8 @@ class Nodo(object):
 class Grafo(object):
     def __init__(self, nivel):
         self.nodosLUT = {}
-        self.simbolosNodos = ['+']
-        self.simbolosCaminos = ['.']
+        self.simbolosNodos = ['+', 'P', 'n']
+        self.simbolosCaminos = ['.', '-', '|', 'p']
         datos = self.leer_laberinto(nivel)
         self.crear_tabla_nodos(datos)
         self.conectar_horizontal(datos)
