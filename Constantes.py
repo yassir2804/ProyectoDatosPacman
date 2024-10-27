@@ -1,8 +1,8 @@
 #Aqui se añadiran todas los valores que se reutilizaran  en distintas secciones del código para facilitar su acceso
 
 #Configuraciones de pantalla
-ALTURACELDA = 16;
-ANCHOCELDA = 16;
+ALTURACELDA = 20;
+ANCHOCELDA = 20;
 FILAS = 36
 COLUMNAS = 28
 ALTURAPANTALLA = ALTURACELDA * FILAS
@@ -24,6 +24,7 @@ DERECHA = 4
 
 #Pacman
 PACMAN = 0
+PORTAL = 5
 
 #Constantes
 PARED = 'X'

@@ -13,7 +13,9 @@ class Controladora(object):
         self.fondo = None
         self.clock = pygame.time.Clock()
         self.grafo = Grafo("mazetest.txt")
+        self.grafo.set_portales ((0, 17), (27, 17))
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
+
 
     def setFondo(self ):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
