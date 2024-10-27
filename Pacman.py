@@ -13,7 +13,7 @@ class Pacman(object):
         self.nodo= nodo
         self.setPosicion()
         self.blanco=nodo
-        
+        self.radioColision = 5
         
     def setPosicion(self):
         self.posicion = self.nodo.posicion.copiar()
@@ -88,3 +88,19 @@ class Pacman(object):
     def render(self, pantalla):
         p = self.posicion.entero()
         pygame.draw.circle(pantalla, self.color, p, self.radio)
+
+    def comer_pellets(self,lista_pellets):
+        #Recorremos la lista de los pellets hasta encontrar uno que tenga colision con pacman
+        #Se toma la raiz cuadrada de las distancias para evitar el uso de raices
+
+        for pellet in lista_pellets:
+            distancia = self.posicion - pellet.posicion #Vector de distancia entre pacman y el pellet
+            distancia_potencia = distancia.magnitudCuadrada()
+            radio_potencia = (pellet.radio + self.radioColision) ** 2
+
+            #Si la distancia es menor o igual al radio de los dos, significa que hay colision
+            #Utilizando la teoria del circle to circle check para las colisiones
+
+            if distancia_potencia <= radio_potencia:
+                return pellet
+        return None

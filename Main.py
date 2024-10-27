@@ -26,12 +26,20 @@ class Controladora(object):
 
     def empezar(self):
         self.setFondo()
+        self.debug_nodos()
+
+    def verificacion_pellets(self):
+        pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
+        if pellet:
+            self.Pellet.numComidos += 1
+            self.Pellet.listaPellets.remove(pellet)
 
 
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
         self.Pellet.actualizar(dt)
+        self.verificacion_pellets()
         self.verificarEventos()
         self.render()
 
@@ -48,6 +56,16 @@ class Controladora(object):
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         pygame.display.update()
+
+    def debug_nodos(self):
+        print("Verificación de conexiones entre nodos:")
+        for nodo in self.grafo.nodosLUT.values():
+            print(f"Nodo en posición: {nodo.posicion}")
+            for direccion, vecino in nodo.vecinos.items():
+                if vecino is not None:
+                    print(f"  Vecino en dirección {direccion}: {vecino.posicion}")
+                else:
+                    print(f"  Sin vecino en dirección {direccion}")
 
 
 if __name__ == '__main__':
