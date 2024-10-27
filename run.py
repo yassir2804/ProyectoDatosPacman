@@ -16,6 +16,8 @@ class GameController(object):
 
     def empezarJuego(self):
         self.setBackground()
+        self.nodos = Grafo("mazetest.txt")
+        self.pacman = Pacman(self.nodos.punto_partida_pacman())
 
     def update(self):
         self.checkEvents()

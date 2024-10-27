@@ -1,4 +1,3 @@
-from xdrlib import Packer
 
 import pygame
 from pygame.locals import *
@@ -13,9 +12,8 @@ class Controladora(object):
         self.pantalla = pygame.display.set_mode(TAMANIOPANTALLA, 0, 32)
         self.fondo = None
         self.clock = pygame.time.Clock()
-        self.grafo = Grafo()
-        self.grafo.setup_nodos_prueba()
-        self.pacman= Pacman(self.grafo.nodos.get(Vector1(80,80)))
+        self.grafo = Grafo("mazetest.txt")
+        self.pacman= Pacman(self.grafo.punto_partida_pacman())
 
     def setFondo(self ):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
@@ -24,6 +22,7 @@ class Controladora(object):
 
     def empezar(self):
         self.setFondo()
+
 
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
