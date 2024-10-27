@@ -25,6 +25,8 @@ class Pacman(object):
 
         if self.overshotTarget():
             self.nodo = self.blanco
+            if self.nodo.vecinos[PORTAL] is not None:
+                self.nodo = self.nodo.vecinos[PORTAL]
             self.blanco = self.getNuevoBlanco(direccion)
             if self.blanco is not self.nodo:
                 self.direccion =  direccion

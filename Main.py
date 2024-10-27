@@ -5,6 +5,7 @@ from Constantes import *
 from Grafo import *
 from Pacman import *
 from Grafo import Grafo
+from Pellet import GrupoPellets
 
 class Controladora(object):
     def __init__(self):
@@ -13,7 +14,10 @@ class Controladora(object):
         self.fondo = None
         self.clock = pygame.time.Clock()
         self.grafo = Grafo("mazetest.txt")
+        self.grafo.set_portales ((0, 17), (27, 17))
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
+        self.Pellet = GrupoPellets("mazetest.txt")
+
 
     def setFondo(self ):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
@@ -27,6 +31,7 @@ class Controladora(object):
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
+        self.Pellet.actualizar(dt)
         self.verificarEventos()
         self.render()
 
@@ -40,6 +45,7 @@ class Controladora(object):
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
         self.grafo.render(self.pantalla)
+        self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         pygame.display.update()
 
