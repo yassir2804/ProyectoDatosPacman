@@ -25,6 +25,10 @@ DERECHA = 4
 #Pacman
 PACMAN = 0
 PORTAL = 5
+PELLET = 1
+PELLETPODER = 2
+
+
 
 #Constantes
 PARED = 'X'
