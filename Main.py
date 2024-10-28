@@ -5,6 +5,7 @@ from Constantes import *
 from Grafo import *
 from Pacman import *
 from Grafo import Grafo
+from Pellet import GrupoPellets
 
 class Controladora(object):
     def __init__(self):
@@ -15,6 +16,7 @@ class Controladora(object):
         self.grafo = Grafo("mazetest.txt")
         self.grafo.set_portales ((0, 17), (27, 17))
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
+        self.Pellet = GrupoPellets("mazetest.txt")
 
 
     def setFondo(self ):
@@ -24,11 +26,20 @@ class Controladora(object):
 
     def empezar(self):
         self.setFondo()
+        self.debug_nodos()
+
+    def verificacion_pellets(self):
+        pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
+        if pellet:
+            self.Pellet.numComidos += 1
+            self.Pellet.listaPellets.remove(pellet)
 
 
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
+        self.Pellet.actualizar(dt)
+        self.verificacion_pellets()
         self.verificarEventos()
         self.render()
 
@@ -42,8 +53,19 @@ class Controladora(object):
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
         self.grafo.render(self.pantalla)
+        self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         pygame.display.update()
+
+    def debug_nodos(self):
+        print("Verificación de conexiones entre nodos:")
+        for nodo in self.grafo.nodosLUT.values():
+            print(f"Nodo en posición: {nodo.posicion}")
+            for direccion, vecino in nodo.vecinos.items():
+                if vecino is not None:
+                    print(f"  Vecino en dirección {direccion}: {vecino.posicion}")
+                else:
+                    print(f"  Sin vecino en dirección {direccion}")
 
 
 if __name__ == '__main__':

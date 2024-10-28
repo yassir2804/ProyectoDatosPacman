@@ -26,8 +26,8 @@ class Nodo(object):
 class Grafo(object):
     def __init__(self, nivel):
         self.nodosLUT = {}
-        self.simbolosNodos = ['+']
-        self.simbolosCaminos = ['.']
+        self.simbolosNodos = ['+', 'P', 'n']
+        self.simbolosCaminos = ['.', '-', '|', 'p']
         datos = self.leer_laberinto(nivel)
         self.crear_tabla_nodos(datos)
         self.conectar_horizontal(datos)
@@ -38,7 +38,10 @@ class Grafo(object):
             nodo.render(pantalla)
 
     def leer_laberinto(self, archivoTexto):
-        return np.loadtxt(archivoTexto, dtype='<U1')
+        datos = np.loadtxt(archivoTexto, dtype='<U1')
+        print("Datos del laberinto:")
+        print(datos)
+        return datos
 
 
     def crear_tabla_nodos(self, datos, xbalance=0, ybalance=0):
@@ -47,6 +50,7 @@ class Grafo(object):
                 if datos[fila][col] in self.simbolosNodos:
                     x, y = self.construir_clave(col + xbalance, fila + ybalance)
                     self.nodosLUT[(x, y)] = Nodo(Vector1(x, y))
+                    print(f"Nodo creado en: {(x, y)}")
 
     def construir_clave(self, col, fila):
         return col * ANCHOCELDA, fila * ALTURACELDA
