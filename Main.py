@@ -18,7 +18,8 @@ class Controladora(object):
         self.grafo.set_portales ((0, 17), (27, 17))
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
         self.Pellet = GrupoPellets("mazetest.txt")
-        self.Clyde = Blinky(self.grafo.punto_partida_fantasmas())
+        self.Clyde = Clyde(self.grafo.punto_partida_fantasmas())
+        self.Blinky = Blinky(self.grafo.punto_partida_fantasmas())
 
 
     def setFondo(self ):
@@ -41,6 +42,7 @@ class Controladora(object):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
         self.Clyde.actualizar(dt)
+        self.Blinky.actualizar(dt,self.pacman)
         self.Pellet.actualizar(dt)
         self.verificacion_pellets()
         self.verificarEventos()
@@ -59,6 +61,7 @@ class Controladora(object):
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         self.Clyde.render(self.pantalla)
+        self.Blinky.render(self.pantalla)
         pygame.display.update()
 
     def debug_nodos(self):

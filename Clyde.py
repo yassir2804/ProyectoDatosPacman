@@ -6,7 +6,7 @@ from random import randint
 from random import choice
 class Clyde(object):
     def __init__(self,nodo):
-        self.nombre = BLINKY
+        self.nombre = CLYDE
         self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
                             IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direccion = STOP
