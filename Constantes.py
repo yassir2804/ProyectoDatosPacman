@@ -18,9 +18,9 @@ ROJO = (255, 0, 0)
 #Direcciones
 STOP = 0
 ARRIBA = 1
-ABAJO = 2
-IZQUIERDA = 3
-DERECHA = 4
+ABAJO = -1
+IZQUIERDA = 2
+DERECHA = -2
 
 #Pacman
 PACMAN = 0
