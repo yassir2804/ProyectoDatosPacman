@@ -2,43 +2,63 @@ import pygame
 from pygame.locals import *
 from Vector import Vector1
 from Constantes import *
+
+
 class Pacman(object):
-    def __init__(self,nodo):
+    def __init__(self, nodo):
         self.nombre = PACMAN
-        self.direcciones = {STOP: Vector1(0,0), ARRIBA: Vector1(0,-1), ABAJO: Vector1(0,1), IZQUIERDA: Vector1(-1,0), DERECHA: Vector1(1,0)}
+        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
+                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direccion = STOP
-        self.velocidad = 100* ANCHOCELDA/16 #Esto es una formula que sirve para que en cualquier formato de pantalla el pacman vaya a una velocidad considerable
+        self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
         self.color = AMARILLO
-        self.nodo= nodo
+        self.nodo = nodo
         self.setPosicion()
-        self.blanco=nodo
+        self.blanco = nodo
         self.radioColision = 5
-        
+        self.direccion_deseada = STOP
+
     def setPosicion(self):
         self.posicion = self.nodo.posicion.copiar()
 
     def actualizar(self, dt):
+        # Actualizar posición actual
         self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
+
+        # Obtener entrada del teclado
         direccion = self.entradaTeclado()
+        if direccion != STOP:
+            self.direccion_deseada = direccion
 
-
+        # Verificar si llegamos al nodo objetivo
         if self.overshotTarget():
+            # Establecer el nodo actual como el nodo objetivo que acabamos de alcanzar
             self.nodo = self.blanco
+
+            # Manejar portales
             if self.nodo.vecinos[PORTAL] is not None:
                 self.nodo = self.nodo.vecinos[PORTAL]
-            self.blanco = self.getNuevoBlanco(direccion)
-            if self.blanco is not self.nodo:
-                self.direccion =  direccion
-            else:
-                self.blanco = self.getNuevoBlanco(self.direccion)
-            if self.blanco is  self.nodo:
+
+            # Solo aquí, cuando llegamos a un nodo, intentamos cambiar la dirección
+            if self.direccion_deseada != STOP:
+                if self.validarDireccion(self.direccion_deseada):
+                    self.direccion = self.direccion_deseada
+                    self.direccion_deseada = STOP
+
+            # Determinar el siguiente nodo objetivo basado en la dirección actual
+            self.blanco = self.getNuevoBlanco(self.direccion)
+
+            # Si no hay un camino válido, detenerse
+            if self.blanco is self.nodo:
                 self.direccion = STOP
+
+            # Resetear la posición exactamente al nodo actual
             self.setPosicion()
         else:
+            # Solo permitir cambio de dirección en medio camino si es dirección opuesta
             if self.direccionOpuesta(direccion):
                 self.direccionReversa()
-
 
     def validarDireccion(self, direccion):
         if direccion is not STOP:
