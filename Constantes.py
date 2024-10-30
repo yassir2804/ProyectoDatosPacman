@@ -14,6 +14,8 @@ NEGRO = (0,0,0)
 AMARILLO = (255, 255, 0)
 BLANCO = (255, 255, 255)
 ROJO = (255, 0, 0)
+ROSADO = (255,192,203)
+AZUL = (0,0,255)
 
 #Direcciones
 STOP = 0
@@ -30,8 +32,10 @@ PELLETPODER = 2
 
 
 
-#Constantes
+#Constantes mapa
 PARED = 'X'
 CAMINO = '.'
 NODO = '+'
 
+#Constantes Fantasmas
+BLINKY=99
