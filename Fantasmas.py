@@ -1,33 +1,29 @@
 
 from Pacman import *
+from numpy.random import random
+from Constantes import *
 
-class fantasma:
+class fantasma(object):
     def __init__(self, nodo, Pacman=None, blinky=None):
         Entity.__init__(self, nodo)
         self.nombre = GHOST
         self.puntos = 150
-        self.objetivo = Vector2()
+        self.objetivo = random()
         self.directionMethod = self.goalDirection
         self.pacman = Pacman
         self.modo = ModoController(self)
         self.blinky = blinky
-        self.NodoCasa = node
+        self.NodoCasa = nodo
 
     def resetear(self):
-        Entity.reset(self)
-        self.puntos= 200
+        self.puntos +=50
         self.directionMethod = self.goalDirection
 
-    def actualizar(self, dt):
-        self.sprites.update(dt)
-        self.modo.update(dt)
-        if self.modo.current is SCATTER:
-            self.scatter()
-        elif self.modo.current is FRIGHTENED:
-            self.frihtened()
-        elif self.modo.current is CHASE:
-            self.chase()
-        Entity.update(self, dt)
+    def actualizar(self, posicion):
+        self.objetivo=posicion
+
+    def cambiar_modo(self,modo):
+
 
     def scatter(self):
         self.objetivo = Vector2()
@@ -39,10 +35,10 @@ class fantasma:
         self.objetivo= 0
 
     def spawn(self):
-        self.objetivo = self.NodoDeSpawn.position
+        self.objetivo = self.NodoCasa.position
 
-    def setNodoDeSpawn(self, node):
-        self.NodoDeSpawn = node
+    def setNodoDeSpawn(self, nodo):
+        self.NodoCasa = node
 
     def startSpawn(self):
         self.modo.setSpawnMode()
@@ -59,7 +55,7 @@ class fantasma:
 
     def modoNormal(self):
         self.setVelocidad(100)
-        self.directionMethod = self.goalDirectio
+        self.directionMethod = self.goalDirection
 
 class Blinky(fantasma):
     def __init__(self, nodo,pacman=None, blinky=None):
@@ -90,7 +86,7 @@ class Pinky(fantasma):
     def __init__(self, nodo, pacman=None, blinky=None):
         fantasma.__init__(self, nodo, pacman, blinky)
         self.nombre = Blinky
-        self.color = Pinky
+        self.color = ROSADO
 
     def actualizar(self, dt):
         self.modo.update(dt)
