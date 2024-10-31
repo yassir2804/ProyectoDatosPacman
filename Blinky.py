@@ -2,9 +2,10 @@ import pygame
 from pygame.locals import *
 from Vector import Vector1
 from Constantes import *
+from PathFinder import PathFinder
 
 class Blinky:
-    def __init__(self, nodo):
+    def __init__(self, nodo, grafo):
         self.nombre = BLINKY
         self.direcciones = {
             STOP: Vector1(0, 0),
@@ -29,6 +30,8 @@ class Blinky:
         self.set_posicion()
         self.blanco = nodo
         self.radio_colision = 5
+        self.grafo = grafo
+        self.pathfinder = PathFinder(grafo)  # Instancia del PathFinder
 
         self.iniciar_movimiento()
 
@@ -45,15 +48,12 @@ class Blinky:
             self.iniciar_movimiento()
             return
 
-        # Comprobar que Pacman tiene un nodo válido
         if pacman.nodo is None:
             return
 
-        # Calcular movimiento hacia Pacman
         vector_movimiento = self.direcciones[self.direccion] * self.velocidad * dt
         nueva_posicion = self.posicion + vector_movimiento
 
-        # Mantener el fantasma en la línea entre nodos
         if self.direccion in [IZQUIERDA, DERECHA]:
             nueva_posicion.y = self.nodo.posicion.y
         else:
@@ -69,48 +69,65 @@ class Blinky:
         self.nodo = self.blanco
         self.posicion = self.nodo.posicion.copiar()
 
-        # Manejar portales
-        if self.nodo.vecinos.get(PORTAL):  # Usar get para evitar KeyError
+        if self.nodo.vecinos.get(PORTAL):
             self.nodo = self.nodo.vecinos[PORTAL]
             self.set_posicion()
 
-        # Actualiza dirección hacia Pacman
         self.actualizar_direccion(pacman)
 
     def actualizar_direccion(self, pacman):
-        """Actualiza la dirección hacia Pacman."""
-        direcciones_validas = self.obtener_direcciones_validas()
-        mejor_direccion = None
-        menor_distancia = float('inf')
+        """Actualiza la dirección usando el PathFinder."""
+        if pacman.nodo is None:
+            return
 
-        for direccion in direcciones_validas:
-            nodo_siguiente = self.nodo.vecinos[direccion]
-            if nodo_siguiente is None:  # Asegúrate de que el vecino no sea None
-                continue
-
-            distancia = self.distancia_a_punto(nodo_siguiente.posicion, pacman.posicion)
-            if distancia < menor_distancia:
-                menor_distancia = distancia
-                mejor_direccion = direccion
+        # Usar PathFinder para encontrar la mejor dirección
+        mejor_direccion = self.pathfinder.encontrar_ruta(
+            self.nodo,
+            pacman.nodo,
+            self.direccion
+        )
 
         if mejor_direccion is not None:
             self.direccion = mejor_direccion
             self.blanco = self.nodo.vecinos[mejor_direccion]
-        elif direcciones_validas:
-            self.direccion = direcciones_validas[0]
-            self.blanco = self.nodo.vecinos[self.direccion]
+        else:
+            # Comportamiento de fallback
+            direcciones_validas = self.obtener_direcciones_validas()
+            mejor_direccion = None
+            menor_distancia = float('inf')
+
+            for direccion in direcciones_validas:
+                # Evitar dirección opuesta a la actual
+                if self.direccion != STOP and direccion == self.direcciones_opuestas[self.direccion]:
+                    continue
+
+                nodo_siguiente = self.nodo.vecinos[direccion]
+                if nodo_siguiente is None:
+                    continue
+
+                distancia = self.distancia_a_punto(nodo_siguiente.posicion, pacman.posicion)
+                if distancia < menor_distancia:
+                    menor_distancia = distancia
+                    mejor_direccion = direccion
+
+            if mejor_direccion is not None:
+                self.direccion = mejor_direccion
+                self.blanco = self.nodo.vecinos[mejor_direccion]
+            elif direcciones_validas:
+                self.direccion = direcciones_validas[0]
+                self.blanco = self.nodo.vecinos[self.direccion]
 
     def distancia_a_punto(self, pos1, pos2):
-        """Calcula la distancia euclidiana entre dos puntos utilizando la clase Vector1."""
+        """Calcula la distancia euclidiana entre dos puntos."""
         return (pos1 - pos2).magnitud()
 
     def obtener_direcciones_validas(self):
-        """Obtiene todas las direcciones válidas disponibles sin recursión."""
+        """Obtiene todas las direcciones válidas disponibles."""
         return [direccion for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]
-                if self.nodo.vecinos.get(direccion) is not None and  # Verifica que no sea None
+                if self.nodo.vecinos.get(direccion) is not None and
                 (self.direccion == STOP or direccion != self.direcciones_opuestas[self.direccion] or
-                len([d for d in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]
-                     if self.nodo.vecinos.get(d)]) == 1)]
+                 len([d for d in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]
+                      if self.nodo.vecinos.get(d)]) == 1)]
 
     def overshot_target(self):
         """Verifica si se ha sobrepasado el nodo objetivo."""
