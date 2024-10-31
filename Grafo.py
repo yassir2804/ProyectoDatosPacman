@@ -18,7 +18,7 @@ class Nodo(object):
         for n in self.vecinos.keys():
             if self.vecinos[n] is not None:
                 pygame.draw.line(pantalla, BLANCO, self.posicion.tupla(), self.vecinos[n].posicion.tupla())
-        pygame.draw.circle(pantalla, ROJO, self.posicion.entero(), 12)
+        pygame.draw.circle(pantalla, AZUL, self.posicion.entero(), 12)
 
     def agregar_vecino(self, direccion, nodo_vecino):
         self.vecinos[direccion] = nodo_vecino
@@ -38,7 +38,10 @@ class Grafo(object):
             nodo.render(pantalla)
 
     def leer_laberinto(self, archivoTexto):
-        return np.loadtxt(archivoTexto, dtype='<U1')
+        datos = np.loadtxt(archivoTexto, dtype='<U1')
+        print("Datos del laberinto:")
+        print(datos)
+        return datos
 
 
     def crear_tabla_nodos(self, datos, xbalance=0, ybalance=0):
@@ -47,6 +50,7 @@ class Grafo(object):
                 if datos[fila][col] in self.simbolosNodos:
                     x, y = self.construir_clave(col + xbalance, fila + ybalance)
                     self.nodosLUT[(x, y)] = Nodo(Vector1(x, y))
+                    print(f"Nodo creado en: {(x, y)}")
 
     def construir_clave(self, col, fila):
         return col * ANCHOCELDA, fila * ALTURACELDA
@@ -92,6 +96,9 @@ class Grafo(object):
         return self.nodosLUT.get(clave, None)
 
     def punto_partida_pacman(self):
+        return next(iter(self.nodosLUT.values()), None)
+
+    def punto_partida_fantasmas(self):
         return next(iter(self.nodosLUT.values()), None)
 
     def set_portales(self, par1, par2):
