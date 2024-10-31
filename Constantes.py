@@ -41,3 +41,4 @@ NODO = '+'
 #Constantes Fantasmas
 BLINKY=99
 CLYDE=98
+PINKY=98

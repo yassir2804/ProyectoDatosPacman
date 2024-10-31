@@ -2,115 +2,191 @@ import pygame
 from pygame.locals import *
 from Vector import Vector1
 from Constantes import *
-from random import randint
-from random import choice
-class Pinky(object):
-    def __init__(self,nodo):
-        self.nombre = CLYDE
-        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
-                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+from PathFinder import PathFinder
+
+
+class Pinky:
+    def __init__(self, nodo, grafo):
+        self.nombre = PINKY
+        self.direcciones = {
+            STOP: Vector1(0, 0),
+            ARRIBA: Vector1(0, -1),
+            ABAJO: Vector1(0, 1),
+            IZQUIERDA: Vector1(-1, 0),
+            DERECHA: Vector1(1, 0)
+        }
+        self.direcciones_opuestas = {
+            ARRIBA: ABAJO,
+            ABAJO: ARRIBA,
+            IZQUIERDA: DERECHA,
+            DERECHA: IZQUIERDA,
+            STOP: STOP
+        }
+
         self.direccion = STOP
-        self.velocidad = 85 * ANCHOCELDA / 16  # Esto es una formula que sirve para que en cualquier formato de pantalla el pacman vaya a una velocidad considerable
+        self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
         self.color = ROSADO
         self.nodo = nodo
-        self.setPosicion()
+        self.set_posicion()
         self.blanco = nodo
-        self.radioColision = 5
+        self.radio_colision = 5
+        self.grafo = grafo
+        self.pathfinder = PathFinder(grafo)
 
-    def setPosicion(self):
+        self.iniciar_movimiento()
+
+    def calcular_objetivo(self, pacman):
+        """Calcula el punto objetivo 4 casillas por delante de Pacman"""
+        if pacman.direccion == STOP or pacman.nodo is None:
+            return pacman.nodo
+
+        # Calculamos la posición objetivo en tiles (cuadros del laberinto)
+        pos_actual = (pacman.posicion.x // ANCHOCELDA, pacman.posicion.y // ALTURACELDA)
+
+        # Vector de dirección en tiles
+        vector_direccion = self.direcciones[pacman.direccion]
+        objetivo_x = pos_actual[0]
+        objetivo_y = pos_actual[1]
+
+        # Ajustamos la posición objetivo según la dirección
+        if pacman.direccion == ARRIBA:
+            # Implementamos el "bug" del Pac-Man original
+            objetivo_x -= 4  # 4 casillas a la izquierda
+            objetivo_y -= 4  # 4 casillas arriba
+        elif pacman.direccion == ABAJO:
+            objetivo_y += 4
+        elif pacman.direccion == IZQUIERDA:
+            objetivo_x -= 4
+        elif pacman.direccion == DERECHA:
+            objetivo_x += 4
+
+        # Intentamos obtener el nodo más cercano a la posición objetivo
+        nodo_objetivo = self.grafo.obtener_nodo_desde_tiles(int(objetivo_x), int(objetivo_y))
+
+        # Si no encontramos un nodo válido, buscamos el nodo más cercano
+        if nodo_objetivo is None:
+            menor_distancia = float('inf')
+            posicion_objetivo = Vector1(objetivo_x * ANCHOCELDA, objetivo_y * ALTURACELDA)
+
+            for nodo in self.grafo.nodosLUT.values():
+                distancia = self.distancia_a_punto(nodo.posicion, posicion_objetivo)
+                if distancia < menor_distancia:
+                    menor_distancia = distancia
+                    nodo_objetivo = nodo
+
+        return nodo_objetivo if nodo_objetivo else pacman.nodo
+
+    def iniciar_movimiento(self):
+        """Inicia el movimiento del fantasma."""
+        direcciones_disponibles = self.obtener_direcciones_validas()
+        if direcciones_disponibles:
+            self.direccion = direcciones_disponibles[0]
+            self.blanco = self.nodo.vecinos[self.direccion]
+
+    def actualizar(self, dt, pacman):
+        """Actualiza la posición del fantasma."""
+        if self.direccion == STOP:
+            self.iniciar_movimiento()
+            return
+
+        if pacman.nodo is None:
+            return
+
+        vector_movimiento = self.direcciones[self.direccion] * self.velocidad * dt
+        nueva_posicion = self.posicion + vector_movimiento
+
+        if self.direccion in [IZQUIERDA, DERECHA]:
+            nueva_posicion.y = self.nodo.posicion.y
+        else:
+            nueva_posicion.x = self.nodo.posicion.x
+
+        self.posicion = nueva_posicion
+
+        if self.overshot_target():
+            self.llegar_a_nodo(pacman)
+
+    def llegar_a_nodo(self, pacman):
+        """Maneja la llegada a un nodo objetivo."""
+        self.nodo = self.blanco
         self.posicion = self.nodo.posicion.copiar()
 
-    def actualizar(self, pacman):
-        # Actualizar la posición actual
-        self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
+        if self.nodo.vecinos.get(PORTAL):
+            self.nodo = self.nodo.vecinos[PORTAL]
+            self.set_posicion()
 
-        # Verificar si llegamos al nodo objetivo
-        if self.overshotTarget():
-            # Establecer el nodo actual como el nodo objetivo que acabamos de alcanzar
-            self.nodo = self.blanco
+        self.actualizar_direccion(pacman)
 
-            # Manejar portales
-            if self.nodo.vecinos[PORTAL] is not None:
-                self.nodo = self.nodo.vecinos[PORTAL]
+    def actualizar_direccion(self, pacman):
+        """Actualiza la dirección usando el PathFinder hacia el punto objetivo."""
+        if pacman.nodo is None:
+            return
 
-            # Elegir una nueva dirección aleatoria válida
-            self.elegirDireccionAleatoria()
+        nodo_objetivo = self.calcular_objetivo(pacman)
 
-            # Establecer el nuevo nodo objetivo
-            self.blanco = self.getNuevoBlanco(self.direccion)
+        if nodo_objetivo is None:
+            nodo_objetivo = pacman.nodo
 
-            # Resetear la posición exactamente al nodo actual
-            self.setPosicion()
+        mejor_direccion = self.pathfinder.encontrar_ruta(
+            self.nodo,
+            nodo_objetivo,
+            self.direccion
+        )
 
-    def elegirDireccionAleatoria(self):
-        # Obtener todas las direcciones posibles desde el nodo actual
-        direcciones_posibles = []
-        for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]:
-            # No queremos que el fantasma se dé la vuelta a menos que sea necesario
-            if self.validarDireccion(direccion) and not self.direccionOpuesta(direccion):
-                direcciones_posibles.append(direccion)
-
-        # Si no hay direcciones válidas excepto la opuesta, permitir dar la vuelta
-        if not direcciones_posibles and self.validarDireccion(self.direccion * -1):
-            direcciones_posibles.append(self.direccion * -1)
-
-        # Si hay direcciones posibles, elegir una al azar
-        if direcciones_posibles:
-            self.direccion = choice(direcciones_posibles)
+        if mejor_direccion is not None:
+            self.direccion = mejor_direccion
+            self.blanco = self.nodo.vecinos[mejor_direccion]
         else:
-            self.direccion=STOP
+            # Comportamiento de fallback
+            direcciones_validas = self.obtener_direcciones_validas()
+            mejor_direccion = None
+            menor_distancia = float('inf')
 
+            for direccion in direcciones_validas:
+                if self.direccion != STOP and direccion == self.direcciones_opuestas[self.direccion]:
+                    continue
 
+                nodo_siguiente = self.nodo.vecinos[direccion]
+                if nodo_siguiente is None:
+                    continue
 
-    def validarDireccion(self, direccion):
-        if direccion is not STOP:
-            if self.nodo.vecinos[direccion] is not None:
-                return True
-        return False
+                distancia = self.distancia_a_punto(nodo_siguiente.posicion, pacman.posicion)
+                if distancia < menor_distancia:
+                    menor_distancia = distancia
+                    mejor_direccion = direccion
 
-    def getNuevoBlanco(self, direccion):
-        if self.validarDireccion(direccion):
-            return self.nodo.vecinos[direccion]
-        return self.nodo
+            if mejor_direccion is not None:
+                self.direccion = mejor_direccion
+                self.blanco = self.nodo.vecinos[mejor_direccion]
+            elif direcciones_validas:
+                self.direccion = direcciones_validas[0]
+                self.blanco = self.nodo.vecinos[self.direccion]
 
-    def overshotTarget(self):
-        if self.blanco is not None:
+    def distancia_a_punto(self, pos1, pos2):
+        """Calcula la distancia euclidiana entre dos puntos."""
+        return (pos1 - pos2).magnitud()
+
+    def obtener_direcciones_validas(self):
+        """Obtiene todas las direcciones válidas disponibles."""
+        return [direccion for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]
+                if self.nodo.vecinos.get(direccion) is not None and
+                (self.direccion == STOP or direccion != self.direcciones_opuestas[self.direccion] or
+                 len([d for d in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]
+                      if self.nodo.vecinos.get(d)]) == 1)]
+
+    def overshot_target(self):
+        """Verifica si se ha sobrepasado el nodo objetivo."""
+        if self.blanco:
             vec1 = self.blanco.posicion - self.nodo.posicion
             vec2 = self.posicion - self.nodo.posicion
-            nodo2Blanco = vec1.magnitudCuadrada()
-            nodo2Self = vec2.magnitudCuadrada()
-            return nodo2Self >= nodo2Blanco
+            return vec2.magnitudCuadrada() >= vec1.magnitudCuadrada()
         return False
 
-    def direccionReversa(self):
-        self.direccion *= -1
-        temp = self.nodo
-        self.nodo = self.blanco
-        self.blanco = temp
-
-    def direccionOpuesta(self, direccion):
-        if direccion is not STOP:
-            if direccion == self.direccion * -1:
-                return True
-        return False
+    def set_posicion(self):
+        """Establece la posición al nodo actual."""
+        self.posicion = self.nodo.posicion.copiar()
 
     def render(self, pantalla):
+        """Dibuja el fantasma en la pantalla."""
         p = self.posicion.entero()
         pygame.draw.circle(pantalla, self.color, p, self.radio)
-
-    # def comer_pellets(self, lista_pellets):
-    #     # Recorremos la lista de los pellets hasta encontrar uno que tenga colision con pacman
-    #     # Se toma la raiz cuadrada de las distancias para evitar el uso de raices
-    #
-    #     for pellet in lista_pellets:
-    #         distancia = self.posicion - pellet.posicion  # Vector de distancia entre pacman y el pellet
-    #         distancia_potencia = distancia.magnitudCuadrada()
-    #         radio_potencia = (pellet.radio + self.radioColision) ** 2
-    #
-    #         # Si la distancia es menor o igual al radio de los dos, significa que hay colision
-    #         # Utilizando la teoria del circle to circle check para las colisiones
-    #
-    #         if distancia_potencia <= radio_potencia:
-    #             return pellet
-    #     return None
