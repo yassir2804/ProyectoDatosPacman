@@ -19,7 +19,7 @@ class Controladora(object):
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
         self.Pellet = GrupoPellets("mazetest.txt")
         self.Clyde = Clyde(self.grafo.punto_partida_fantasmas())
-        self.Blinky = Blinky(self.grafo.punto_partida_fantasmas())
+        self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
 
 
     def setFondo(self ):
