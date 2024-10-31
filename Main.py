@@ -6,7 +6,9 @@ from Grafo import *
 from Pacman import *
 from Grafo import Grafo
 from Pellet import GrupoPellets
-
+from Clyde import *
+from Blinky import *
+from Pinky import *
 class Controladora(object):
     def __init__(self):
         pygame.init()
@@ -17,6 +19,9 @@ class Controladora(object):
         self.grafo.set_portales ((0, 17), (27, 17))
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
         self.Pellet = GrupoPellets("mazetest.txt")
+        self.Clyde = Clyde(self.grafo.punto_partida_fantasmas())
+        self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
+        self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
 
 
     def setFondo(self ):
@@ -38,6 +43,9 @@ class Controladora(object):
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
+        self.Clyde.actualizar(dt)
+        self.Blinky.actualizar(dt,self.pacman)
+        self.Pinky.actualizar(dt,self.pacman)
         self.Pellet.actualizar(dt)
         self.verificacion_pellets()
         self.verificarEventos()
@@ -55,6 +63,9 @@ class Controladora(object):
         self.grafo.render(self.pantalla)
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
+        self.Clyde.render(self.pantalla)
+        self.Blinky.render(self.pantalla)
+        self.Pinky.render(self.pantalla)
         pygame.display.update()
 
     def debug_nodos(self):
