@@ -4,7 +4,7 @@ from Vector import Vector1
 from Constantes import *
 from random import randint
 from random import choice
-class Clyde(object):
+class Pinky(object):
     def __init__(self,nodo):
         self.nombre = CLYDE
         self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
@@ -12,7 +12,7 @@ class Clyde(object):
         self.direccion = STOP
         self.velocidad = 85 * ANCHOCELDA / 16  # Esto es una formula que sirve para que en cualquier formato de pantalla el pacman vaya a una velocidad considerable
         self.radio = 10
-        self.color = NARANJA
+        self.color = ROSADO
         self.nodo = nodo
         self.setPosicion()
         self.blanco = nodo
@@ -21,7 +21,7 @@ class Clyde(object):
     def setPosicion(self):
         self.posicion = self.nodo.posicion.copiar()
 
-    def actualizar(self, dt):
+    def actualizar(self, pacman):
         # Actualizar la posición actual
         self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
 
