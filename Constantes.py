@@ -16,6 +16,7 @@ BLANCO = (255, 255, 255)
 ROJO = (255, 0, 0)
 ROSADO = (255,192,203)
 AZUL = (0,0,255)
+NARANJA = (255,91,1)
 
 #Direcciones
 STOP = 0
