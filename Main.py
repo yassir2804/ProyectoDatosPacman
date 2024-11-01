@@ -1,16 +1,14 @@
-
 import pygame
 from pygame.locals import *
 from Constantes import *
-from Grafo import *
-from Pacman import *
 from Grafo import Grafo
+from Pacman import Pacman
 from Pellet import GrupoPellets
-from Clyde import *
-from Blinky import *
-from Pinky import *
-from Inky import *
-
+from Clyde import Clyde
+from Blinky import Blinky
+from Pinky import Pinky
+from Inky import Inky
+from Texto import GrupoTexto
 
 class Controladora(object):
     def __init__(self):
@@ -19,19 +17,19 @@ class Controladora(object):
         self.fondo = None
         self.clock = pygame.time.Clock()
         self.grafo = Grafo("mazetest.txt")
-        self.grafo.set_portales ((0, 17), (27, 17))
-        self.pacman= Pacman(self.grafo.punto_partida_pacman())
+        self.grafo.set_portales((0, 17), (27, 17))
+        self.pacman = Pacman(self.grafo.punto_partida_pacman())
         self.Pellet = GrupoPellets("mazetest.txt")
         self.Clyde = Clyde(self.grafo.punto_partida_fantasmas(),self.grafo)
         self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
         self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
         self.Inky = Inky(self.grafo.punto_partida_fantasmas(), self.grafo)
+        self.grupo_texto = GrupoTexto()
+        self.puntaje = 0
 
-
-    def setFondo(self ):
+    def setFondo(self):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
         self.fondo.fill(NEGRO)
-
 
     def empezar(self):
         self.setFondo()
@@ -41,8 +39,9 @@ class Controladora(object):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
         if pellet:
             self.Pellet.numComidos += 1
+            self.puntaje += 10
+            self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
-
 
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
@@ -53,16 +52,15 @@ class Controladora(object):
         self.Pinky.actualizar(dt,self.pacman)
         self.Inky.actualizar(dt,self.pacman, self.Blinky)
         self.Pellet.actualizar(dt)
+        self.grupo_texto.actualizar(dt)
         self.verificacion_pellets()
         self.verificarEventos()
         self.render()
-
 
     def verificarEventos(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
-
 
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
@@ -73,6 +71,7 @@ class Controladora(object):
         self.Blinky.render(self.pantalla)
         self.Pinky.render(self.pantalla)
         self.Inky.render(self.pantalla)
+        self.grupo_texto.renderizar(self.pantalla)
         pygame.display.update()
 
     def debug_nodos(self):
