@@ -41,8 +41,18 @@ PARED = 'X'
 CAMINO = '.'
 NODO = '+'
 
+#Constantes texto
+SCORETXT = 0
+LEVELTXT = 1
+READYTXT = 2
+PAUSETXT = 3
+GAMEOVERTXT = 4
+
+
+
 #Constantes Fantasmas
 BLINKY=99
 CLYDE=98
 PINKY=97
 INKY=96
+
