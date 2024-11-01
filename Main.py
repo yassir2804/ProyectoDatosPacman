@@ -22,7 +22,7 @@ class Controladora(object):
         self.grafo.set_portales ((0, 17), (27, 17))
         self.pacman= Pacman(self.grafo.punto_partida_pacman())
         self.Pellet = GrupoPellets("mazetest.txt")
-        self.Clyde = Clyde(self.grafo.punto_partida_fantasmas())
+        self.Clyde = Clyde(self.grafo.punto_partida_fantasmas(),self.grafo)
         self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
         self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
         self.Inky = Inky(self.grafo.punto_partida_fantasmas(), self.grafo)
@@ -48,6 +48,7 @@ class Controladora(object):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
         self.Clyde.actualizar(dt)
+        self.Clyde.set_scatter_mode()
         self.Blinky.actualizar(dt,self.pacman)
         self.Pinky.actualizar(dt,self.pacman)
         self.Inky.actualizar(dt,self.pacman, self.Blinky)
