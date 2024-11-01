@@ -186,6 +186,7 @@ class Inky:
         """Establece la posición al nodo actual."""
         self.posicion = self.nodo.posicion.copiar()
 
+
     def render(self, pantalla):
         """Dibuja el fantasma en la pantalla."""
         p = self.posicion.entero()
