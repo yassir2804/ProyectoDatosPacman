@@ -9,6 +9,9 @@ from Pellet import GrupoPellets
 from Clyde import *
 from Blinky import *
 from Pinky import *
+from Inky import *
+
+
 class Controladora(object):
     def __init__(self):
         pygame.init()
@@ -22,6 +25,7 @@ class Controladora(object):
         self.Clyde = Clyde(self.grafo.punto_partida_fantasmas())
         self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
         self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
+        self.Inky = Inky(self.grafo.punto_partida_fantasmas(), self.grafo)
 
 
     def setFondo(self ):
@@ -46,6 +50,7 @@ class Controladora(object):
         self.Clyde.actualizar(dt)
         self.Blinky.actualizar(dt,self.pacman)
         self.Pinky.actualizar(dt,self.pacman)
+        self.Inky.actualizar(dt,self.pacman, self.Blinky)
         self.Pellet.actualizar(dt)
         self.verificacion_pellets()
         self.verificarEventos()
@@ -66,6 +71,7 @@ class Controladora(object):
         self.Clyde.render(self.pantalla)
         self.Blinky.render(self.pantalla)
         self.Pinky.render(self.pantalla)
+        self.Inky.render(self.pantalla)
         pygame.display.update()
 
     def debug_nodos(self):

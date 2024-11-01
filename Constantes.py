@@ -17,6 +17,7 @@ ROJO = (255, 0, 0)
 ROSADO = (255,192,203)
 AZUL = (0,0,255)
 NARANJA = (255,91,1)
+CELESTE = (135,206,235)
 
 #Direcciones
 STOP = 0
@@ -31,6 +32,8 @@ PORTAL = 5
 PELLET = 1
 PELLETPODER = 2
 
+SCATTER = "scatter"
+CHASE = "chase"
 
 
 #Constantes mapa
@@ -41,4 +44,5 @@ NODO = '+'
 #Constantes Fantasmas
 BLINKY=99
 CLYDE=98
-PINKY=98
+PINKY=97
+INKY=96
