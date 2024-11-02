@@ -33,7 +33,6 @@ class Pinky:
         self.radio_colision = 5
         self.grafo = grafo
         self.pathfinder = PathFinder(grafo)
-
         self.iniciar_movimiento()
 
     def calcular_objetivo(self, pacman):
