@@ -28,7 +28,7 @@ class Controladora(object):
 
         # Crear Pacman y establecer los fantasmas
         self.pacman = Pacman(self.grafo.punto_partida_pacman())
-        self.lista_fantasmas = [self.Blinky]
+        self.lista_fantasmas = [self.Blinky,self.Clyde,self.Inky,self.Pinky]
         self.pacman.establecerFantasmas(self.lista_fantasmas)
 
         self.Pellet = GrupoPellets("mazetest.txt")
