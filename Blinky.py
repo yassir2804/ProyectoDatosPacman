@@ -7,6 +7,7 @@ from PathFinder import PathFinder
 
 class Blinky:
     def __init__(self, nodo, grafo):
+
         self.nombre = BLINKY
         self.direcciones = {STOP: Vector1(0, 0),ARRIBA: Vector1(0, -1),ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0),DERECHA: Vector1(1, 0) }
         self.direcciones_opuestas = {ARRIBA: ABAJO,ABAJO: ARRIBA,IZQUIERDA: DERECHA, DERECHA: IZQUIERDA,STOP: STOP }
@@ -244,5 +245,5 @@ class Blinky:
             pantalla: Superficie de pygame donde dibujar
         """
         p = self.posicion.entero()
-        #color_actual = NARANJA if self.modo == SCATTER else self.color
-        pygame.draw.circle(pantalla, self.color, p,self.radio)
+        color_actual = PURPURA if self.modo == SCATTER else self.color
+        pygame.draw.circle(pantalla,  color_actual, p,self.radio)

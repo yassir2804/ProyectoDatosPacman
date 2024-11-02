@@ -4,152 +4,57 @@ from numpy.random import random
 from Constantes import *
 
 class fantasma(object):
-    def __init__(self, nodo, Pacman=None, blinky=None):
-        Entity.__init__(self, nodo)
+    def __init__(self, nodo,grafo):
         self.nombre = GHOST
         self.puntos = 150
-        self.objetivo = random()
+        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0),DERECHA: Vector1(1, 0)}
+        self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
+        # Propiedades básicas
+        self.direccion = STOP
+        self.nodo=nodo
+        self.blanco = nodo
+        self.velocidad = 100 * ANCHOCELDA / 16
+        self.radio = 10
+        self.radio_colision = 5
+        self.grafo = grafo
         self.directionMethod = self.goalDirection
-        self.pacman = Pacman
-        self.modo = ModoController(self)
         self.blinky = blinky
-        self.NodoCasa = nodo
+        self.modo = CHASE
+        self.pathfinder = PathFinder(grafo)
 
-    def resetear(self):
-        self.puntos +=50
-        self.directionMethod = self.goalDirection
+        # Propiedades del modo scatter
+        self.tiempo_scatter = 0
+        self.duracion_scatter = 7
+        self.esquina_scatter = None
+        self.encontrar_esquina_scatter()
 
-    def actualizar(self, posicion):
-        self.objetivo=posicion
+        self.set_posicion()
+        self.iniciar_movimiento()
 
-    def cambiar_modo(self,modo):
+    def set_posicion(self):
+        """Establece la posición en el nodo actual."""
+        self.posicion = self.nodo.posicion.copiar()
 
+    def render(self, pantalla):
+        """Dibuja el fantasma en la pantalla."""
+        p = self.posicion.entero()
+        color_actual = PURPURA if self.modo == SCATTER else self.color
+        pygame.draw.circle(pantalla, color_actual, p, self.radio)
 
-    def scatter(self):
-        self.objetivo = Vector2()
+    @abstractmethod
+    def calcular_objetivo(self, pacman):
+        """Calcula el punto objetivo específico del fantasma"""
+        pass
 
-    def chase(self):
-        self.objetivo = self.pacman.position
+    @abstractmethod
+    def actualizar_direccion(self, pacman):
+        """Actualiza la dirección del fantasma."""
+        pass
 
-    def frihtened(self):
-        self.objetivo= 0
-
-    def spawn(self):
-        self.objetivo = self.NodoCasa.position
-
-    def setNodoDeSpawn(self, nodo):
-        self.NodoCasa = node
-
-    def startSpawn(self):
-        self.modo.setSpawnMode()
-        if self.modo.current == SPAWN:
-            self.setVelocidad(150)
-            self.directionMethod = self.goalDirection
-            self.spawn()
-
-    def startFreight(self):
-        self.modo.setFreightMode()
-        if self.modo.current == FREIGHT:
-            self.setVelocidad(50)
-            self.directionMethod = self.randomDirection
-
-    def modoNormal(self):
-        self.setVelocidad(100)
-        self.directionMethod = self.goalDirection
-
-class Blinky(fantasma):
-    def __init__(self, nodo,pacman=None, blinky=None):
-        fantasma.__init__(self, nodo, pacman, blinky)
-        self.nombre=Blinky
-        self.color= Red
-
-    def actualizar(self, dt):
-        self.modo.update(dt)
-        if self.modo.current is SCATTER:
-            self.scatter()
-        elif self.modo.current is CHASE:
-            self.chase()
-        Entity.update(self, dt)
-
-    def scatter(self):
-        self.objetivo= 0
-
-    def chase(self):
-        self.objetivo= 0
-
-    def frihtened(self):
-        self.objetivo= 0
-
-
-
-class Pinky(fantasma):
-    def __init__(self, nodo, pacman=None, blinky=None):
-        fantasma.__init__(self, nodo, pacman, blinky)
-        self.nombre = Blinky
-        self.color = ROSADO
-
-    def actualizar(self, dt):
-        self.modo.update(dt)
-        if self.modo.current is SCATTER:
-            self.scatter()
-        elif self.modo.current is CHASE:
-            self.chase()
-        Entity.update(self, dt)
-
-    def scatter(self):
-        self.objetivo = 0
-
-    def chase(self):
-        self.objetivo = 0
-
-    def frihtened(self):
-        self.objetivo= 0
-
-class Inky(fantasma):
-    def __init__(self, nodo, pacman=None, blinky=None):
-        fantasma.__init__(self, nodo, pacman, blinky)
-        self.nombre = Inky
-        self.color = Teal
-
-    def actualizar(self, dt):
-        self.modo.update(dt)
-        if self.modo.current is SCATTER:
-            self.scatter()
-        elif self.modo.current is CHASE:
-            self.chase()
-        Entity.update(self, dt)
-
-    def scatter(self):
-        self.objetivo = 0
-
-    def chase(self):
-        self.objetivo = 0
-
-    def frihtened(self):
-        self.objetivo= 0
-
-class Clyde(fantasma):
-    def __init__(self, nodo, pacman=None, blinky=None):
-        fantasma.__init__(self, nodo, pacman, blinky)
-        self.nombre = Clyde
-        self.color = Orange
-
-    def actualizar(self, dt):
-        self.modo.update(dt)
-        if self.modo.current is SCATTER:
-            self.scatter()
-        elif self.modo.current is CHASE:
-            self.chase()
-        Entity.update(self, dt)
-
-    def scatter(self):
-        self.objetivo = 0
-
-    def chase(self):
-        self.objetivo = 0
-
-    def frihtened(self):
-        self.objetivo= 0
+    def encontrar_esquina_scatter(self):
+        """Define una esquina del mapa para el modo scatter."""
+        # Se puede sobrecargar en cada fantasma para elegir esquinas diferentes
+        pass
 
 
 class GrupoFantasma(Object):

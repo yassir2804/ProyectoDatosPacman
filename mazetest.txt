@@ -14,9 +14,9 @@ X X X X X X + X X X X X n X X n X X X X X + X X X X X X
 X X X X X X + X X X X X n X X n X X X X X + X X X X X X
 X X X X X X + X X n n n n n n n n n n X X + X X X X X X
 X X X X X X + X X n X X X = = X X X n X X + X X X X X X
-X X X X X X + X X n X X X X X X X X n X X + X X X X X X
-n n n n n n + n n n X X X X X X X X n n n + n n n n n n
-X X X X X X + X X n X X X X X X X X n X X + X X X X X X
+X X X X X X + X X n X + + + + + + X n X X + X X X X X X
+n n n n n n + n n n X + + + + + + X n n n + n n n n n n
+X X X X X X + X X n X + + + + + + X n X X + X X X X X X
 X X X X X X + X X n X X X X X X X X n X X + X X X X X X
 X X X X X X + X X n n n n n n n n n n X X + X X X X X X
 X X X X X X + X X n X X X X X X X X n X X + X X X X X X
