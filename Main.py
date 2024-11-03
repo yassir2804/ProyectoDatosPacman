@@ -4,6 +4,7 @@ from Constantes import *
 from Grafo import Grafo
 from Pacman import Pacman
 from Pellet import GrupoPellets
+from Fantasmas import *
 from Clyde import Clyde
 from Blinky import Blinky
 from Pinky import Pinky
@@ -20,16 +21,17 @@ class Controladora(object):
         self.grafo = Grafo("mazetest.txt")
         self.grafo.set_portales((0, 17), (27, 17))
 
-        # Crear los fantasmas primero
-        self.Clyde = Clyde(self.grafo.punto_partida_fantasmas(), self.grafo)
-        self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
-        self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
-        self.Inky = Inky(self.grafo.punto_partida_fantasmas(), self.grafo)
+        # # Crear los fantasmas primero
+        # self.Clyde = Clyde(self.grafo.punto_partida_fantasmas(), self.grafo)
+        # self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
+        # self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
+        # self.Inky = Inky(self.grafo.punto_partida_fantasmas(), self.grafo)
 
         # Crear Pacman y establecer los fantasmas
         self.pacman = Pacman(self.grafo.punto_partida_pacman())
-        self.lista_fantasmas = [self.Blinky,self.Clyde,self.Inky,self.Pinky]
-        self.pacman.establecerFantasmas(self.lista_fantasmas)
+        self.fantasma = Fantasma(self.grafo.punto_partida_pacman())
+        # self.lista_fantasmas = [self.Blinky,self.Clyde,self.Inky,self.Pinky]
+        # self.pacman.establecerFantasmas(self.lista_fantasmas)
 
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
@@ -49,10 +51,11 @@ class Controladora(object):
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
         self.pacman.actualizar(dt)
-        self.Clyde.actualizar(dt)
-        self.Blinky.actualizar(dt, self.pacman)
-        self.Pinky.actualizar(dt, self.pacman)
-        self.Inky.actualizar(dt, self.pacman, self.Blinky)
+        self.fantasma.actualizar(dt)
+        # self.Clyde.actualizar(dt,self.pacman)
+        # self.Blinky.actualizar(dt, self.pacman)
+        # self.Pinky.actualizar(dt, self.pacman)
+        # self.Inky.actualizar(dt, self.pacman, self.Blinky)
         self.Pellet.actualizar(dt)
         self.grupo_texto.actualizar(dt)
         self.verificacion_pellets()
@@ -77,14 +80,13 @@ class Controladora(object):
         self.grafo.render(self.pantalla)
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
-        self.Clyde.render(self.pantalla)
-        self.Blinky.render(self.pantalla)
-        self.Pinky.render(self.pantalla)
-        self.Inky.render(self.pantalla)
+        self.fantasma.render(self.pantalla)
+        # self.Clyde.render(self.pantalla)
+        # self.Blinky.render(self.pantalla)
+        # self.Pinky.render(self.pantalla)
+        # self.Inky.render(self.pantalla)
         self.grupo_texto.renderizar(self.pantalla)
         pygame.display.update()
-
-
 
 
 if __name__ == '__main__':
