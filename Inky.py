@@ -8,20 +8,8 @@ from PathFinder import PathFinder
 class Inky:
     def __init__(self, nodo, grafo):
         self.nombre = INKY
-        self.direcciones = {
-            STOP: Vector1(0, 0),
-            ARRIBA: Vector1(0, -1),
-            ABAJO: Vector1(0, 1),
-            IZQUIERDA: Vector1(-1, 0),
-            DERECHA: Vector1(1, 0)
-        }
-        self.direcciones_opuestas = {
-            ARRIBA: ABAJO,
-            ABAJO: ARRIBA,
-            IZQUIERDA: DERECHA,
-            DERECHA: IZQUIERDA,
-            STOP: STOP
-        }
+        self.direcciones = {STOP: Vector1(0, 0),ARRIBA: Vector1(0, -1),ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0),DERECHA: Vector1(1, 0)}
+        self.direcciones_opuestas = {ARRIBA: ABAJO,ABAJO: ARRIBA, IZQUIERDA: DERECHA,DERECHA: IZQUIERDA,STOP: STOP}
 
         self.direccion = STOP
         self.velocidad = 100 * ANCHOCELDA / 16
@@ -34,7 +22,53 @@ class Inky:
         self.grafo = grafo
         self.pathfinder = PathFinder(grafo)
 
+        # Propiedades del modo scatter
+        self.modo = CHASE
+        self.tiempo_scatter = 0
+        self.duracion_scatter = 7
+        self.esquina_scatter = None
+        self.encontrar_esquina_scatter()
+
         self.iniciar_movimiento()
+
+    def encontrar_esquina_scatter(self):
+        """Encuentra el nodo más cercano a la esquina inferior izquierda del mapa."""
+        min_x = float('inf')  # Cambiado para buscar el mínimo en X
+        max_y = -float('inf')  # Buscando el máximo en Y
+
+        # Encuentra las coordenadas mínimas en X y máximas en Y.
+        for (x, y) in self.grafo.nodosLUT.keys():
+            if x < min_x:
+                min_x = x
+            if y > max_y:
+             max_y = y
+
+            col = min_x // ANCHOCELDA  # Columna de la esquina inferior izquierda
+            fila = max_y // ALTURACELDA  # Fila de la esquina inferior izquierda
+
+            nodo_esquina = self.grafo.obtener_nodo_desde_tiles(col, fila)
+
+            if nodo_esquina is None:
+                menor_distancia = float('inf')
+                for nodo in self.grafo.nodosLUT.values():
+                    distancia = abs(nodo.posicion.x - (col * ANCHOCELDA)) + abs(nodo.posicion.y - (fila * ALTURACELDA))
+                    if distancia < menor_distancia:
+                        menor_distancia = distancia
+                        nodo_esquina = nodo
+
+            self.esquina_scatter = nodo_esquina
+
+    def set_scatter_mode(self):
+        """Activa el modo scatter y realiza los ajustes necesarios."""
+        self.modo = SCATTER
+        self.tiempo_scatter = self.duracion_scatter
+
+        # Forzar la dirección inicial hacia la esquina scatter
+        if self.esquina_scatter:
+            mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
+            if mejor_direccion is not None:
+                self.direccion = mejor_direccion
+                self.blanco = self.nodo.vecinos[self.direccion]
 
     def calcular_objetivo(self, pacman, blinky):
         """Calcula el punto objetivo basado en la posición de Pacman y Blinky"""
@@ -86,6 +120,14 @@ class Inky:
 
     def actualizar(self, dt, pacman, blinky):
         """Actualiza la posición del fantasma."""
+        """Actualiza la posición del fantasma."""
+        if self.modo == SCATTER:
+            self.tiempo_scatter -= dt
+            if self.tiempo_scatter <= 0:
+                self.modo = CHASE
+                # Invertir dirección al salir del modo scatter
+                if self.direccion != STOP:
+                    self.direccion = self.direcciones_opuestas[self.direccion]
         if self.direccion == STOP:
             self.iniciar_movimiento()
             return
@@ -114,8 +156,10 @@ class Inky:
         if self.nodo.vecinos.get(PORTAL):
             self.nodo = self.nodo.vecinos[PORTAL]
             self.set_posicion()
-
-        self.actualizar_direccion(pacman, blinky)
+        if self.modo == SCATTER:
+            self.actualizar_direccion_scatter()
+        else:
+            self.actualizar_direccion(pacman, blinky)
 
     def actualizar_direccion(self, pacman, blinky):
         """Actualiza la dirección usando el PathFinder hacia el punto objetivo."""
@@ -162,6 +206,25 @@ class Inky:
                 self.direccion = direcciones_validas[0]
                 self.blanco = self.nodo.vecinos[self.direccion]
 
+    def actualizar_direccion_scatter(self):
+        """Actualiza la dirección cuando está en modo scatter."""
+        if self.esquina_scatter is None:
+            return
+
+        # Encuentra la mejor dirección hacia la esquina scatter.
+        mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
+
+        # Si hay una dirección mejor, muévete hacia ella.
+        if mejor_direccion is not None:
+            self.direccion = mejor_direccion
+            self.blanco = self.nodo.vecinos[mejor_direccion]
+        else:
+            # Si no se encuentra una ruta clara, intenta una dirección válida.
+            direcciones_validas = self.obtener_direcciones_validas()
+            if direcciones_validas:
+                self.direccion = direcciones_validas[0]
+                self.blanco = self.nodo.vecinos[self.direccion]
+
     def distancia_a_punto(self, pos1, pos2):
         """Calcula la distancia euclidiana entre dos puntos."""
         return (pos1 - pos2).magnitud()
@@ -186,7 +249,9 @@ class Inky:
         """Establece la posición al nodo actual."""
         self.posicion = self.nodo.posicion.copiar()
 
+
     def render(self, pantalla):
         """Dibuja el fantasma en la pantalla."""
         p = self.posicion.entero()
-        pygame.draw.circle(pantalla, self.color, p, self.radio)
+        color_actual = PURPURA if self.modo == SCATTER else self.color
+        pygame.draw.circle(pantalla,  color_actual, p, self.radio)

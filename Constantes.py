@@ -18,6 +18,7 @@ ROSADO = (255,192,203)
 AZUL = (0,0,255)
 NARANJA = (255,91,1)
 CELESTE = (135,206,235)
+PURPURA = (128, 0, 128)
 
 #Direcciones
 STOP = 0
@@ -41,8 +42,18 @@ PARED = 'X'
 CAMINO = '.'
 NODO = '+'
 
+#Constantes texto
+SCORETXT = 0
+LEVELTXT = 1
+READYTXT = 2
+PAUSETXT = 3
+GAMEOVERTXT = 4
+
+
+
 #Constantes Fantasmas
 BLINKY=99
 CLYDE=98
 PINKY=97
 INKY=96
+

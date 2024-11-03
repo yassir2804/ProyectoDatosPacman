@@ -99,7 +99,12 @@ class Grafo(object):
         return next(iter(self.nodosLUT.values()), None)
 
     def punto_partida_fantasmas(self):
-        return next(iter(self.nodosLUT.values()), None)
+        # Especifica las coordenadas del nodo donde quieres que aparezca el fantasma
+        col = 2  # Cambia esto por la columna deseada
+        fila = 3  # Cambia esto por la fila deseada
+
+        nodo_partida = self.obtener_nodo_desde_tiles(col, fila)
+        return nodo_partida if nodo_partida else next(iter(self.nodosLUT.values()), None)
 
     def set_portales(self, par1, par2):
         clave1 = self.construir_clave(*par1)  # Corrección del nombre
