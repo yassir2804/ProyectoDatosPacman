@@ -4,6 +4,7 @@ from Vector import Vector1
 from Constantes import *
 from random import randint
 from random import choice
+from PathFinder import PathFinder
 class Clyde(object):
     def __init__(self,nodo,grafo):
         self.nombre = CLYDE
@@ -20,6 +21,7 @@ class Clyde(object):
         self.blanco = nodo
         self.radioColision = 5
         self.grafo=grafo
+        self.pathfinder = PathFinder(grafo)
 
         # Propiedades del modo scatter
         self.modo = CHASE
@@ -27,6 +29,8 @@ class Clyde(object):
         self.duracion_scatter = 7
         self.esquina_scatter = None
         self.encontrar_esquina_scatter()
+
+
 
     def encontrar_esquina_scatter(self):
         """Encuentra el nodo más cercano a la esquina superior derecha del mapa."""
@@ -62,12 +66,12 @@ class Clyde(object):
         """Activa el modo scatter y realiza los ajustes necesarios."""
         self.modo = SCATTER
         self.tiempo_scatter = self.duracion_scatter
-        self.encontrar_esquina_scatter()  # Asegúrate de encontrar la esquina en este momento.
 
-        # Asegúrate de establecer la dirección inicial correcta al activar el modo scatter.
-        if self.direccion != STOP:
-            self.direccion = self.direcciones_opuestas[self.direccion]
-            if self.nodo.vecinos[self.direccion]:
+        # Forzar la dirección inicial hacia la esquina scatter
+        if self.esquina_scatter:
+            mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
+            if mejor_direccion is not None:
+                self.direccion = mejor_direccion
                 self.blanco = self.nodo.vecinos[self.direccion]
 
     def setPosicion(self):
@@ -77,55 +81,39 @@ class Clyde(object):
         if self.modo == SCATTER:
             self.tiempo_scatter -= dt
             if self.tiempo_scatter <= 0:
-                self.modo = CHASE  # Cambiar al modo chase una vez que se acabe el tiempo
-                return  # Salir de la función para evitar movimiento en el modo scatter
+                self.modo = CHASE
+                if self.direccion != STOP:
+                    self.direccionReversa()
             else:
-                # Si no hay ruta válida, elige una dirección aleatoria
-                self.elegirDireccionAleatoria()
-        else:
-            # Actualizar la posición actual
-            self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
+                # En modo SCATTER, actualizar dirección hacia la esquina
+                self.actualizar_direccion_scatter()
+
+            # Actualizar la posición
+        self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
 
         # Verificar si llegamos al nodo objetivo
         if self.overshotTarget():
-            # Establecer el nodo actual como el nodo objetivo que acabamos de alcanzar
             self.nodo = self.blanco
 
             # Manejar portales
             if self.nodo.vecinos.get(PORTAL) is not None:
                 self.nodo = self.nodo.vecinos[PORTAL]
 
-            # Elegir una nueva dirección aleatoria válida si no está en modo scatter
-            if self.modo != SCATTER:
+            # Decidir la siguiente dirección según el modo
+            if self.modo == SCATTER:
+                # En modo SCATTER, seguir intentando llegar a la esquina
+                self.actualizar_direccion_scatter()
+            else:
+                # En cualquier otro modo, moverse aleatoriamente
                 self.elegirDireccionAleatoria()
 
-            # Establecer el nuevo nodo objetivo
+            # Actualizar el blanco según la nueva dirección
             self.blanco = self.getNuevoBlanco(self.direccion)
-
-            # Resetear la posición exactamente al nodo actual
             self.setPosicion()
 
 
-    def elegirDireccionAleatoria(self):
-        # Obtener todas las direcciones posibles desde el nodo actual
-        direcciones_posibles = []
-        for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]:
-            # No queremos que el fantasma se dé la vuelta a menos que sea necesario
-            if self.validarDireccion(direccion) and not self.direccionOpuesta(direccion):
-                direcciones_posibles.append(direccion)
-
-        # Si no hay direcciones válidas excepto la opuesta, permitir dar la vuelta
-        if not direcciones_posibles and self.validarDireccion(self.direccion * -1):
-            direcciones_posibles.append(self.direccion * -1)
-
-        # Si hay direcciones posibles, elegir una al azar
-        if direcciones_posibles:
-            self.direccion = choice(direcciones_posibles)
-        else:
-            self.direccion=STOP
-
     def actualizar_direccion_scatter(self):
-        """Actualiza la dirección cuando está en modo scatter."""
+        """Actualiza la dirección para ir hacia la esquina en modo scatter."""
         if self.esquina_scatter is None:
             return
 
@@ -135,13 +123,39 @@ class Clyde(object):
             self.direccion
         )
 
-        if mejor_direccion is not None:
-            self.direccion = mejor_direccion
-            self.blanco = self.nodo.vecinos[mejor_direccion]
+        if mejor_direccion is not None and self.validarDireccion(mejor_direccion):
+            # Solo cambiar dirección si no es opuesta o si no hay otra opción
+            if not self.direccionOpuesta(mejor_direccion):
+                self.direccion = mejor_direccion
         else:
-            # Si no hay ruta, elige una dirección aleatoria válida
+            # Si no hay ruta directa, elegir una dirección aleatoria
             self.elegirDireccionAleatoria()
 
+
+    def obtener_direcciones_validas(self):
+        """Obtiene todas las direcciones válidas desde el nodo actual."""
+        direcciones_validas = []
+        for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]:
+            if self.validarDireccion(direccion):
+                direcciones_validas.append(direccion)
+        return direcciones_validas
+
+
+    def elegirDireccionAleatoria(self):
+        """Elige una dirección aleatoria válida, evitando la dirección opuesta si es posible."""
+        direcciones_posibles = []
+        for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]:
+            if self.validarDireccion(direccion) and not self.direccionOpuesta(direccion):
+                direcciones_posibles.append(direccion)
+
+            # Si no hay direcciones válidas excepto la opuesta, permitir dar la vuelta
+            if not direcciones_posibles:
+                direcciones_posibles = self.obtener_direcciones_validas()
+
+        if direcciones_posibles:
+            self.direccion = choice(direcciones_posibles)
+        else:
+            self.direccion = STOP
     def validarDireccion(self, direccion):
         if direccion is not STOP:
             if self.nodo.vecinos[direccion] is not None:
@@ -176,7 +190,8 @@ class Clyde(object):
 
     def render(self, pantalla):
         p = self.posicion.entero()
-        pygame.draw.circle(pantalla, self.color, p, self.radio)
+        color_actual = PURPURA if self.modo == SCATTER else self.color
+        pygame.draw.circle(pantalla, color_actual, p, self.radio)
 
     # def comer_pellets(self, lista_pellets):
     #     # Recorremos la lista de los pellets hasta encontrar uno que tenga colision con pacman

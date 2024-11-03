@@ -8,20 +8,8 @@ from PathFinder import PathFinder
 class Pinky:
     def __init__(self, nodo, grafo):
         self.nombre = PINKY
-        self.direcciones = {
-            STOP: Vector1(0, 0),
-            ARRIBA: Vector1(0, -1),
-            ABAJO: Vector1(0, 1),
-            IZQUIERDA: Vector1(-1, 0),
-            DERECHA: Vector1(1, 0)
-        }
-        self.direcciones_opuestas = {
-            ARRIBA: ABAJO,
-            ABAJO: ARRIBA,
-            IZQUIERDA: DERECHA,
-            DERECHA: IZQUIERDA,
-            STOP: STOP
-        }
+        self.direcciones = {STOP: Vector1(0, 0),ARRIBA: Vector1(0, -1),ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0),DERECHA: Vector1(1, 0)}
+        self.direcciones_opuestas = {ARRIBA: ABAJO,ABAJO: ARRIBA,IZQUIERDA: DERECHA,DERECHA: IZQUIERDA, STOP: STOP}
 
         self.direccion = STOP
         self.velocidad = 100 * ANCHOCELDA / 16
@@ -33,8 +21,54 @@ class Pinky:
         self.radio_colision = 5
         self.grafo = grafo
         self.pathfinder = PathFinder(grafo)
-        self.iniciar_movimiento()
 
+        # Propiedades del modo scatter
+        self.modo = CHASE
+        self.tiempo_scatter = 0
+        self.duracion_scatter = 7
+        self.esquina_scatter = None
+        self.encontrar_esquina_scatter()
+
+        #Inicio para poder moverse
+        self.iniciar_movimiento()
+    def encontrar_esquina_scatter(self):
+        """Encuentra el nodo más cercano a la esquina inferior izquierda del mapa."""
+        min_x = float('inf')  # Cambiado para buscar el mínimo en X
+        mix_y = -float('inf')  # Buscando el máximo en Y
+
+        # Encuentra las coordenadas mínimas en X y máximas en Y.
+        for (x, y) in self.grafo.nodosLUT.keys():
+            if x < min_x:
+                min_x = x
+            if y < mix_y:
+                mix_y = y
+
+            col = min_x // ANCHOCELDA  # Columna de la esquina superior izquierda
+            fila = mix_y // ALTURACELDA  # Fila de la esquina superior izquierda
+
+            nodo_esquina = self.grafo.obtener_nodo_desde_tiles(col, fila)
+
+            if nodo_esquina is None:
+                menor_distancia = float('inf')
+                for nodo in self.grafo.nodosLUT.values():
+                    distancia = abs(nodo.posicion.x - (col * ANCHOCELDA)) + abs(nodo.posicion.y - (fila * ALTURACELDA))
+                    if distancia < menor_distancia:
+                        menor_distancia = distancia
+                        nodo_esquina = nodo
+
+            self.esquina_scatter = nodo_esquina
+
+    def set_scatter_mode(self):
+        """Activa el modo scatter y realiza los ajustes necesarios."""
+        self.modo = SCATTER
+        self.tiempo_scatter = self.duracion_scatter
+
+        # Forzar la dirección inicial hacia la esquina scatter
+        if self.esquina_scatter:
+            mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
+            if mejor_direccion is not None:
+                self.direccion = mejor_direccion
+                self.blanco = self.nodo.vecinos[self.direccion]
     def calcular_objetivo(self, pacman):
         """Calcula el punto objetivo 4 casillas por delante de Pacman"""
         if pacman.direccion == STOP or pacman.nodo is None:
@@ -85,6 +119,13 @@ class Pinky:
 
     def actualizar(self, dt, pacman):
         """Actualiza la posición del fantasma."""
+        if self.modo == SCATTER:
+            self.tiempo_scatter -= dt
+            if self.tiempo_scatter <= 0:
+                self.modo = CHASE
+                # Invertir dirección al salir del modo scatter
+                if self.direccion != STOP:
+                    self.direccion = self.direcciones_opuestas[self.direccion]
         if self.direccion == STOP:
             self.iniciar_movimiento()
             return
@@ -188,4 +229,5 @@ class Pinky:
     def render(self, pantalla):
         """Dibuja el fantasma en la pantalla."""
         p = self.posicion.entero()
-        pygame.draw.circle(pantalla, self.color, p, self.radio)
+        color_actual = PURPURA if self.modo == SCATTER else self.color
+        pygame.draw.circle(pantalla, color_actual, p, self.radio)
