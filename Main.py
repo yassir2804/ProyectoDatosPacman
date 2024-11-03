@@ -6,7 +6,6 @@ from Pacman import Pacman
 from Pellet import GrupoPellets
 from Fantasmas import *
 from Clyde import Clyde
-from Blinky import Blinky
 from Pinky import Pinky
 from Inky import Inky
 from Texto import GrupoTexto
@@ -21,21 +20,21 @@ class Controladora(object):
         self.grafo = Grafo("mazetest.txt")
         self.grafo.set_portales((0, 17), (27, 17))
 
-        # # Crear los fantasmas primero
-        # self.Clyde = Clyde(self.grafo.punto_partida_fantasmas(), self.grafo)
-        # self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
-        # self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
-        # self.Inky = Inky(self.grafo.punto_partida_fantasmas(), self.grafo)
-
-        # Crear Pacman y establecer los fantasmas
+        # Crear Pacman primero
         self.pacman = Pacman(self.grafo.punto_partida_pacman())
-        self.fantasma = Fantasma(self.grafo.punto_partida_pacman())
-        # self.lista_fantasmas = [self.Blinky,self.Clyde,self.Inky,self.Pinky]
-        # self.pacman.establecerFantasmas(self.lista_fantasmas)
+
+        # Crear Blinky pasando el nodo inicial, grafo y pacman
+        self.fantasma = Blinky(
+            nodo=self.grafo.punto_partida_fantasmas(),
+            grafo=self.grafo,
+            pacman=self.pacman
+        )
 
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
         self.puntaje = 0
+        self.tiempo_poder = 0
+        self.duracion_poder = 7  # duración en segundos del modo scatter
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
@@ -43,6 +42,8 @@ class Controladora(object):
             self.Pellet.numComidos += 1
             if pellet.nombre == PELLETPODER:
                 self.puntaje += 50  # Más puntos por power pellet
+                self.fantasma.modo.actualizar(SCATTER)
+                self.tiempo_poder = self.duracion_poder
             else:
                 self.puntaje += 10  # Puntos normales por pellet regular
             self.grupo_texto.actualizarPuntaje(self.puntaje)
@@ -50,12 +51,16 @@ class Controladora(object):
 
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
+
+        # Actualizar tiempo del poder
+        if self.tiempo_poder > 0:
+            self.tiempo_poder -= dt
+            if self.tiempo_poder <= 0:
+                # Cuando se acaba el tiempo, volver a modo chase
+                self.fantasma.modo.actualizar(CHASE)
+
         self.pacman.actualizar(dt)
         self.fantasma.actualizar(dt)
-        # self.Clyde.actualizar(dt,self.pacman)
-        # self.Blinky.actualizar(dt, self.pacman)
-        # self.Pinky.actualizar(dt, self.pacman)
-        # self.Inky.actualizar(dt, self.pacman, self.Blinky)
         self.Pellet.actualizar(dt)
         self.grupo_texto.actualizar(dt)
         self.verificacion_pellets()
