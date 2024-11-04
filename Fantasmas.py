@@ -62,7 +62,7 @@ class Blinky(Fantasma):
         self.meta = Vector1(0,0)
 
     def chase(self):
-        self.meta = self.pacman.posicion
+        self.meta = self.pacman.posicio
 
 class Inky(Fantasma):
     def __init__(self, nodo,pacman=None):
@@ -117,7 +117,7 @@ class Pinky(Fantasma):
 
     def chase(self):
         self.meta = self.pacman.posicion
-
+#
 class GrupoFantasmas(object):
     def __init__(self,nodo,pacman):
         self.blinky = Blinky(nodo, pacman)
