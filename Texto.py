@@ -88,7 +88,7 @@ class GrupoTexto(object):
     def actualizar(self, dt):
         # actualiza todos los textos del grupo y elimina los que se hayan destruido
         for tkey in list(self.todos_los_textos.keys()):
-            self.todos_los_textos[tkey].actualizar(dt)
+            # self.todos_los_textos[tkey].actualizar(dt)
             if self.todos_los_textos[tkey].destruir:
                 self.eliminarTexto(tkey)
 
