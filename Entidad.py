@@ -20,7 +20,7 @@ class Entidad(object):
         self.blanco = nodo
         self.visible = True
         self.desactivar_portal = False
-        self.metodoDireccion = self.direccion_aleatoria
+        self.metodo_direccion = self.direccion_meta
         
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""
@@ -34,7 +34,7 @@ class Entidad(object):
             self.nodo = self.blanco
 
             direcciones = self.obtener_direcciones_validas()
-            direccion = self.metodoDireccion(direcciones)
+            direccion = self.metodo_direccion(direcciones)
 
             if not self.desactivar_portal:
                 if self.nodo.vecinos[PORTAL] is not None:

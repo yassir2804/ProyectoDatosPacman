@@ -16,28 +16,7 @@ class Pacman(Entidad):
         self.tiene_poder = False
         self.tiempo_poder = 0
         self.duracion_poder = 7
-        self.fantasmas = []
 
-    def establecer_fantasmas(self, fantasmas):
-        """Establece la lista de fantasmas para el poder."""
-        self.fantasmas = fantasmas
-
-    def activar_poder(self):
-        """Activa el poder y cambia el modo de los fantasmas."""
-        self.tiene_poder = True
-        self.tiempo_poder = self.duracion_poder
-        for fantasma in self.fantasmas:
-            fantasma.set_scatter_mode()
-
-    def actualizar_poder(self, dt):
-        """Actualiza el estado del poder."""
-        if self.tiene_poder:
-            self.tiempo_poder -= dt
-            if self.tiempo_poder <= 0:
-                self.tiene_poder = False
-                self.tiempo_poder = 0
-                for fantasma in self.fantasmas:
-                    fantasma.modo = CHASE
 
     def comer_pellets(self, lista_pellets):
         """Verifica colisiones con pellets."""
@@ -45,16 +24,12 @@ class Pacman(Entidad):
             distancia = self.posicion - pellet.posicion
             distancia_potencia = distancia.magnitudCuadrada()
             radio_potencia = (pellet.radio + self.radio_colision) ** 2
-
             if distancia_potencia <= radio_potencia:
-                if pellet.nombre == PELLETPODER:
-                    self.activar_poder()
+
                 return pellet
         return None
 
     def actualizar(self, dt):
-        """Actualiza el estado de Pacman."""
-        self.actualizar_poder(dt)
 
         # Actualizar posición actual
         self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
