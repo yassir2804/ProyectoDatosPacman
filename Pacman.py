@@ -15,8 +15,20 @@ class Pacman(Entidad):
         self.tiene_poder = False
         self.tiempo_poder = 0
         self.duracion_poder = 7
-        self.fantasmas = []
 
+
+    def comer_pellets(self, lista_pellets):
+        """Verifica colisiones con pellets."""
+        for pellet in lista_pellets:
+            distancia = self.posicion - pellet.posicion
+            distancia_potencia = distancia.magnitudCuadrada()
+            radio_potencia = (pellet.radio + self.radio_colision) ** 2
+            if distancia_potencia <= radio_potencia:
+
+                return pellet
+        return None
+
+    def actualizar(self, dt):
         # Cargar todas las imágenes de Pac-Man para cada dirección
         self.skins = {
             ARRIBA: [
@@ -93,7 +105,6 @@ class Pacman(Entidad):
         # Solo avanza si no está en STOP; de lo contrario, mantiene la posición pero sigue animando
         if self.direccion != STOP:
             self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
-
         # Control del tiempo de animación
         self.animation_timer += dt
         if self.animation_timer >= self.animation_interval:

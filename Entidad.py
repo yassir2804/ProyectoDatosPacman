@@ -16,11 +16,12 @@ class Entidad(object):
         self.radio_colision = 5
         self.color = BLANCO
         self.nodo = nodo
+        self.nodo_inicio(nodo)
         self.set_posicion()
         self.blanco = nodo
         self.visible = True
         self.desactivar_portal = False
-        self.metodoDireccion = self.direccion_aleatoria
+        self.metodo_direccion = self.direccion_meta
         
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""
@@ -34,7 +35,7 @@ class Entidad(object):
             self.nodo = self.blanco
 
             direcciones = self.obtener_direcciones_validas()
-            direccion = self.metodoDireccion(direcciones)
+            direccion = self.metodo_direccion(direcciones)
 
             if not self.desactivar_portal:
                 if self.nodo.vecinos[PORTAL] is not None:
@@ -110,7 +111,7 @@ class Entidad(object):
         """Dibuja la entidad en la pantalla."""
         if self.visible:
             p = self.posicion.entero()
-            pygame.draw.circle(pantalla, self.color, p, self.radio)
+            pygame.draw.circle(pantalla,self.color, p, self.radio)
 
     def direccion_aleatoria(self, direcciones):
         """Selecciona una dirección aleatoria de la lista de direcciones proporcionada."""
@@ -177,3 +178,8 @@ class Entidad(object):
                 mejor_direccion = direccion
 
         return mejor_direccion
+
+    def nodo_inicio(self,nodo):
+        self.nodo=nodo
+        self.blanco=nodo
+        self.set_posicion()
