@@ -42,6 +42,8 @@ class Controladora_Modos(object):
                 self.tiempo = None
                 self.entidad.modo_normal()
                 self.current = self.modoPrincipal.modo
+        elif self.current in [SCATTER, CHASE]:
+            self.current = self.modoPrincipal.modo
         else:
             self.current = self.modoPrincipal.modo
 
@@ -51,4 +53,12 @@ class Controladora_Modos(object):
             self.tiempo = 7
             self.current = FREIGHT
         elif self.current is FREIGHT:
+            self.temporizador = 0
+
+    def modo_chase(self):
+        if self.current in [FREIGHT]:
+            self.temporizador = 0
+            self.tiempo = 20
+            self.current = SCATTER
+        elif self.current is  SCATTER:
             self.temporizador = 0
