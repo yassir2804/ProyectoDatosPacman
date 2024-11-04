@@ -6,53 +6,55 @@ from PathFinder import PathFinder
 
 
 class Blinky:
-    def __init__(self, nodo, grafo):
+    def __init__(self, nodo, grafo, pacman=None):
+        # Llama al constructor del padre primero
+        super().__init__(nodo, pacman)
 
+        # Propiedades específicas de Blinky
         self.nombre = BLINKY
-        self.direcciones = {STOP: Vector1(0, 0),ARRIBA: Vector1(0, -1),ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0),DERECHA: Vector1(1, 0) }
-        self.direcciones_opuestas = {ARRIBA: ABAJO,ABAJO: ARRIBA,IZQUIERDA: DERECHA, DERECHA: IZQUIERDA,STOP: STOP }
-
-        # Propiedades básicas
-        self.direccion = STOP
-        self.velocidad = 100 * ANCHOCELDA / 16
-        self.radio = 10
         self.color = ROJO
-        self.nodo = nodo
-        self.set_posicion()
-        self.blanco = nodo
-        self.radio_colision = 5
+        self.velocidad = 50 * ANCHOCELDA / 16
+        self.radio = ANCHOCELDA // 2  # Radio ajustado al tamaño de la celda
+
+        # Propiedades adicionales específicas de Blinky
         self.grafo = grafo
         self.pathfinder = PathFinder(grafo)
-
-        # Propiedades del modo scatter
-        self.modo = CHASE
-        self.tiempo_scatter = 0
-        self.duracion_scatter = 7
         self.esquina_scatter = None
         self.encontrar_esquina_scatter()
 
+        # Inicializa movimiento
         self.iniciar_movimiento()
+
+        # Cargar las skins para las diferentes direcciones
+        self.skins = {
+            ARRIBA: pygame.transform.scale(pygame.image.load("multimedia/BlinkyARRIBA.png").convert_alpha(),
+                                           (self.radio * 2, self.radio * 2)),
+            ABAJO: pygame.transform.scale(pygame.image.load("multimedia/BlinkyABAJO.png.png").convert_alpha(),
+                                          (self.radio * 2, self.radio * 2)),
+            IZQUIERDA: pygame.transform.scale(pygame.image.load("multimedia/BlinkyIZQUIERDA.png").convert_alpha(),
+                                              (self.radio * 2, self.radio * 2)),
+            DERECHA: pygame.transform.scale(pygame.image.load("multimedia/BlinkyDERECHA.png").convert_alpha(),
+                                            (self.radio * 2, self.radio * 2)),
+        }
+
+        # Inicializar imagen actual
+        self.imagen_actual = self.skins[DERECHA]
 
     def encontrar_esquina_scatter(self):
         """Encuentra el nodo más cercano a la esquina inferior derecha del mapa."""
         max_x = float('-inf')
         max_y = float('-inf')
 
-        # Encuentra las coordenadas máximas en X e Y.
         for (x, y) in self.grafo.nodosLUT.keys():
             if x > max_x:
                 max_x = x
             if y > max_y:
                 max_y = y
 
-        # Calcula la columna y la fila correspondientes.
         col = max_x // ANCHOCELDA
         fila = max_y // ALTURACELDA
-
-        # Intenta obtener el nodo en la esquina inferior derecha.
         nodo_esquina = self.grafo.obtener_nodo_desde_tiles(col, fila)
 
-        # Si no existe un nodo exacto, busca el nodo más cercano.
         if nodo_esquina is None:
             menor_distancia = float('inf')
             for nodo in self.grafo.nodosLUT.values():
@@ -62,7 +64,6 @@ class Blinky:
                     menor_distancia = distancia
                     nodo_esquina = nodo
 
-        # Asigna la esquina scatter a la esquina inferior derecha.
         self.esquina_scatter = nodo_esquina
 
     def set_scatter_mode(self):
@@ -70,13 +71,11 @@ class Blinky:
         self.modo = SCATTER
         self.tiempo_scatter = self.duracion_scatter
 
-        # Forzar la dirección inicial hacia la esquina scatter
         if self.esquina_scatter:
             mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
             if mejor_direccion is not None:
                 self.direccion = mejor_direccion
                 self.blanco = self.nodo.vecinos[self.direccion]
-
 
     def iniciar_movimiento(self):
         """Inicia el movimiento del fantasma desde una posición estática."""
@@ -86,18 +85,11 @@ class Blinky:
             self.blanco = self.nodo.vecinos[self.direccion]
 
     def actualizar(self, dt, pacman):
-        """
-        Actualiza la posición y estado del fantasma.
-
-        Args:
-            dt: Delta time (tiempo transcurrido desde última actualización)
-            pacman: Instancia del jugador (Pac-Man)
-        """
+        """Actualiza la posición y estado del fantasma."""
         if self.modo == SCATTER:
             self.tiempo_scatter -= dt
             if self.tiempo_scatter <= 0:
                 self.modo = CHASE
-                # Invertir dirección al salir del modo scatter
                 if self.direccion != STOP:
                     self.direccion = self.direcciones_opuestas[self.direccion]
 
@@ -122,12 +114,7 @@ class Blinky:
             self.llegar_a_nodo(pacman)
 
     def llegar_a_nodo(self, pacman):
-        """
-        Maneja la llegada a un nodo objetivo y decide la siguiente dirección.
-
-        Args:
-            pacman: Instancia del jugador (Pac-Man)
-        """
+        """Maneja la llegada a un nodo objetivo y decide la siguiente dirección."""
         self.nodo = self.blanco
         self.posicion = self.nodo.posicion.copiar()
 
@@ -145,36 +132,24 @@ class Blinky:
         if self.esquina_scatter is None:
             return
 
-        # Encuentra la mejor dirección hacia la esquina scatter.
         mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
 
-        # Si hay una dirección mejor, muévete hacia ella.
         if mejor_direccion is not None:
             self.direccion = mejor_direccion
             self.blanco = self.nodo.vecinos[mejor_direccion]
         else:
-            # Si no se encuentra una ruta clara, intenta una dirección válida.
             direcciones_validas = self.obtener_direcciones_validas()
             if direcciones_validas:
                 self.direccion = direcciones_validas[0]
                 self.blanco = self.nodo.vecinos[self.direccion]
 
     def actualizar_direccion(self, pacman):
-        """
-        Actualiza la dirección usando el PathFinder en modo persecución.
-
-        Args:
-            pacman: Instancia del jugador (Pac-Man)
-        """
+        """Actualiza la dirección usando el PathFinder en modo persecución."""
         if pacman.nodo is None:
             return
 
         objetivo = pacman.nodo
-        mejor_direccion = self.pathfinder.encontrar_ruta(
-            self.nodo,
-            objetivo,
-            self.direccion
-        )
+        mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, objetivo, self.direccion)
 
         if mejor_direccion is not None:
             self.direccion = mejor_direccion
@@ -183,12 +158,7 @@ class Blinky:
             self.manejar_fallback(pacman)
 
     def manejar_fallback(self, pacman):
-        """
-        Maneja el caso cuando no se encuentra una ruta óptima.
-
-        Args:
-            pacman: Instancia del jugador (Pac-Man)
-        """
+        """Maneja el caso cuando no se encuentra una ruta óptima."""
         direcciones_validas = self.obtener_direcciones_validas()
         mejor_direccion = None
         menor_distancia = float('inf')
@@ -238,12 +208,14 @@ class Blinky:
         self.posicion = self.nodo.posicion.copiar()
 
     def render(self, pantalla):
-        """
-        Dibuja el fantasma en la pantalla.
-
-        Args:
-            pantalla: Superficie de pygame donde dibujar
-        """
+        """Dibuja el fantasma en la pantalla."""
         p = self.posicion.entero()
         color_actual = PURPURA if self.modo == SCATTER else self.color
-        pygame.draw.circle(pantalla,  color_actual, p,self.radio)
+        # Elegir la imagen basada en la dirección actual
+        if self.direccion in self.skins:
+            self.skin = self.skins[self.direccion]
+            pantalla.blit(self.skin, (p.x - self.radio_imagen, p.y - self.radio_imagen))
+        else:
+            pygame.draw.circle(pantalla, color_actual, p, self.radio)
+
+
