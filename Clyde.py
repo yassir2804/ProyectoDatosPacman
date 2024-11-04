@@ -4,8 +4,6 @@ from Vector import Vector1
 from Constantes import *
 from random import randint
 from random import choice
-from PathFinder import PathFinder
-
 
 class Clyde(object):
     def __init__(self, nodo, grafo):

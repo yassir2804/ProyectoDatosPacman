@@ -20,6 +20,7 @@ class Nodo(object):
         self.costo_f = float('inf')  # Costo total (g + h)
         self.padre = None  # Nodo padre para reconstruir el camino
 
+    
     def reiniciar_datos_camino(self):
         """Reinicia los datos de búsqueda de camino"""
         self.costo_g = float('inf')
@@ -184,14 +185,6 @@ class Grafo(object):
 
     def punto_partida_pacman(self):
         return next(iter(self.nodosLUT.values()), None)
-
-    def punto_partida_fantasmas(self):
-        # Especifica las coordenadas del nodo donde quieres que aparezca el fantasma
-        col = 2  # Cambia esto por la columna deseada
-        fila = 3  # Cambia esto por la fila deseada
-
-        nodo_partida = self.obtener_nodo_desde_tiles(col, fila)
-        return nodo_partida if nodo_partida else next(iter(self.nodosLUT.values()), None)
 
     def set_portales(self, par1, par2):
         clave1 = self.construir_clave(*par1)  # Corrección del nombre
