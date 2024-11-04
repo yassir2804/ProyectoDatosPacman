@@ -1,3 +1,4 @@
+
 import pygame
 from pygame.locals import *
 from Vector import Vector1
@@ -217,5 +218,3 @@ class Blinky:
             pantalla.blit(self.skin, (p.x - self.radio_imagen, p.y - self.radio_imagen))
         else:
             pygame.draw.circle(pantalla, color_actual, p, self.radio)
-
-

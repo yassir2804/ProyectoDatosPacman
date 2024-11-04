@@ -2,8 +2,6 @@ import pygame
 from pygame.locals import *
 from Vector import Vector1
 from Constantes import *
-from PathFinder import PathFinder
-
 
 class Pinky:
     def __init__(self, nodo, grafo):

@@ -1,20 +1,18 @@
 from Constantes import *
 from Entidad import *
-class Modo(object):
+class ModoPrincipal(object):
     def __init__(self):
         self.temporizador = 0
-        self.tiempo = 20  # tiempo inicial
-        self.modo = CHASE  # modo inicial
+        self.scatter()
 
     def actualizar(self, dt):
         self.temporizador += dt
-        if self.temporizador > self.tiempo:
+        if self.temporizador >= self.tiempo:
             if self.modo is SCATTER:
                 self.chase()
             elif self.modo is CHASE:
                 self.scatter()
-            else: 
-                self.freight()
+
 
     def scatter(self):
         self.modo = SCATTER
@@ -25,37 +23,42 @@ class Modo(object):
         self.modo = CHASE
         self.tiempo = 20
         self.temporizador = 0
-        
-    def freight(self):
-        self.modo = FREIGHT
-        self.tiempo = 7
-        self.temporizador = 0
-
-    def set_modo(self, nuevo_modo, tiempo=None):
-        """Método para cambiar el modo externamente"""
-        if nuevo_modo == SCATTER:
-            self.modo = SCATTER
-            self.tiempo = tiempo if tiempo is not None else 7
-        elif nuevo_modo == CHASE:
-            self.modo = CHASE
-            self.tiempo = tiempo if tiempo is not None else 20
-        else:
-            self.modo = FREIGHT
-            self.tiempo = tiempo if tiempo is not None else 7
-        self.temporizador = 0
 
 
 class Controladora_Modos(object):
     def __init__(self, entidad):
-        self.modo = Modo()
-        self.current = self.modo.modo
+        self.temporizador = 0
+        self.tiempo = None
+        self.modoPrincipal = ModoPrincipal()
+        self.current = self.modoPrincipal.modo
         self.entidad = entidad
 
     def actualizar(self, dt):
-        self.modo.actualizar(dt)
-        self.current = self.modo.modo
+        self.modoPrincipal.actualizar(dt)
+        if self.current is FREIGHT:
+            self.temporizador += dt
+            if self.temporizador >= self.tiempo:
+                self.temporizador += dt
+                self.tiempo = None
+                self.entidad.modo_normal()
+                self.current = self.modoPrincipal.modo
+        elif self.current in [SCATTER, CHASE]:
+            self.current = self.modoPrincipal.modo
+        else:
+            self.current = self.modoPrincipal.modo
 
-    def set_modo(self, nuevo_modo, tiempo=None):
-        """Método para cambiar el modo desde fuera"""
-        self.modo.set_modo(nuevo_modo, tiempo)
-        self.current = self.modo.modo
+    def modo_freight(self):
+        if self.current in [SCATTER, CHASE]:
+            self.temporizador = 0
+            self.tiempo = 7
+            self.current = FREIGHT
+        elif self.current is FREIGHT:
+            self.temporizador = 0
+
+    def modo_chase(self):
+        if self.current in [FREIGHT]:
+            self.temporizador = 0
+            self.tiempo = 20
+            self.current = SCATTER
+        elif self.current is  SCATTER:
+            self.temporizador = 0
