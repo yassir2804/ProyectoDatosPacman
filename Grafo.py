@@ -3,6 +3,7 @@ import pygame
 from Vector import Vector1
 from Constantes import *
 
+
 class Nodo(object):
     def __init__(self, posicion):
         self.posicion = posicion
@@ -13,15 +14,102 @@ class Nodo(object):
             ABAJO: None,
             PORTAL: None
         }
+        # Atributos para A*
+        self.costo_g = float('inf')  # Costo desde el inicio
+        self.costo_h = 0  # Costo heurístico al objetivo
+        self.costo_f = float('inf')  # Costo total (g + h)
+        self.padre = None  # Nodo padre para reconstruir el camino
+
+    
+    def reiniciar_datos_camino(self):
+        """Reinicia los datos de búsqueda de camino"""
+        self.costo_g = float('inf')
+        self.costo_h = 0
+        self.costo_f = float('inf')
+        self.padre = None
+
+    def calcular_distancia_hasta(self, otro_nodo):
+        """Calcula la distancia Manhattan entre este nodo y otro"""
+        return abs(self.posicion.x - otro_nodo.posicion.x) + \
+            abs(self.posicion.y - otro_nodo.posicion.y)
+
+    def obtener_vecinos_validos(self):
+        """Retorna lista de vecinos válidos"""
+        return [(dir, vecino) for dir, vecino in self.vecinos.items()
+                if vecino is not None]
 
     def render(self, pantalla):
         for n in self.vecinos.keys():
             if self.vecinos[n] is not None:
-                pygame.draw.line(pantalla, BLANCO, self.posicion.tupla(), self.vecinos[n].posicion.tupla())
+                pygame.draw.line(pantalla, BLANCO, self.posicion.tupla(),
+                                 self.vecinos[n].posicion.tupla())
         pygame.draw.circle(pantalla, AZUL, self.posicion.entero(), 12)
 
     def agregar_vecino(self, direccion, nodo_vecino):
         self.vecinos[direccion] = nodo_vecino
+
+    def encontrar_camino_hasta(self, nodo_objetivo):
+        """Encuentra el camino hasta el nodo objetivo usando A*"""
+        # Reinicia todos los nodos
+        self.reiniciar_datos_camino()
+
+        # Inicializa el nodo inicial
+        self.costo_g = 0
+        self.costo_h = self.calcular_distancia_hasta(nodo_objetivo)
+        self.costo_f = self.costo_g + self.costo_h
+
+        nodos_abiertos = {self}  # Nodos por explorar
+        nodos_cerrados = set()  # Nodos ya explorados
+
+        while nodos_abiertos:
+            # Obtiene el nodo con menor costo_f
+            actual = min(nodos_abiertos, key=lambda x: (x.costo_f, x.costo_h))
+
+            if actual == nodo_objetivo:
+                # Reconstruye y retorna el camino
+                camino = []
+                while actual != self:
+                    camino.append(actual)
+                    actual = actual.padre
+                return camino[::-1]
+
+            nodos_abiertos.remove(actual)
+            nodos_cerrados.add(actual)
+
+            # Explora los vecinos
+            for direccion, vecino in actual.obtener_vecinos_validos():
+                if vecino in nodos_cerrados:
+                    continue
+
+                # Calcula el nuevo costo g
+                costo_tentativo = actual.costo_g + 1
+
+                if vecino not in nodos_abiertos:
+                    nodos_abiertos.add(vecino)
+                elif costo_tentativo >= vecino.costo_g:
+                    continue
+
+                # Este camino es el mejor hasta ahora
+                vecino.padre = actual
+                vecino.costo_g = costo_tentativo
+                vecino.costo_h = vecino.calcular_distancia_hasta(nodo_objetivo)
+                vecino.costo_f = vecino.costo_g + vecino.costo_h
+
+        return None  # No se encontró camino
+
+    def obtener_siguiente_direccion_hacia(self, nodo_objetivo):
+        """Obtiene la siguiente dirección hacia el objetivo"""
+        camino = self.encontrar_camino_hasta(nodo_objetivo)
+        if not camino or not camino[0]:
+            return None
+
+        # Encuentra qué dirección lleva al siguiente nodo
+        siguiente_nodo = camino[0]
+        for direccion, vecino in self.obtener_vecinos_validos():
+            if vecino == siguiente_nodo:
+                return direccion
+
+        return None
 
 class Grafo(object):
     def __init__(self, nivel):
@@ -96,9 +184,6 @@ class Grafo(object):
         return self.nodosLUT.get(clave, None)
 
     def punto_partida_pacman(self):
-        return next(iter(self.nodosLUT.values()), None)
-
-    def punto_partida_fantasmas(self):
         return next(iter(self.nodosLUT.values()), None)
 
     def set_portales(self, par1, par2):

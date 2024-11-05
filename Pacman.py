@@ -2,77 +2,132 @@ import pygame
 from pygame.locals import *
 from Vector import Vector1
 from Constantes import *
+from Entidad import Entidad
 
 
-class Pacman(object):
+class Pacman(Entidad):
     def __init__(self, nodo):
+        super().__init__(nodo)  # Llamada al constructor de la clase padre
         self.nombre = PACMAN
-        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
-                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
-        self.direccion = STOP
-        self.velocidad = 100 * ANCHOCELDA / 16
-        self.radio = 10
         self.color = AMARILLO
-        self.nodo = nodo
-        self.setPosicion()
-        self.blanco = nodo
-        self.radioColision = 5
+        self.velocidad = 100 * ANCHOCELDA / 16  # Sobreescribe la velocidad del padre
+        # Atributos específicos de Pacman
         self.direccion_deseada = STOP
+        self.tiene_poder = False
+        self.tiempo_poder = 0
+        self.duracion_poder = 7
+        self.fantasmas = []
+        # Inicialización de la animación
+        self.cargar_animaciones()
+        self.skin = self.skins[DERECHA][0]  # Imagen inicial
 
-    def setPosicion(self):
-        self.posicion = self.nodo.posicion.copiar()
+    def cargar_animaciones(self):
+        # Diccionario para almacenar las animaciones por dirección
+        self.skins = {
+            ARRIBA: [],
+            ABAJO: [],
+            IZQUIERDA: [],
+            DERECHA: []
+        }
+
+        # Cargar las imágenes para cada dirección
+        for i in range(1, 7):  # Del 1 al 6 según los archivos que veo
+            # Cargar arriba
+            arr = pygame.image.load(f"multimedia/{i}_Arr.png").convert_alpha()
+            self.skins[ARRIBA].append(arr)
+
+            # Cargar abajo
+            aba = pygame.image.load(f"multimedia/{i}_Aba.png").convert_alpha()
+            self.skins[ABAJO].append(aba)
+
+            # Cargar derecha
+            der = pygame.image.load(f"multimedia/{i}_Der.png").convert_alpha()
+            self.skins[DERECHA].append(der)
+
+            # Cargar izquierda
+            izq = pygame.image.load(f"multimedia/{i}_Izq.png").convert_alpha()
+            self.skins[IZQUIERDA].append(izq)
+
+    def activar_poder(self):
+        """Activa el poder y cambia el modo de los fantasmas."""
+        self.tiene_poder = True
+        self.tiempo_poder = self.duracion_poder
+        for fantasma in self.fantasmas:
+            fantasma.set_scatter_mode()
+
+    def actualizar_poder(self, dt):
+        """Actualiza el estado del poder."""
+        if self.tiene_poder:
+            self.tiempo_poder -= dt
+            if self.tiempo_poder <= 0:
+                self.tiene_poder = False
+                self.tiempo_poder = 0
+                for fantasma in self.fantasmas:
+                    fantasma.modo = CHASE
+
+    def comer_pellets(self, lista_pellets):
+        """Verifica colisiones con pellets."""
+        for pellet in lista_pellets:
+            distancia = self.posicion - pellet.posicion
+            distancia_potencia = distancia.magnitudCuadrada()
+            radio_potencia = (pellet.radio + self.radio_colision) ** 2
+
+            if distancia_potencia <= radio_potencia:
+                if pellet.nombre == PELLETPODER:
+                    self.activar_poder()
+                return pellet
+        return None
 
     def actualizar(self, dt):
+        """Actualiza el estado de Pacman."""
+        self.actualizar_animacion(dt)
+        self.actualizar_poder(dt)
+
         # Actualizar posición actual
         self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
 
-        # Obtener entrada del teclado
-        direccion = self.entradaTeclado()
+        direccion = self.entrada_teclado()
         if direccion != STOP:
             self.direccion_deseada = direccion
 
-        # Verificar si llegamos al nodo objetivo
-        if self.overshotTarget():
-            # Establecer el nodo actual como el nodo objetivo que acabamos de alcanzar
+        if self.blanco_sobrepasado():
             self.nodo = self.blanco
 
-            # Manejar portales
             if self.nodo.vecinos[PORTAL] is not None:
                 self.nodo = self.nodo.vecinos[PORTAL]
 
-            # Solo aquí, cuando llegamos a un nodo, intentamos cambiar la dirección
             if self.direccion_deseada != STOP:
-                if self.validarDireccion(self.direccion_deseada):
+                if self.validar_direccion(self.direccion_deseada):
                     self.direccion = self.direccion_deseada
                     self.direccion_deseada = STOP
 
-            # Determinar el siguiente nodo objetivo basado en la dirección actual
-            self.blanco = self.getNuevoBlanco(self.direccion)
+            self.blanco = self.get_nuevo_blanco(self.direccion)
 
-            # Si no hay un camino válido, detenerse
             if self.blanco is self.nodo:
                 self.direccion = STOP
 
-            # Resetear la posición exactamente al nodo actual
-            self.setPosicion()
+            self.set_posicion()
         else:
-            # Solo permitir cambio de dirección en medio camino si es dirección opuesta
-            if self.direccionOpuesta(direccion):
-                self.direccionReversa()
+            if self.direccion_opuesta(direccion):
+                self.direccion_reversa()
 
-    def validarDireccion(self, direccion):
-        if direccion is not STOP:
-            if self.nodo.vecinos[direccion] is not None:
-                return True
-        return False
+    def render(self, pantalla):
+        """Renderiza a Pacman en la pantalla"""
+        if self.visible:
+            if self.skin:
+                # Obtener la posición como tupla de enteros
+                p = self.posicion.entero()
 
-    def getNuevoBlanco(self, direccion):
-        if self.validarDireccion(direccion):
-            return self.nodo.vecinos[direccion]
-        return self.nodo
+                # Obtener el rectángulo de la imagen centrado en la posición actual
+                rect = self.skin.get_rect(center=p)
 
 
-    def entradaTeclado(self):
+                # Dibujar la imagen actual de la animación
+                pantalla.blit(self.skin, rect)
+
+
+    def entrada_teclado(self):
+
         teclaPresionada = pygame.key.get_pressed()
         if teclaPresionada[K_UP]:
             return ARRIBA
@@ -83,44 +138,3 @@ class Pacman(object):
         if teclaPresionada[K_RIGHT]:
             return DERECHA
         return STOP
-
-    def overshotTarget(self):
-        if self.blanco is not None:
-            vec1 = self.blanco.posicion- self.nodo.posicion
-            vec2 = self.posicion - self.nodo.posicion
-            nodo2Blanco = vec1.magnitudCuadrada()
-            nodo2Self = vec2.magnitudCuadrada()
-            return nodo2Self >= nodo2Blanco
-        return False
-
-    def direccionReversa(self):
-        self.direccion *= -1
-        temp = self.nodo
-        self.nodo = self.blanco
-        self.blanco = temp
-
-    def direccionOpuesta(self, direccion):
-        if direccion is not STOP:
-            if direccion == self.direccion * -1:
-                return True
-        return False
-
-    def render(self, pantalla):
-        p = self.posicion.entero()
-        pygame.draw.circle(pantalla, self.color, p, self.radio)
-
-    def comer_pellets(self,lista_pellets):
-        #Recorremos la lista de los pellets hasta encontrar uno que tenga colision con pacman
-        #Se toma la raiz cuadrada de las distancias para evitar el uso de raices
-
-        for pellet in lista_pellets:
-            distancia = self.posicion - pellet.posicion #Vector de distancia entre pacman y el pellet
-            distancia_potencia = distancia.magnitudCuadrada()
-            radio_potencia = (pellet.radio + self.radioColision) ** 2
-
-            #Si la distancia es menor o igual al radio de los dos, significa que hay colision
-            #Utilizando la teoria del circle to circle check para las colisiones
-
-            if distancia_potencia <= radio_potencia:
-                return pellet
-        return None

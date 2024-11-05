@@ -1,14 +1,12 @@
-
 import pygame
 from pygame.locals import *
 from Constantes import *
-from Grafo import *
-from Pacman import *
 from Grafo import Grafo
+from Pacman import Pacman
 from Pellet import GrupoPellets
-from Clyde import *
-from Blinky import *
-from Pinky import *
+from Texto import GrupoTexto
+from Fantasmas import GrupoFantasmas
+
 class Controladora(object):
     def __init__(self):
         pygame.init()
@@ -16,68 +14,77 @@ class Controladora(object):
         self.fondo = None
         self.clock = pygame.time.Clock()
         self.grafo = Grafo("mazetest.txt")
-        self.grafo.set_portales ((0, 17), (27, 17))
-        self.pacman= Pacman(self.grafo.punto_partida_pacman())
+        self.grafo.set_portales((0, 17), (27, 17))
+
+        # Crear Pacman primero
+        self.pacman = Pacman(self.grafo.punto_partida_pacman())
+        self.vidas = 3  # Inicializa el número de vidas del jugador
+
+        # Crear grupo de fantasmas
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 20))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(14, 16))
+
+        # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
-        self.Clyde = Clyde(self.grafo.punto_partida_fantasmas())
-        self.Blinky = Blinky(self.grafo.punto_partida_fantasmas(), self.grafo)
-        self.Pinky = Pinky(self.grafo.punto_partida_fantasmas(), self.grafo)
-
-
-    def setFondo(self ):
-        self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
-        self.fondo.fill(NEGRO)
-
-
-    def empezar(self):
-        self.setFondo()
-        self.debug_nodos()
+        self.grupo_texto = GrupoTexto()
+        self.grupo_texto.actualizarVidas(self.vidas)  # Mostrar las vidas iniciales en pantalla
+        self.puntaje = 0
+        self.tiempo_poder = 0
+        self.duracion_poder = 7  # duración en segundos del modo scatter
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
         if pellet:
             self.Pellet.numComidos += 1
+            if pellet.nombre == PELLETPODER:
+                self.puntaje += 50  # Más puntos por power pellet
+                self.fantasmas.modo_Freight()
+                self.tiempo_poder = self.duracion_poder
+            else:
+                self.puntaje += 10  # Puntos normales por pellet regular
+            self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
 
+    def verificar_vidas(self):
+        # Este método se implementará más adelante
+        pass
 
     def actualizar(self):
         dt = self.clock.tick(30) / 1000
+
+        # Actualizaciones de entidades
         self.pacman.actualizar(dt)
-        self.Clyde.actualizar(dt)
-        self.Blinky.actualizar(dt,self.pacman)
-        self.Pinky.actualizar(dt,self.pacman)
+        self.fantasmas.actualizar(dt)
         self.Pellet.actualizar(dt)
+        self.grupo_texto.actualizar(dt)
         self.verificacion_pellets()
+        self.verificar_vidas()
         self.verificarEventos()
         self.render()
 
+    def setFondo(self):
+        self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
+        self.fondo.fill(NEGRO)
+
+    def empezar(self):
+        self.setFondo()
 
     def verificarEventos(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
 
-
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
         self.grafo.render(self.pantalla)
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
-        self.Clyde.render(self.pantalla)
-        self.Blinky.render(self.pantalla)
-        self.Pinky.render(self.pantalla)
+        self.fantasmas.render(self.pantalla)
+        self.grupo_texto.renderizar(self.pantalla)
         pygame.display.update()
-
-    def debug_nodos(self):
-        print("Verificación de conexiones entre nodos:")
-        for nodo in self.grafo.nodosLUT.values():
-            print(f"Nodo en posición: {nodo.posicion}")
-            for direccion, vecino in nodo.vecinos.items():
-                if vecino is not None:
-                    print(f"  Vecino en dirección {direccion}: {vecino.posicion}")
-                else:
-                    print(f"  Sin vecino en dirección {direccion}")
-
 
 if __name__ == '__main__':
     juego = Controladora()

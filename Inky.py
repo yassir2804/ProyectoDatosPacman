@@ -3,16 +3,16 @@ from pygame.locals import *
 from Vector import Vector1
 from Constantes import *
 
-class Pinky:
+class Inky:
     def __init__(self, nodo, grafo):
-        self.nombre = PINKY
+        self.nombre = INKY
         self.direcciones = {STOP: Vector1(0, 0),ARRIBA: Vector1(0, -1),ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0),DERECHA: Vector1(1, 0)}
-        self.direcciones_opuestas = {ARRIBA: ABAJO,ABAJO: ARRIBA,IZQUIERDA: DERECHA,DERECHA: IZQUIERDA, STOP: STOP}
+        self.direcciones_opuestas = {ARRIBA: ABAJO,ABAJO: ARRIBA, IZQUIERDA: DERECHA,DERECHA: IZQUIERDA,STOP: STOP}
 
         self.direccion = STOP
         self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
-        self.color = ROSADO
+        self.color = CELESTE
         self.nodo = nodo
         self.set_posicion()
         self.blanco = nodo
@@ -27,22 +27,22 @@ class Pinky:
         self.esquina_scatter = None
         self.encontrar_esquina_scatter()
 
-        #Inicio para poder moverse
         self.iniciar_movimiento()
+
     def encontrar_esquina_scatter(self):
         """Encuentra el nodo más cercano a la esquina inferior izquierda del mapa."""
         min_x = float('inf')  # Cambiado para buscar el mínimo en X
-        mix_y = -float('inf')  # Buscando el máximo en Y
+        max_y = -float('inf')  # Buscando el máximo en Y
 
         # Encuentra las coordenadas mínimas en X y máximas en Y.
         for (x, y) in self.grafo.nodosLUT.keys():
             if x < min_x:
                 min_x = x
-            if y < mix_y:
-                mix_y = y
+            if y > max_y:
+             max_y = y
 
-            col = min_x // ANCHOCELDA  # Columna de la esquina superior izquierda
-            fila = mix_y // ALTURACELDA  # Fila de la esquina superior izquierda
+            col = min_x // ANCHOCELDA  # Columna de la esquina inferior izquierda
+            fila = max_y // ALTURACELDA  # Fila de la esquina inferior izquierda
 
             nodo_esquina = self.grafo.obtener_nodo_desde_tiles(col, fila)
 
@@ -67,35 +67,36 @@ class Pinky:
             if mejor_direccion is not None:
                 self.direccion = mejor_direccion
                 self.blanco = self.nodo.vecinos[self.direccion]
-    def calcular_objetivo(self, pacman):
-        """Calcula el punto objetivo 4 casillas por delante de Pacman"""
+
+    def calcular_objetivo(self, pacman, blinky):
+        """Calcula el punto objetivo basado en la posición de Pacman y Blinky"""
         if pacman.direccion == STOP or pacman.nodo is None:
             return pacman.nodo
 
-        # Calculamos la posición objetivo en tiles (cuadros del laberinto)
+        # Calculamos la posición dos casillas por delante de Pacman
         pos_actual = (pacman.posicion.x // ANCHOCELDA, pacman.posicion.y // ALTURACELDA)
-
-        # Vector de dirección en tiles
         vector_direccion = self.direcciones[pacman.direccion]
-        objetivo_x = pos_actual[0]
-        objetivo_y = pos_actual[1]
 
-        # Ajustamos la posición objetivo según la dirección
+        # Posición intermedia (2 casillas adelante de Pacman)
+        pos_intermedia_x = pos_actual[0] + 2 * vector_direccion.x
+        pos_intermedia_y = pos_actual[1] + 2 * vector_direccion.y
+
+        # Si Pacman mira hacia arriba, aplicamos el offset como en el juego original
         if pacman.direccion == ARRIBA:
-            # Implementamos el "bug" del Pac-Man original
-            objetivo_x -= 4  # 4 casillas a la izquierda
-            objetivo_y -= 4  # 4 casillas arriba
-        elif pacman.direccion == ABAJO:
-            objetivo_y += 4
-        elif pacman.direccion == IZQUIERDA:
-            objetivo_x -= 4
-        elif pacman.direccion == DERECHA:
-            objetivo_x += 4
+            pos_intermedia_x -= 2  # 2 casillas a la izquierda
 
-        # Intentamos obtener el nodo más cercano a la posición objetivo
+        # Calculamos el vector desde Blinky hasta el punto intermedio
+        vector_x = pos_intermedia_x - (blinky.posicion.x // ANCHOCELDA)
+        vector_y = pos_intermedia_y - (blinky.posicion.y // ALTURACELDA)
+
+        # Duplicamos el vector para obtener el punto objetivo final
+        objetivo_x = (blinky.posicion.x // ANCHOCELDA) + (2 * vector_x)
+        objetivo_y = (blinky.posicion.y // ALTURACELDA) + (2 * vector_y)
+
+        # Buscamos el nodo más cercano a la posición objetivo
         nodo_objetivo = self.grafo.obtener_nodo_desde_tiles(int(objetivo_x), int(objetivo_y))
 
-        # Si no encontramos un nodo válido, buscamos el nodo más cercano
+        # Si no encontramos un nodo válido, buscamos el más cercano
         if nodo_objetivo is None:
             menor_distancia = float('inf')
             posicion_objetivo = Vector1(objetivo_x * ANCHOCELDA, objetivo_y * ALTURACELDA)
@@ -115,7 +116,8 @@ class Pinky:
             self.direccion = direcciones_disponibles[0]
             self.blanco = self.nodo.vecinos[self.direccion]
 
-    def actualizar(self, dt, pacman):
+    def actualizar(self, dt, pacman, blinky):
+        """Actualiza la posición del fantasma."""
         """Actualiza la posición del fantasma."""
         if self.modo == SCATTER:
             self.tiempo_scatter -= dt
@@ -142,9 +144,9 @@ class Pinky:
         self.posicion = nueva_posicion
 
         if self.overshot_target():
-            self.llegar_a_nodo(pacman)
+            self.llegar_a_nodo(pacman, blinky)
 
-    def llegar_a_nodo(self, pacman):
+    def llegar_a_nodo(self, pacman, blinky):
         """Maneja la llegada a un nodo objetivo."""
         self.nodo = self.blanco
         self.posicion = self.nodo.posicion.copiar()
@@ -152,15 +154,17 @@ class Pinky:
         if self.nodo.vecinos.get(PORTAL):
             self.nodo = self.nodo.vecinos[PORTAL]
             self.set_posicion()
+        if self.modo == SCATTER:
+            self.actualizar_direccion_scatter()
+        else:
+            self.actualizar_direccion(pacman, blinky)
 
-        self.actualizar_direccion(pacman)
-
-    def actualizar_direccion(self, pacman):
+    def actualizar_direccion(self, pacman, blinky):
         """Actualiza la dirección usando el PathFinder hacia el punto objetivo."""
         if pacman.nodo is None:
             return
 
-        nodo_objetivo = self.calcular_objetivo(pacman)
+        nodo_objetivo = self.calcular_objetivo(pacman, blinky)
 
         if nodo_objetivo is None:
             nodo_objetivo = pacman.nodo
@@ -200,6 +204,25 @@ class Pinky:
                 self.direccion = direcciones_validas[0]
                 self.blanco = self.nodo.vecinos[self.direccion]
 
+    def actualizar_direccion_scatter(self):
+        """Actualiza la dirección cuando está en modo scatter."""
+        if self.esquina_scatter is None:
+            return
+
+        # Encuentra la mejor dirección hacia la esquina scatter.
+        mejor_direccion = self.pathfinder.encontrar_ruta(self.nodo, self.esquina_scatter, self.direccion)
+
+        # Si hay una dirección mejor, muévete hacia ella.
+        if mejor_direccion is not None:
+            self.direccion = mejor_direccion
+            self.blanco = self.nodo.vecinos[mejor_direccion]
+        else:
+            # Si no se encuentra una ruta clara, intenta una dirección válida.
+            direcciones_validas = self.obtener_direcciones_validas()
+            if direcciones_validas:
+                self.direccion = direcciones_validas[0]
+                self.blanco = self.nodo.vecinos[self.direccion]
+
     def distancia_a_punto(self, pos1, pos2):
         """Calcula la distancia euclidiana entre dos puntos."""
         return (pos1 - pos2).magnitud()
@@ -224,8 +247,9 @@ class Pinky:
         """Establece la posición al nodo actual."""
         self.posicion = self.nodo.posicion.copiar()
 
+
     def render(self, pantalla):
         """Dibuja el fantasma en la pantalla."""
         p = self.posicion.entero()
         color_actual = PURPURA if self.modo == SCATTER else self.color
-        pygame.draw.circle(pantalla, color_actual, p, self.radio)
+        pygame.draw.circle(pantalla,  color_actual, p, self.radio)

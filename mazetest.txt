@@ -13,10 +13,10 @@ X + + + + + + X X + + + + X X + + + + X X + + + + + + X
 X X X X X X + X X X X X n X X n X X X X X + X X X X X X
 X X X X X X + X X X X X n X X n X X X X X + X X X X X X
 X X X X X X + X X n n n n n n n n n n X X + X X X X X X
-X X X X X X + X X n X X X = = X X X n X X + X X X X X X
-X X X X X X + X X n X X X X X X X X n X X + X X X X X X
-n n n n n n + n n n X X X X X X X X n n n + n n n n n n
-X X X X X X + X X n X X X X X X X X n X X + X X X X X X
+X X X X X X + X X n X X X n n X X X n X X + X X X X X X
+X X X X X X + X X n X n n n n n n X n X X + X X X X X X
+n n n n n n + n n n X n n n n n n X n n n + n n n n n n
+X X X X X X + X X n X n n n n n n X n X X + X X X X X X
 X X X X X X + X X n X X X X X X X X n X X + X X X X X X
 X X X X X X + X X n n n n n n n n n n X X + X X X X X X
 X X X X X X + X X n X X X X X X X X n X X + X X X X X X
