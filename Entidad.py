@@ -22,7 +22,35 @@ class Entidad(object):
         self.visible = True
         self.desactivar_portal = False
         self.metodo_direccion = self.direccion_meta
-        
+        self.animation_timer = 0
+        self.animation_interval = 0.05  # 50ms entre frames
+        self.skins = {}  # Diccionario para almacenar las animaciones
+        self.skin_index = 0
+        self.skin = None
+
+    def cargar_animaciones(self):
+        """Método que las subclases deben implementar para cargar sus animaciones específicas"""
+        pass
+
+    def actualizar_animacion(self, dt):
+        """Actualiza el frame de la animación basado en el tiempo transcurrido"""
+        if not self.skins:  # Si no hay skins cargadas, no actualizar
+            return
+
+        self.animation_timer += dt
+        if self.animation_timer >= self.animation_interval:
+            self.animation_timer = 0
+            self.actualizar_skin()
+
+    def actualizar_skin(self):
+        """Actualiza al siguiente frame de la animación actual"""
+        if self.direccion in self.skins:
+            self.skin_index = (self.skin_index + 1) % len(self.skins[self.direccion])
+            self.skin = self.skins[self.direccion][self.skin_index]
+
+
+
+
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""
         self.posicion = self.nodo.posicion.copiar()
