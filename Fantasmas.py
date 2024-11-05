@@ -1,10 +1,9 @@
-from Pacman import *
 from numpy.random import random
 from Constantes import *
 from Entidad import *
 from Modo import Controladora_Modos
 from Grafo import *
-
+import pygame
 
 class Fantasma(Entidad):
     def __init__(self, nodo, pacman=None, blinky=None):
@@ -16,10 +15,12 @@ class Fantasma(Entidad):
         self.modo = Controladora_Modos(self)
         self.blinky = blinky
         self.nodoInicial = nodo
-        self.metodo_direccion = self.direccion_meta  # Corregido para usar el nombre correcto
+        self.metodo_direccion = self.direccion_meta
+        # Inicialización de la animación
+        self.cargar_animaciones()
+        self.skin = self.skins[DERECHA][0]  # Imagen inicial
 
     def reset(self):
-        super().reset()
         self.puntos = 200
         self.metodo_direccion = self.direccion_meta
         self.nodo_inicio(self.nodoInicial)
@@ -30,6 +31,7 @@ class Fantasma(Entidad):
             self.scatter()
         elif self.modo.current is CHASE:
             self.chase()
+        self.actualizar_animacion(dt)  # Actualizar la animación
         super().actualizar(dt)
 
     def chase(self):
@@ -61,6 +63,25 @@ class Fantasma(Entidad):
         self.set_velocidad(100)
         self.metodo_direccion = self.direccion_meta
 
+    def cargar_animaciones(self):
+        """Método base para cargar animaciones de fantasmas"""
+        pass
+
+    def render(self, pantalla):
+        """Renderiza el fantasma en la pantalla"""
+        if self.visible:
+            if self.skin:
+                # Obtener la posición como tupla de enteros
+                p = self.posicion.entero()
+                # Obtener el rectángulo de la imagen centrado en la posición actual
+                rect = self.skin.get_rect(center=p)
+                # Dibujar la imagen actual de la animación
+                pantalla.blit(self.skin, rect)
+            else:
+                # Fallback al círculo original si no hay skin
+                p = self.posicion.entero()
+                pygame.draw.circle(pantalla, self.color, p, self.radio)
+
 
 class Blinky(Fantasma):
     def __init__(self, nodo, pacman=None):
@@ -77,6 +98,13 @@ class Blinky(Fantasma):
     def chase(self):
         self.meta = self.pacman.posicion
 
+    def cargar_animaciones(self):
+        self.skins = {
+            ARRIBA: [pygame.image.load("multimedia/BlinkyArr.png").convert_alpha()],
+            ABAJO: [pygame.image.load("multimedia/BlinkyAba.png").convert_alpha()],
+            IZQUIERDA: [pygame.image.load("multimedia/BlinkyIzq.png").convert_alpha()],
+            DERECHA: [pygame.image.load("multimedia/BlinkyDer.png").convert_alpha()]
+        }
 
 class Pinky(Fantasma):
     def __init__(self, nodo, pacman=None):
@@ -93,6 +121,14 @@ class Pinky(Fantasma):
     def chase(self):
         # Pinky aims 4 tiles ahead of Pacman's current direction
         self.meta = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 4
+
+    def cargar_animaciones(self):
+        self.skins = {
+            ARRIBA: [pygame.image.load("multimedia/PinkyArr.png").convert_alpha()],
+            ABAJO: [pygame.image.load("multimedia/PinkyAba.png").convert_alpha()],
+            IZQUIERDA: [pygame.image.load("multimedia/PinkyIzq.png").convert_alpha()],
+            DERECHA: [pygame.image.load("multimedia/PinkyDer.png").convert_alpha()]
+        }
 
 
 class Inky(Fantasma):
@@ -122,6 +158,14 @@ class Inky(Fantasma):
             # Si hay algún error en el cálculo, perseguir directamente a Pacman
             self.meta = self.pacman.posicion
 
+    def cargar_animaciones(self):
+        self.skins = {
+            ARRIBA: [pygame.image.load("multimedia/InkyArr.png").convert_alpha()],
+            ABAJO: [pygame.image.load("multimedia/InkyAba.png").convert_alpha()],
+            IZQUIERDA: [pygame.image.load("multimedia/InkyIzq.png").convert_alpha()],
+            DERECHA: [pygame.image.load("multimedia/InkyDer.png").convert_alpha()]
+        }
+
 
 class Clyde(Fantasma):
     def __init__(self, nodo, pacman=None):
@@ -138,7 +182,7 @@ class Clyde(Fantasma):
     def chase(self):
         # Calculate distance to Pacman
         d = self.pacman.posicion - self.posicion
-        ds = d.magnitudCuadrada()  # Usando el método correcto de tu Vector1
+        ds = d.magnitudCuadrada()
 
         # If Clyde is closer than 8 tiles to Pacman, go to scatter mode
         if ds <= (ANCHOCELDA * 8) ** 2:
@@ -147,12 +191,19 @@ class Clyde(Fantasma):
             # Otherwise chase Pacman like Blinky
             self.meta = self.pacman.posicion
 
+    def cargar_animaciones(self):
+        self.skins = {
+            ARRIBA: [pygame.image.load("multimedia/ClydeArr.png").convert_alpha()],
+            ABAJO: [pygame.image.load("multimedia/ClydeAba.png").convert_alpha()],
+            IZQUIERDA: [pygame.image.load("multimedia/ClydeIzq.png").convert_alpha()],
+            DERECHA: [pygame.image.load("multimedia/ClydeDer.png").convert_alpha()]
+        }
 
 class GrupoFantasmas(object):
     def __init__(self, nodo, pacman):
         self.blinky = Blinky(nodo, pacman)
         self.pinky = Pinky(nodo, pacman)
-        self.inky = Inky(nodo, pacman, self.blinky)  # Pasamos blinky como referencia
+        self.inky = Inky(nodo, pacman, self.blinky)
         self.clyde = Clyde(nodo, pacman)
         self.fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
 
