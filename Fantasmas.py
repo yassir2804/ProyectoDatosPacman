@@ -1,9 +1,15 @@
+
+
+from Pacman import *
+
 from numpy.random import random
 from Constantes import *
 from Entidad import *
 from Modo import Controladora_Modos
 from Grafo import *
+
 import pygame
+
 
 class Fantasma(Entidad):
     def __init__(self, nodo, pacman=None, blinky=None):
@@ -31,8 +37,10 @@ class Fantasma(Entidad):
             self.scatter()
         elif self.modo.current is CHASE:
             self.chase()
+
         self.actualizar_animacion(dt)  # Actualizar la animación
         super().actualizar(dt)
+
 
     def chase(self):
         self.meta = self.pacman.posicion
@@ -56,6 +64,7 @@ class Fantasma(Entidad):
     def modo_Freight(self):
         self.modo.modo_freight()
         if self.modo.current == FREIGHT:
+
             self.set_velocidad(50)
             self.metodo_direccion = self.direccion_aleatoria
 
@@ -86,6 +95,7 @@ class Fantasma(Entidad):
 class Blinky(Fantasma):
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
+
         self.nombre = BLINKY
         self.color = ROJO
         self.velocidad = 100 * ANCHOCELDA / 16
@@ -96,7 +106,7 @@ class Blinky(Fantasma):
         self.meta = Vector1(0, 0)
 
     def chase(self):
-        self.meta = self.pacman.posicion
+        self.meta = self.pacman.posicio
 
     def cargar_animaciones(self):
         self.skins = {
@@ -180,6 +190,7 @@ class Clyde(Fantasma):
         self.meta = Vector1(0, ANCHOCELDA * FILAS)
 
     def chase(self):
+
         # Calculate distance to Pacman
         d = self.pacman.posicion - self.posicion
         ds = d.magnitudCuadrada()
@@ -240,6 +251,7 @@ class GrupoFantasmas(object):
             fantasma.reset()
 
     def esconder(self):
+
         for fantasma in self:
             fantasma.visible = False
 
