@@ -166,12 +166,19 @@ class Fantasma(Entidad):
         self.nodoSpawn = nodo
 
     def iniciar_spawn(self):
+
         """Inicia el modo spawn cuando el fantasma es comido"""
         self.modo.set_modo_spawn()
         self.set_velocidad(300)
         self.metodo_direccion = self.direccion_meta
         self.spawn()
         # No resetear la skin aquí, ya que queremos mantener los ojos
+
+        # self.modo.set_modo_spawn()
+        if self.modo.current == SPAWN:
+            self.set_velocidad(150)
+            self.metodo_direccion = self.direccion_meta
+            self.spawn()
 
     def modo_Freight(self):
         """Solo entrar en modo Freight si no está en casa"""
