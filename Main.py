@@ -7,6 +7,7 @@ from Pellet import GrupoPellets
 from Texto import GrupoTexto
 from Fantasmas import GrupoFantasmas
 
+
 class Controladora(object):
     def __init__(self):
         pygame.init()
@@ -16,24 +17,25 @@ class Controladora(object):
         self.grafo = Grafo("mazetest.txt")
         self.grafo.set_portales((0, 17), (27, 17))
 
+        self.game_over = False
+        self.pausa = False
+
         # Crear Pacman primero
         self.pacman = Pacman(self.grafo.punto_partida_pacman())
-        self.vidas = 3  # Inicializa el número de vidas del jugador
 
         # Crear grupo de fantasmas
         self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 20))
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(14, 16))
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13, 16))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 20))
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
-        self.grupo_texto.actualizarVidas(self.vidas)  # Mostrar las vidas iniciales en pantalla
         self.puntaje = 0
         self.tiempo_poder = 0
-        self.duracion_poder = 7  # duración en segundos del modo scatter
+        self.duracion_poder = 7
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
@@ -49,21 +51,52 @@ class Controladora(object):
             self.Pellet.listaPellets.remove(pellet)
 
     def verificar_vidas(self):
-        # Este método se implementará más adelante
-        pass
+        """Verifica el estado de las vidas y maneja el game over"""
+        # Verificar colisiones con fantasmas
+        puntos = self.pacman.colision_con_fantasmas(self.fantasmas)
+        if puntos > 0:
+            self.puntaje += puntos
+            self.grupo_texto.actualizarPuntaje(self.puntaje)
+
+        # Actualizar display de vidas cuando cambian
+        self.grupo_texto.actualizarVidas(self.pacman.vidas)
+
+        # Verificar game over
+        if self.pacman.vidas <= 0 and not self.game_over:
+            self.game_over = True
+            self.fantasmas.esconder()  # Ocultar fantasmas
+            self.grupo_texto.mostrar_game_over()
+
+    def reset_nivel(self):
+        """Resetea las posiciones de todos los personajes"""
+        self.pacman.reset_posicion()
+        self.fantasmas.reset()
+        self.fantasmas.mostrar()
 
     def actualizar(self):
-        dt = self.clock.tick(30) / 1000
+        if not self.game_over:
+            dt = self.clock.tick(30) / 1000.0
 
-        # Actualizaciones de entidades
-        self.pacman.actualizar(dt)
-        self.fantasmas.actualizar(dt)
-        self.Pellet.actualizar(dt)
-        self.grupo_texto.actualizar(dt)
-        self.verificacion_pellets()
-        self.verificar_vidas()
-        self.verificarEventos()
-        self.render()
+            if not self.pacman.muerto:
+                self.pacman.actualizar(dt)
+                self.fantasmas.actualizar(dt)
+                self.Pellet.actualizar(dt)
+                self.verificacion_pellets()
+            else:
+                # Si Pacman está muerto, solo actualizar su timer
+                self.pacman.actualizar(dt)
+                # Cuando termina el timer, reset del nivel
+                if not self.pacman.muerto:
+                    self.reset_nivel()
+
+            self.grupo_texto.actualizar(dt)
+            self.verificar_vidas()
+            self.verificarEventos()
+            self.render()
+        else:
+            # En game over, solo procesar eventos para salir
+            self.verificarEventos()
+            self.render()
 
     def setFondo(self):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
