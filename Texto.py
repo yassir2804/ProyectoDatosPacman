@@ -2,6 +2,7 @@ import pygame
 from Constantes import *
 from Vector import Vector1
 
+
 class Texto(object):
     def __init__(self, texto, color, x, y, tamaño, tiempo=None, id=None, visible=True):
         self.id = id
@@ -44,17 +45,37 @@ class GrupoTexto(object):
         self.configurarTextos()
         self.vidas = 3  # Número inicial de vidas
         self.cargar_imagen_vida()
-        self.cargar_imagen_fruta()
-        self.cerezas_comidas = 3  # Inicializa el contador de cerezas
+        self.cargar_imagen_frutas()
+        self.frutas_comidas = 4  # Inicializa el contador de frutas
         self.game_over_visible = False
+        self.nombres_frutas = ["Cereza", "Naranja", "Manzana"]  # Nombres de las frutas para referencia
 
     def cargar_imagen_vida(self):
         self.imagen_vida = pygame.image.load("multimedia/Vidas.png").convert_alpha()
         self.imagen_vida = pygame.transform.scale(self.imagen_vida, (45, 45))
 
-    def cargar_imagen_fruta(self):
-        self.imagen_fruta = pygame.image.load("multimedia/Cherry.png").convert_alpha()
-        self.imagen_fruta = pygame.transform.scale(self.imagen_fruta, (45, 45))  # Escalar la imagen
+    def cargar_imagen_frutas(self):
+        # Lista de rutas de las imágenes de frutas
+        rutas_frutas = [
+            "multimedia/comodin_fres.png",
+            "multimedia/comodin_vai.png",
+            "multimedia/comodin_choco.png",
+            "multimedia/comodin_pach.png"
+        ]
+
+        # Cargar y escalar todas las imágenes
+        self.imagenes_frutas = []
+        for ruta in rutas_frutas:
+            try:
+                imagen = pygame.image.load(ruta).convert_alpha()
+                imagen_escalada = pygame.transform.scale(imagen, (45, 45))
+                self.imagenes_frutas.append(imagen_escalada)
+            except pygame.error as e:
+                print(f"Error al cargar la imagen {ruta}: {e}")
+                # Crear una imagen de respaldo en caso de error
+                imagen_respaldo = pygame.Surface((45, 45))
+                imagen_respaldo.fill(AMARILLO)
+                self.imagenes_frutas.append(imagen_respaldo)
 
     def agregarTexto(self, texto, color, x, y, tamaño, tiempo=None, id=None):
         self.proximo_id += 1
@@ -87,7 +108,11 @@ class GrupoTexto(object):
         self.vidas = vidas
 
     def agregarFruta(self):
-        self.cerezas_comidas += 1  # Incrementar la cantidad de cerezas comidas
+        self.frutas_comidas += 1
+
+    def obtenerNombreFruta(self, indice):
+        """Retorna el nombre de la fruta según el índice"""
+        return self.nombres_frutas[indice % len(self.nombres_frutas)]
 
     def renderizar(self, pantalla):
         # Renderizar todos los textos
@@ -102,11 +127,13 @@ class GrupoTexto(object):
             y = TAMANIOPANTALLA[1] - self.imagen_vida.get_height() - margen
             pantalla.blit(self.imagen_vida, (x, y))
 
-        # Renderizar cerezas comidas en la esquina inferior derecha
-        for i in range(self.cerezas_comidas):
-            x = TAMANIOPANTALLA[0] - (margen + (i + 1) * (self.imagen_fruta.get_width() + separacion))
-            y = TAMANIOPANTALLA[1] - self.imagen_fruta.get_height() - margen
-            pantalla.blit(self.imagen_fruta, (x, y))
+        # Renderizar las diferentes frutas en la esquina inferior derecha
+        for i in range(self.frutas_comidas):
+            x = TAMANIOPANTALLA[0] - (margen + (i + 1) * (45 + separacion))
+            y = TAMANIOPANTALLA[1] - 45 - margen
+            # Usar el módulo para alternar entre las tres frutas
+            indice_fruta = i % len(self.imagenes_frutas)
+            pantalla.blit(self.imagenes_frutas[indice_fruta], (x, y))
 
         # Mostrar el texto "GAME OVER" si es necesario
         if self.game_over_visible:
@@ -115,3 +142,9 @@ class GrupoTexto(object):
 
     def mostrar_game_over(self):
         self.game_over_visible = True
+
+    def reset(self):
+        """Reinicia el estado de las frutas y otros elementos"""
+        self.frutas_comidas = 0
+        self.game_over_visible = False
+        # Reiniciar otros elementos según sea necesario
