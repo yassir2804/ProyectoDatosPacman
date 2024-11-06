@@ -38,17 +38,28 @@ class Controladora(object):
         self.duracion_poder = 7
 
     def verificacion_pellets(self):
+        """
+        Verifica la colisión con pellets y actualiza el puntaje.
+        También maneja la activación del modo freight y los puntos por comer fantasmas.
+        """
+        # Verificar colisión con pellets
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
         if pellet:
             self.Pellet.numComidos += 1
             if pellet.nombre == PELLETPODER:
                 self.puntaje += 50  # Más puntos por power pellet
-                self.fantasmas.modo_Freight()
+                self.fantasmas.modo_Freight()  # Esto ya establece los puntos base en 200
                 self.tiempo_poder = self.duracion_poder
             else:
                 self.puntaje += 10  # Puntos normales por pellet regular
             self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
+
+        # Verificar colisión con fantasmas
+        puntos_fantasma = self.pacman.colision_con_fantasmas(self.fantasmas)
+        if puntos_fantasma > 0:
+            self.puntaje += puntos_fantasma
+            self.grupo_texto.actualizarPuntaje(self.puntaje)
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""

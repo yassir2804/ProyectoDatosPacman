@@ -22,13 +22,16 @@ class Fantasma(Entidad):
         self.modo = Controladora_Modos(self)
         self.blinky = blinky
         self.nodoInicial = nodo
+        self.nodoSpawn = nodo
         self.metodo_direccion = self.direccion_meta
         # Inicialización de la animación
         self.cargar_animaciones()
         self.cargar_animaciones_freight()
-        self.skin = self.skins[DERECHA][0]  # Imagen inicial
+        self.cargar_animaciones_ojos()  # Nuevo metodo para cargar las animaciones de los ojos
+        self.skin_inicial = self.skins[DERECHA][0]  # Guardar la imagen inicial
+        self.skin = self.skin_inicial
         self.tiempo_freight = 0
-        self.intervalo_freight = 0.2  # Cambiar cada 0.2 segundos
+        self.intervalo_freight = 0.2
         self.indice_freight = 0
 
     def reset(self):
@@ -43,6 +46,15 @@ class Fantasma(Entidad):
             pygame.image.load("multimedia/FreightBlanco.png").convert_alpha()
         ]
 
+    def cargar_animaciones_ojos(self):
+        """Cargar las imágenes de los ojos para cuando el fantasma está en modo SPAWN"""
+        self.skins_ojos = {
+            ARRIBA: pygame.image.load("multimedia/OjosArriba.png").convert_alpha(),
+            ABAJO: pygame.image.load("multimedia/OjosAbajo.png").convert_alpha(),
+            IZQUIERDA: pygame.image.load("multimedia/OjosIzquierda.png").convert_alpha(),
+            DERECHA: pygame.image.load("multimedia/OjosDerecha.png").convert_alpha()
+        }
+
     def actualizar_skin_freight(self, dt):
         self.tiempo_freight += dt
         if self.tiempo_freight >= self.intervalo_freight:
@@ -56,17 +68,23 @@ class Fantasma(Entidad):
             self.scatter()
         elif self.modo.current == CHASE:
             self.chase()
-
+        elif self.modo.current == SPAWN:
+            self.spawn()
 
         # Actualizar animación según el modo
         if self.modo.current == FREIGHT:
             self.actualizar_skin_freight(dt)
+        elif self.modo.current == SPAWN:
+            # Actualizar la imagen de los ojos según la dirección
+            if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
+                self.skin = self.skins_ojos[self.direccion]
+            # Verificar si el fantasma ha llegado a su nodo de spawn
+            if self.posicion == self.meta:
+                self.modo_normal()  # Cambiar al modo normal
         else:
-            self.actualizar_animacion(dt)  # Actualizar la animación normal
-
+            self.actualizar_animacion(dt)
 
         super().actualizar(dt)
-
 
     def chase(self):
         self.meta = self.pacman.posicion
@@ -75,34 +93,44 @@ class Fantasma(Entidad):
         self.meta = Vector1(0, 0)
 
     def spawn(self):
-        self.meta = self.nodoSpawn.posicion
+        if hasattr(self, 'nodoSpawn') and self.nodoSpawn is not None:
+            self.meta = self.nodoSpawn.posicion
+        else:
+            self.meta = self.nodoInicial.posicion
+
 
     def setSpawnNode(self, nodo):
         self.nodoSpawn = nodo
 
     def iniciar_spawn(self):
+        """Inicia el modo spawn cuando el fantasma es comido"""
         self.modo.set_modo_spawn()
-        if self.modo.current == SPAWN:
-            self.set_velocidad(150)
-            self.metodo_direccion = self.direccion_meta
-            self.spawn()
+        self.set_velocidad(300)
+        self.metodo_direccion = self.direccion_meta
+        self.spawn()
+        # No resetear la skin aquí, ya que queremos mantener los ojos
 
     def modo_Freight(self):
         self.modo.modo_freight()
         if self.modo.current == FREIGHT:
-
             self.set_velocidad(50)
             self.metodo_direccion = self.direccion_aleatoria
             self.tiempo_freight = 0  # Reiniciar el tiempo de animación
             self.indice_freight = 0  # Reiniciar el índice
 
     def modo_normal(self):
+        """Restaura el modo normal del fantasma"""
         self.set_velocidad(100)
         self.metodo_direccion = self.direccion_meta
+        self.modo.current = CHASE  # Establecer explícitamente el modo
+        # Asegurarse de que la skin vuelva a la animación normal
+        if hasattr(self, 'direccion') and self.direccion in self.skins:
+            self.skin = self.skins[self.direccion][0]
 
     def cargar_animaciones(self):
         """Método base para cargar animaciones de fantasmas"""
         pass
+
 
     def render(self, pantalla):
         """Renderiza el fantasma en la pantalla"""
@@ -134,7 +162,7 @@ class Blinky(Fantasma):
         self.meta = Vector1(0, 0)
 
     def chase(self):
-        self.meta = self.pacman.posicio
+        self.meta = self.pacman.posicion
 
     def cargar_animaciones(self):
         self.skins = {
@@ -247,6 +275,13 @@ class GrupoFantasmas(object):
         self.inky = Inky(nodo, pacman, self.blinky)
         self.clyde = Clyde(nodo, pacman)
         self.fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
+
+        # Establecer el nodo spawn por defecto
+        self.setSpawnNode(nodo)  # Usar el nodo inicial como spawn por defecto
+
+    def setSpawnNode(self, nodo):
+        for fantasma in self:
+            fantasma.setSpawnNode(nodo)
 
     def __iter__(self):
         return iter(self.fantasmas)
