@@ -103,11 +103,21 @@ class Fantasma(Entidad):
 
 
     def actualizar_skin_freight(self, dt):
+        # Actualiza el tiempo acumulado en modo Freight
         self.tiempo_freight += dt
-        if self.tiempo_freight >= self.intervalo_freight:
-            self.tiempo_freight = 0
-            self.indice_freight = (self.indice_freight + 1) % len(self.skins_freight)
-            self.skin = self.skins_freight[self.indice_freight]
+        tiempo_restante = self.duracion_freight - self.tiempo_freight
+
+        if tiempo_restante <= 3:  # Comienza a parpadear en los últimos 3 segundos
+            self.tiempo_parpadeo += dt
+            if self.tiempo_parpadeo >= self.intervalo_freight:
+                self.tiempo_parpadeo = 0  # Reinicia el contador de parpadeo
+                # Alterna entre las imágenes de parpadeo (azul y blanco)
+                self.indice_freight = (self.indice_freight + 1) % len(self.skins_freight)
+                self.skin = self.skins_freight[self.indice_freight]
+        else:
+            # Mantén la imagen azul fija cuando el tiempo restante es mayor a 3 segundos
+            self.skin = self.skins_freight[0]
+            self.tiempo_parpadeo = 0  # Reinicia el contador de parpadeo al estado inicial
 
     def actualizar(self, dt):
         if not self.activo and self.en_casa:
@@ -156,6 +166,7 @@ class Fantasma(Entidad):
         self.nodoSpawn = nodo
 
     def iniciar_spawn(self):
+
         """Inicia el modo spawn cuando el fantasma es comido"""
         self.modo.set_modo_spawn()
         self.set_velocidad(300)
@@ -163,16 +174,23 @@ class Fantasma(Entidad):
         self.spawn()
         # No resetear la skin aquí, ya que queremos mantener los ojos
 
-    def modo_Freight(self):
+        # self.modo.set_modo_spawn()
+        if self.modo.current == SPAWN:
+            self.set_velocidad(150)
+            self.metodo_direccion = self.direccion_meta
+            self.spawn()
 
-        """Solo entrar en modo freight si no está en casa"""
+    def modo_Freight(self):
+        """Solo entrar en modo Freight si no está en casa"""
         if not self.en_casa:
             self.modo.modo_freight()
             if self.modo.current == FREIGHT:
                 self.set_velocidad(50)
                 self.metodo_direccion = self.direccion_aleatoria
-                self.tiempo_freight = 0
-                self.indice_freight = 0
+                self.tiempo_freight = 0  # Tiempo acumulado en Freight
+                self.duracion_freight = 7  # Duración total en segundos
+                self.tiempo_parpadeo = 0  # Controla el tiempo de parpadeo
+                self.skin = self.skins_freight[0]  # Inicia con la imagen azul
 
 
     def modo_normal(self):
