@@ -44,7 +44,7 @@ class Controladora_Modos(object):
                 self.current = self.modoPrincipal.modo
         elif self.current in [SCATTER, CHASE]:
             self.current = self.modoPrincipal.modo
-        else:
+        elif self.current is not SPAWN:  # No actualizar si está en modo SPAWN
             self.current = self.modoPrincipal.modo
 
     def modo_freight(self):
@@ -60,5 +60,13 @@ class Controladora_Modos(object):
             self.temporizador = 0
             self.tiempo = 20
             self.current = SCATTER
-        elif self.current is  SCATTER:
+        elif self.current is SCATTER:
             self.temporizador = 0
+
+    def set_modo_spawn(self):
+        """
+        Establece el modo SPAWN para cuando el fantasma es comido
+        """
+        self.current = SPAWN
+        self.temporizador = 0
+        self.tiempo = None  # El tiempo no es necesario en modo SPAWN

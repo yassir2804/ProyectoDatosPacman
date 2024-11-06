@@ -7,8 +7,7 @@ from random import randint
 class Entidad(object):
     def __init__(self, nodo):
         self.nombre = None
-        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
-                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
         self.direccion = STOP
         self.set_velocidad(100)
@@ -28,10 +27,6 @@ class Entidad(object):
         self.skin_index = 0
         self.skin = None
 
-    def cargar_animaciones(self):
-        """Método que las subclases deben implementar para cargar sus animaciones específicas"""
-        pass
-
     def actualizar_animacion(self, dt):
         """Actualiza el frame de la animación basado en el tiempo transcurrido"""
         if not self.skins:  # Si no hay skins cargadas, no actualizar
@@ -49,7 +44,11 @@ class Entidad(object):
             self.skin = self.skins[self.direccion][self.skin_index]
 
 
-
+    def establecer_entre_nodos(self, direccion):
+        """Coloca la fruta exactamente en medio de dos nodos"""
+        if self.nodo.vecinos[direccion] is not None:
+            self.blanco = self.nodo.vecinos[direccion]
+            self.posicion = (self.nodo.posicion + self.blanco.posicion) / 2.0
 
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""
@@ -77,7 +76,6 @@ class Entidad(object):
                 self.blanco = self.get_nuevo_blanco(self.direccion)
 
             self.set_posicion()
-
 
     def obtener_direcciones_validas(self):
         """Obtiene todas las direcciones válidas desde el nodo actual."""

@@ -10,7 +10,6 @@ class Pacman(Entidad):
         super().__init__(nodo)  # Llamada al constructor de la clase padre
         self.nombre = PACMAN
         self.color = AMARILLO
-        self.velocidad = 100 * ANCHOCELDA / 16
         self.direccion_deseada = STOP
         self.tiene_poder = False
         self.tiempo_poder = 0
@@ -32,6 +31,8 @@ class Pacman(Entidad):
         self.comiendo = False
         self.tiempo_ultimo_pellet = 0
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
+
+        self.establecer_entre_nodos(IZQUIERDA)
 
     def cargar_animaciones(self):
         # Diccionario para almacenar las animaciones por dirección
@@ -91,8 +92,25 @@ class Pacman(Entidad):
         self.visible = True
         self.muerto = False
 
+    def colision_fruta(self, fruta):
+        """Verifica colisiones con la fruta."""
+        if fruta and fruta.visible:
+            distancia = self.posicion - fruta.posicion
+            distancia_cuadrada = distancia.magnitudCuadrada()
+            radio_total = (self.radio_colision + fruta.radio_colision) ** 2
+
+            if distancia_cuadrada <= radio_total:
+                return True
+        return False
+
     def colision_con_fantasmas(self, fantasmas):
-        """Verifica colisiones con fantasmas"""
+        """
+        Verifica colisiones con los fantasmas.
+        Retorna los puntos si come un fantasma asustado,
+        0 si no hay colisión o si Pacman muere.
+        Recibe como parámetro un objeto GrupoFantasmas
+        """
+        # Iterar sobre todos los fantasmas usando el iterador de GrupoFantasmas
         for fantasma in fantasmas:
             if fantasma.visible:
                 distancia = self.posicion - fantasma.posicion
@@ -103,7 +121,7 @@ class Pacman(Entidad):
                     if fantasma.modo.current == FREIGHT:
                         # Come al fantasma
                         fantasma.iniciar_spawn()
-                        return fantasma.puntos
+                        return fantasma.puntos  # Usa los puntos del fantasma
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
                         self.morir()

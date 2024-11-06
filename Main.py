@@ -6,6 +6,7 @@ from Pacman import Pacman
 from Pellet import GrupoPellets
 from Texto import GrupoTexto
 from Fantasmas import GrupoFantasmas
+from Fruta import Fruta
 
 
 class Controladora(object):
@@ -26,9 +27,25 @@ class Controladora(object):
         # Crear grupo de fantasmas
         self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
         self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13, 16))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 20))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(17, 20))
         self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+
+        # Inicializar temporizadores para la salida de fantasmas
+        self.tiempo_transcurrido = 0
+        self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
+        self.fantasmas_liberados = 0
+        # Lista de fantasmas en orden de salida
+        self.orden_fantasmas = [
+            self.fantasmas.blinky,
+            self.fantasmas.pinky,
+            self.fantasmas.inky,
+            self.fantasmas.clyde
+        ]
+        # Desactivar movimiento inicial de fantasmas
+        for fantasma in self.orden_fantasmas[1:]:  # Todos excepto Blinky
+            fantasma.activo = False
+            fantasma.en_casa = True  # Nuevo estado para controlar si está en casa
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
@@ -37,18 +54,33 @@ class Controladora(object):
         self.tiempo_poder = 0
         self.duracion_poder = 7
 
+        #Frutas
+        self.fruta = None
+
+
     def verificacion_pellets(self):
+        """
+        Verifica la colisión con pellets y actualiza el puntaje.
+        También maneja la activación del modo freight y los puntos por comer fantasmas.
+        """
+        # Verificar colisión con pellets
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
         if pellet:
             self.Pellet.numComidos += 1
             if pellet.nombre == PELLETPODER:
                 self.puntaje += 50  # Más puntos por power pellet
-                self.fantasmas.modo_Freight()
+                self.fantasmas.modo_Freight()  # Esto ya establece los puntos base en 200
                 self.tiempo_poder = self.duracion_poder
             else:
                 self.puntaje += 10  # Puntos normales por pellet regular
             self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
+
+        # Verificar colisión con fantasmas
+        puntos_fantasma = self.pacman.colision_con_fantasmas(self.fantasmas)
+        if puntos_fantasma > 0:
+            self.puntaje += puntos_fantasma
+            self.grupo_texto.actualizarPuntaje(self.puntaje)
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""
@@ -72,15 +104,41 @@ class Controladora(object):
         self.pacman.reset_posicion()
         self.fantasmas.reset()
         self.fantasmas.mostrar()
+        # Resetear temporizadores de fantasmas
+        self.tiempo_transcurrido = 0
+        self.fantasmas_liberados = 0
+        # Desactivar todos los fantasmas excepto Blinky
+        for fantasma in self.orden_fantasmas[1:]:
+            fantasma.activo = False
+            fantasma.en_casa = True  # Resetear estado de casa
+
+    def actualizar_temporizador_fantasmas(self, dt):
+        """Maneja la liberación temporizada de los fantasmas"""
+        if self.fantasmas_liberados < len(self.orden_fantasmas):
+            self.tiempo_transcurrido += dt
+
+            # Calcular cuántos fantasmas deberían estar activos
+            fantasmas_a_liberar = int(self.tiempo_transcurrido // self.tiempo_entre_fantasmas)
+
+            # Activar los fantasmas que correspondan
+            while self.fantasmas_liberados < fantasmas_a_liberar and \
+                    self.fantasmas_liberados < len(self.orden_fantasmas):
+                fantasma = self.orden_fantasmas[self.fantasmas_liberados]
+                fantasma.liberar_de_casa()  # Nuevo método para liberar fantasma
+                self.fantasmas_liberados += 1
 
     def actualizar(self):
         if not self.game_over:
             dt = self.clock.tick(30) / 1000.0
 
             if not self.pacman.muerto:
+                self.actualizar_temporizador_fantasmas(dt)  # Añadir esta línea
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
                 self.Pellet.actualizar(dt)
+                if self.fruta is not None:
+                    self.fruta.actualizar(dt)
+                    
                 self.verificacion_pellets()
             else:
                 # Si Pacman está muerto, solo actualizar su timer
@@ -91,11 +149,12 @@ class Controladora(object):
 
             self.grupo_texto.actualizar(dt)
             self.verificar_vidas()
-            self.verificarEventos()
+            self.verificar_eventos()
+            self.verificar_fruta()
             self.render()
         else:
             # En game over, solo procesar eventos para salir
-            self.verificarEventos()
+            self.verificar_eventos()
             self.render()
 
     def setFondo(self):
@@ -105,7 +164,7 @@ class Controladora(object):
     def empezar(self):
         self.setFondo()
 
-    def verificarEventos(self):
+    def verificar_eventos(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
@@ -116,8 +175,27 @@ class Controladora(object):
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         self.fantasmas.render(self.pantalla)
+        if self.fruta is not None:
+            self.fruta.render(self.pantalla)
         self.grupo_texto.renderizar(self.pantalla)
         pygame.display.update()
+
+    def verificar_fruta(self):
+        """Verifica eventos relacionados con la fruta"""
+        # Crear fruta cuando se hayan comido cierta cantidad de pellets
+        if self.Pellet.numComidos == 50 or self.Pellet.numComidos == 140:
+            if self.fruta is None:
+                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+
+        # Verificar colisiones o si la fruta debe desaparecer
+        if self.fruta is not None:
+            if self.pacman.colision_fruta(self.fruta):
+                self.puntaje += self.fruta.puntos  # Aumentar puntaje al comer la fruta
+                self.grupo_texto.actualizarPuntaje(self.puntaje)
+                self.fruta = None
+            elif self.fruta.desaparecer:
+                self.fruta = None
+
 
 if __name__ == '__main__':
     juego = Controladora()
