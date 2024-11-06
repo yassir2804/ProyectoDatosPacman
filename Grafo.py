@@ -184,7 +184,7 @@ class Grafo(object):
         return self.nodosLUT.get(clave, None)
 
     def punto_partida_pacman(self):
-        return next(iter(self.nodosLUT.values()), None)
+        return self.obtener_nodo_desde_tiles(14, 32)
 
     def set_portales(self, par1, par2):
         clave1 = self.construir_clave(*par1)  # Corrección del nombre

@@ -69,9 +69,12 @@ class Fantasma(Entidad):
     def mover_en_casa(self, dt):
         """Método para mover el fantasma dentro de la casa"""
         if not self.en_casa:
+            # Actualizar posición horizontal cuando el fantasma sale de la casa
+            self.posicion.x += self.velocidad_casa * dt * self.direccion.x
+            self.posicion.y += self.velocidad_casa * dt * self.direccion.y
             return
 
-        # Movimiento vertical
+        # Movimiento vertical dentro de la casa
         if self.movimiento_casa == 'arriba':
             self.posicion.y -= self.velocidad_casa * dt
             if self.posicion.y <= self.limite_arriba:
@@ -86,11 +89,11 @@ class Fantasma(Entidad):
         # Mantener dentro de límites horizontales
         self.posicion.x = max(self.limite_izquierdo,
                               min(self.posicion.x, self.limite_derecho))
+
     def liberar_de_casa(self):
         """Método para liberar al fantasma de la casa inicial"""
         self.activo = True
         self.en_casa = False
-        self.modo_normal()  # Asegurar que empiece en modo normal
 
     def cargar_animaciones_ojos(self):
         """Cargar las imágenes de los ojos para cuando el fantasma está en modo SPAWN"""
@@ -150,7 +153,7 @@ class Fantasma(Entidad):
         super().actualizar(dt)
 
     def chase(self):
-        self.meta = self.pacman.posicion
+        self.meta = Vector1(0, 0)
 
     def scatter(self):
         self.meta = Vector1(0, 0)
@@ -168,10 +171,13 @@ class Fantasma(Entidad):
     def iniciar_spawn(self):
 
         """Inicia el modo spawn cuando el fantasma es comido"""
+        """Inicia el modo spawn cuando el fantasma es comido"""
         self.modo.set_modo_spawn()
         self.set_velocidad(300)
         self.metodo_direccion = self.direccion_meta
         self.spawn()
+        self.posicion = self.nodoSpawn.posicion.copiar()  # Establecer la posición en el nodo de spawn
+        # No resetear la skin aquí, ya que queremos mantener los ojos
         # No resetear la skin aquí, ya que queremos mantener los ojos
 
         # self.modo.set_modo_spawn()
@@ -351,23 +357,40 @@ class GrupoFantasmas(object):
         self.inky = Inky(nodo, pacman, self.blinky)
         self.clyde = Clyde(nodo, pacman)
         self.fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
+        self.tiempo_transcurrido = 0
+        self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
+        self.fantasmas_liberados = 0
+        self.orden_fantasmas = [self.blinky,self.pinky,self.inky,self.clyde]
         # Activar solo a Blinky inicialmente
         self.blinky.activo = True
         # Calcular límites de la casa basados en las posiciones iniciales
         self.calcular_limites_casa()
 
         # Establecer el nodo spawn por defecto
-        self.setSpawnNode(nodo)  # Usar el nodo inicial como spawn por defecto
 
-    def setSpawnNode(self, nodo):
-        for fantasma in self:
-            fantasma.setSpawnNode(nodo)
 
     def __iter__(self):
         return iter(self.fantasmas)
 
+
+    def actualizar_temporizador_fantasmas(self, dt):
+        """Maneja la liberación temporizada de los fantasmas"""
+        if self.fantasmas_liberados < len(self.orden_fantasmas):
+            self.tiempo_transcurrido += dt
+
+            # Calcular cuántos fantasmas deberían estar activos
+            fantasmas_a_liberar = int(self.tiempo_transcurrido // self.tiempo_entre_fantasmas)
+
+            # Activar los fantasmas que correspondan
+            while self.fantasmas_liberados < fantasmas_a_liberar and \
+                    self.fantasmas_liberados < len(self.orden_fantasmas):
+                fantasma = self.orden_fantasmas[self.fantasmas_liberados]
+                fantasma.liberar_de_casa()
+                self.fantasmas_liberados += 1
+
     def actualizar(self, dt):
-        for fantasma in self:
+        self.actualizar_temporizador_fantasmas(dt)
+        for fantasma in self.fantasmas:
             fantasma.actualizar(dt)
 
     def modo_Freight(self):
@@ -396,6 +419,8 @@ class GrupoFantasmas(object):
             fantasma.reset()
             # Reactivar solo a Blinky
             self.blinky.activo = True
+            self.tiempo_transcurrido = 0
+            self.fantasmas_liberados = 0
 
     def esconder(self):
         for fantasma in self:
