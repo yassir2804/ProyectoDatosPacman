@@ -32,7 +32,7 @@ class Pacman(Entidad):
         self.tiempo_ultimo_pellet = 0
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
 
-        self.establecer_entre_nodos(IZQUIERDA)
+       # self.establecer_entre_nodos(IZQUIERDA)
 
     def cargar_animaciones(self):
         # Diccionario para almacenar las animaciones por dirección
