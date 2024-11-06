@@ -7,8 +7,7 @@ from random import randint
 class Entidad(object):
     def __init__(self, nodo):
         self.nombre = None
-        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
-                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
         self.direccion = STOP
         self.set_velocidad(100)
@@ -48,9 +47,6 @@ class Entidad(object):
             self.skin_index = (self.skin_index + 1) % len(self.skins[self.direccion])
             self.skin = self.skins[self.direccion][self.skin_index]
 
-
-
-
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""
         self.posicion = self.nodo.posicion.copiar()
@@ -77,7 +73,6 @@ class Entidad(object):
                 self.blanco = self.get_nuevo_blanco(self.direccion)
 
             self.set_posicion()
-
 
     def obtener_direcciones_validas(self):
         """Obtiene todas las direcciones válidas desde el nodo actual."""

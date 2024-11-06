@@ -26,9 +26,25 @@ class Controladora(object):
         # Crear grupo de fantasmas
         self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
         self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13, 16))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 20))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(17, 20))
         self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+
+        # Inicializar temporizadores para la salida de fantasmas
+        self.tiempo_transcurrido = 0
+        self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
+        self.fantasmas_liberados = 0
+        # Lista de fantasmas en orden de salida
+        self.orden_fantasmas = [
+            self.fantasmas.blinky,
+            self.fantasmas.pinky,
+            self.fantasmas.inky,
+            self.fantasmas.clyde
+        ]
+        # Desactivar movimiento inicial de fantasmas
+        for fantasma in self.orden_fantasmas[1:]:  # Todos excepto Blinky
+            fantasma.activo = False
+            fantasma.en_casa = True  # Nuevo estado para controlar si está en casa
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
@@ -83,12 +99,35 @@ class Controladora(object):
         self.pacman.reset_posicion()
         self.fantasmas.reset()
         self.fantasmas.mostrar()
+        # Resetear temporizadores de fantasmas
+        self.tiempo_transcurrido = 0
+        self.fantasmas_liberados = 0
+        # Desactivar todos los fantasmas excepto Blinky
+        for fantasma in self.orden_fantasmas[1:]:
+            fantasma.activo = False
+            fantasma.en_casa = True  # Resetear estado de casa
+
+    def actualizar_temporizador_fantasmas(self, dt):
+        """Maneja la liberación temporizada de los fantasmas"""
+        if self.fantasmas_liberados < len(self.orden_fantasmas):
+            self.tiempo_transcurrido += dt
+
+            # Calcular cuántos fantasmas deberían estar activos
+            fantasmas_a_liberar = int(self.tiempo_transcurrido // self.tiempo_entre_fantasmas)
+
+            # Activar los fantasmas que correspondan
+            while self.fantasmas_liberados < fantasmas_a_liberar and \
+                    self.fantasmas_liberados < len(self.orden_fantasmas):
+                fantasma = self.orden_fantasmas[self.fantasmas_liberados]
+                fantasma.liberar_de_casa()  # Nuevo método para liberar fantasma
+                self.fantasmas_liberados += 1
 
     def actualizar(self):
         if not self.game_over:
             dt = self.clock.tick(30) / 1000.0
 
             if not self.pacman.muerto:
+                self.actualizar_temporizador_fantasmas(dt)  # Añadir esta línea
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
                 self.Pellet.actualizar(dt)
