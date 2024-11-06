@@ -81,7 +81,7 @@ class Fantasma(Entidad):
         self.nodoSpawn = nodo
 
     def iniciar_spawn(self):
-        self.modo.set_modo_spawn()
+        # self.modo.set_modo_spawn()
         if self.modo.current == SPAWN:
             self.set_velocidad(150)
             self.metodo_direccion = self.direccion_meta
@@ -134,7 +134,7 @@ class Blinky(Fantasma):
         self.meta = Vector1(0, 0)
 
     def chase(self):
-        self.meta = self.pacman.posicio
+        self.meta = self.pacman.posicion
 
     def cargar_animaciones(self):
         self.skins = {

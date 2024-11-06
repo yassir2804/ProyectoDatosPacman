@@ -28,10 +28,6 @@ class Entidad(object):
         self.skin_index = 0
         self.skin = None
 
-    def cargar_animaciones(self):
-        """Método que las subclases deben implementar para cargar sus animaciones específicas"""
-        pass
-
     def actualizar_animacion(self, dt):
         """Actualiza el frame de la animación basado en el tiempo transcurrido"""
         if not self.skins:  # Si no hay skins cargadas, no actualizar
@@ -48,8 +44,11 @@ class Entidad(object):
             self.skin_index = (self.skin_index + 1) % len(self.skins[self.direccion])
             self.skin = self.skins[self.direccion][self.skin_index]
 
-
-
+    def establecer_entre_nodos(self, direccion):
+        """Coloca la fruta exactamente en medio de dos nodos"""
+        if self.nodo.vecinos[direccion] is not None:
+            self.blanco = self.nodo.vecinos[direccion]
+            self.posicion = (self.nodo.posicion + self.blanco.posicion) / 2.0
 
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""

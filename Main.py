@@ -6,6 +6,7 @@ from Pacman import Pacman
 from Pellet import GrupoPellets
 from Texto import GrupoTexto
 from Fantasmas import GrupoFantasmas
+from Fruta import Fruta
 
 
 class Controladora(object):
@@ -36,6 +37,10 @@ class Controladora(object):
         self.puntaje = 0
         self.tiempo_poder = 0
         self.duracion_poder = 7
+
+        #Frutas
+        self.fruta = None
+
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
@@ -81,6 +86,9 @@ class Controladora(object):
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
                 self.Pellet.actualizar(dt)
+                if self.fruta is not None:
+                    self.fruta.actualizar(dt)
+                    
                 self.verificacion_pellets()
             else:
                 # Si Pacman está muerto, solo actualizar su timer
@@ -91,11 +99,12 @@ class Controladora(object):
 
             self.grupo_texto.actualizar(dt)
             self.verificar_vidas()
-            self.verificarEventos()
+            self.verificar_eventos()
+            self.verificar_fruta()
             self.render()
         else:
             # En game over, solo procesar eventos para salir
-            self.verificarEventos()
+            self.verificar_eventos()
             self.render()
 
     def setFondo(self):
@@ -105,7 +114,7 @@ class Controladora(object):
     def empezar(self):
         self.setFondo()
 
-    def verificarEventos(self):
+    def verificar_eventos(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
@@ -116,8 +125,27 @@ class Controladora(object):
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         self.fantasmas.render(self.pantalla)
+        if self.fruta is not None:
+            self.fruta.render(self.pantalla)
         self.grupo_texto.renderizar(self.pantalla)
         pygame.display.update()
+
+    def verificar_fruta(self):
+        """Verifica eventos relacionados con la fruta"""
+        # Crear fruta cuando se hayan comido cierta cantidad de pellets
+        if self.Pellet.numComidos == 50 or self.Pellet.numComidos == 140:
+            if self.fruta is None:
+                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+
+        # Verificar colisiones o si la fruta debe desaparecer
+        if self.fruta is not None:
+            if self.pacman.colision_fruta(self.fruta):
+                self.puntaje += self.fruta.puntos  # Aumentar puntaje al comer la fruta
+                self.grupo_texto.actualizarPuntaje(self.puntaje)
+                self.fruta = None
+            elif self.fruta.desaparecer:
+                self.fruta = None
+
 
 if __name__ == '__main__':
     juego = Controladora()
