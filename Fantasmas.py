@@ -22,19 +22,41 @@ class Fantasma(Entidad):
         self.modo = Controladora_Modos(self)
         self.blinky = blinky
         self.nodoInicial = nodo
+        self.nodoSpawn = nodo
         self.metodo_direccion = self.direccion_meta
+        # Activación para salir de casa fantasmas
+
+        self.activo = False
+        self.en_casa = True  #Conocer si el fantasma se encuentra en la casa
+        self.posicion_inicial = nodo.posicion.copiar()
+
+        self.movimiento_casa = ARRIBA
+        self.velocidad_casa = 50
+
+        # Los límites se establecerán desde GrupoFantasmas
+        self.limite_izquierdo = 0
+        self.limite_derecho = 0
+        self.limite_arriba = 0
+        self.limite_abajo = 0
+
         # Inicialización de la animación
         self.cargar_animaciones()
         self.cargar_animaciones_freight()
-        self.skin = self.skins[DERECHA][0]  # Imagen inicial
+        self.cargar_animaciones_ojos()  # Nuevo metodo para cargar las animaciones de los ojos
+        self.skin_inicial = self.skins[DERECHA][0]  # Guardar la imagen inicial
+        self.skin = self.skin_inicial
         self.tiempo_freight = 0
-        self.intervalo_freight = 0.2  # Cambiar cada 0.2 segundos
+        self.intervalo_freight = 0.2
         self.indice_freight = 0
 
     def reset(self):
         self.puntos = 200
         self.metodo_direccion = self.direccion_meta
         self.nodo_inicio(self.nodoInicial)
+        self.activo = False
+        self.en_casa = True  # Resetear estado de casa
+        self.posicion = self.posicion_inicial.copiar()
+        self.modo_normal()  # Asegurar que esté en modo normal al resetear
 
     def cargar_animaciones_freight(self):
         # Cargar las imágenes de freight una sola vez
@@ -43,30 +65,89 @@ class Fantasma(Entidad):
             pygame.image.load("multimedia/FreightBlanco.png").convert_alpha()
         ]
 
+
+    def mover_en_casa(self, dt):
+        """Método para mover el fantasma dentro de la casa"""
+        if not self.en_casa:
+            return
+
+        # Movimiento vertical
+        if self.movimiento_casa == 'arriba':
+            self.posicion.y -= self.velocidad_casa * dt
+            if self.posicion.y <= self.limite_arriba:
+                self.posicion.y = self.limite_arriba
+                self.movimiento_casa = 'abajo'
+        else:
+            self.posicion.y += self.velocidad_casa * dt
+            if self.posicion.y >= self.limite_abajo:
+                self.posicion.y = self.limite_abajo
+                self.movimiento_casa = 'arriba'
+
+        # Mantener dentro de límites horizontales
+        self.posicion.x = max(self.limite_izquierdo,
+                              min(self.posicion.x, self.limite_derecho))
+    def liberar_de_casa(self):
+        """Método para liberar al fantasma de la casa inicial"""
+        self.activo = True
+        self.en_casa = False
+        self.modo_normal()  # Asegurar que empiece en modo normal
+
+    def cargar_animaciones_ojos(self):
+        """Cargar las imágenes de los ojos para cuando el fantasma está en modo SPAWN"""
+        self.skins_ojos = {
+            ARRIBA: pygame.image.load("multimedia/OjosArriba.png").convert_alpha(),
+            ABAJO: pygame.image.load("multimedia/OjosAbajo.png").convert_alpha(),
+            IZQUIERDA: pygame.image.load("multimedia/OjosIzquierda.png").convert_alpha(),
+            DERECHA: pygame.image.load("multimedia/OjosDerecha.png").convert_alpha()
+        }
+
+
     def actualizar_skin_freight(self, dt):
+        # Actualiza el tiempo acumulado en modo Freight
         self.tiempo_freight += dt
-        if self.tiempo_freight >= self.intervalo_freight:
-            self.tiempo_freight = 0
-            self.indice_freight = (self.indice_freight + 1) % len(self.skins_freight)
-            self.skin = self.skins_freight[self.indice_freight]
+        tiempo_restante = self.duracion_freight - self.tiempo_freight
+
+        if tiempo_restante <= 3:  # Comienza a parpadear en los últimos 3 segundos
+            self.tiempo_parpadeo += dt
+            if self.tiempo_parpadeo >= self.intervalo_freight:
+                self.tiempo_parpadeo = 0  # Reinicia el contador de parpadeo
+                # Alterna entre las imágenes de parpadeo (azul y blanco)
+                self.indice_freight = (self.indice_freight + 1) % len(self.skins_freight)
+                self.skin = self.skins_freight[self.indice_freight]
+        else:
+            # Mantén la imagen azul fija cuando el tiempo restante es mayor a 3 segundos
+            self.skin = self.skins_freight[0]
+            self.tiempo_parpadeo = 0  # Reinicia el contador de parpadeo al estado inicial
 
     def actualizar(self, dt):
+        if not self.activo and self.en_casa:
+            self.mover_en_casa(dt)
+            return
+
         self.modo.actualizar(dt)
         if self.modo.current == SCATTER:
             self.scatter()
         elif self.modo.current == CHASE:
             self.chase()
 
+        elif self.modo.current == SPAWN:
+            self.spawn()
+
 
         # Actualizar animación según el modo
         if self.modo.current == FREIGHT:
             self.actualizar_skin_freight(dt)
+        elif self.modo.current == SPAWN:
+            # Actualizar la imagen de los ojos según la dirección
+            if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
+                self.skin = self.skins_ojos[self.direccion]
+            # Verificar si el fantasma ha llegado a su nodo de spawn
+            if self.posicion == self.meta:
+                self.modo_normal()  # Cambiar al modo normal
         else:
-            self.actualizar_animacion(dt)  # Actualizar la animación normal
-
+            self.actualizar_animacion(dt)
 
         super().actualizar(dt)
-
 
     def chase(self):
         self.meta = self.pacman.posicion
@@ -75,12 +156,24 @@ class Fantasma(Entidad):
         self.meta = Vector1(0, 0)
 
     def spawn(self):
-        self.meta = self.nodoSpawn.posicion
+        if hasattr(self, 'nodoSpawn') and self.nodoSpawn is not None:
+            self.meta = self.nodoSpawn.posicion
+        else:
+            self.meta = self.nodoInicial.posicion
+
 
     def setSpawnNode(self, nodo):
         self.nodoSpawn = nodo
 
     def iniciar_spawn(self):
+
+        """Inicia el modo spawn cuando el fantasma es comido"""
+        self.modo.set_modo_spawn()
+        self.set_velocidad(300)
+        self.metodo_direccion = self.direccion_meta
+        self.spawn()
+        # No resetear la skin aquí, ya que queremos mantener los ojos
+
         # self.modo.set_modo_spawn()
         if self.modo.current == SPAWN:
             self.set_velocidad(150)
@@ -88,21 +181,32 @@ class Fantasma(Entidad):
             self.spawn()
 
     def modo_Freight(self):
-        self.modo.modo_freight()
-        if self.modo.current == FREIGHT:
+        """Solo entrar en modo Freight si no está en casa"""
+        if not self.en_casa:
+            self.modo.modo_freight()
+            if self.modo.current == FREIGHT:
+                self.set_velocidad(50)
+                self.metodo_direccion = self.direccion_aleatoria
+                self.tiempo_freight = 0  # Tiempo acumulado en Freight
+                self.duracion_freight = 7  # Duración total en segundos
+                self.tiempo_parpadeo = 0  # Controla el tiempo de parpadeo
+                self.skin = self.skins_freight[0]  # Inicia con la imagen azul
 
-            self.set_velocidad(50)
-            self.metodo_direccion = self.direccion_aleatoria
-            self.tiempo_freight = 0  # Reiniciar el tiempo de animación
-            self.indice_freight = 0  # Reiniciar el índice
 
     def modo_normal(self):
+        """Restaura el modo normal del fantasma"""
         self.set_velocidad(100)
+        #self.modo.modo_chase()
         self.metodo_direccion = self.direccion_meta
+        self.modo.current = CHASE  # Establecer explícitamente el modo
+        # Asegurarse de que la skin vuelva a la animación normal
+        if hasattr(self, 'direccion') and self.direccion in self.skins:
+            self.skin = self.skins[self.direccion][0]
 
     def cargar_animaciones(self):
         """Método base para cargar animaciones de fantasmas"""
         pass
+
 
     def render(self, pantalla):
         """Renderiza el fantasma en la pantalla"""
@@ -247,6 +351,17 @@ class GrupoFantasmas(object):
         self.inky = Inky(nodo, pacman, self.blinky)
         self.clyde = Clyde(nodo, pacman)
         self.fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
+        # Activar solo a Blinky inicialmente
+        self.blinky.activo = True
+        # Calcular límites de la casa basados en las posiciones iniciales
+        self.calcular_limites_casa()
+
+        # Establecer el nodo spawn por defecto
+        self.setSpawnNode(nodo)  # Usar el nodo inicial como spawn por defecto
+
+    def setSpawnNode(self, nodo):
+        for fantasma in self:
+            fantasma.setSpawnNode(nodo)
 
     def __iter__(self):
         return iter(self.fantasmas)
@@ -279,11 +394,43 @@ class GrupoFantasmas(object):
     def reset(self):
         for fantasma in self:
             fantasma.reset()
+            # Reactivar solo a Blinky
+            self.blinky.activo = True
 
     def esconder(self):
-
         for fantasma in self:
             fantasma.visible = False
+
+    def activar_fantasma(self, fantasma):
+        """Activa un fantasma específico"""
+        fantasma.activo = True
+        fantasma.modo_normal()  # Asegurar que empiece en modo normal
+
+    def calcular_limites_casa(self):
+        """Calcula los límites de la casa basados en las posiciones de los fantasmas"""
+        posiciones_x = [fantasma.posicion_inicial.x for fantasma in self.fantasmas]
+        posiciones_y = [fantasma.posicion_inicial.y for fantasma in self.fantasmas]
+
+        # Añadir un margen de movimiento
+        margen = ALTURACELDA * 2  # Ajusta este valor según necesites
+
+        # Calcular límites
+        limite_izquierda = min(posiciones_x) - ANCHOCELDA
+        limite_derecha = max(posiciones_x) + ANCHOCELDA
+        limite_arriba = min(posiciones_y) - margen / 2
+        limite_abajo = max(posiciones_y) + margen / 2
+
+        # Asignar límites a cada fantasma
+        for fantasma in self.fantasmas:
+            fantasma.limite_izquierdo = limite_izquierda
+            fantasma.limite_derecho = limite_derecha
+            fantasma.limite_arriba = limite_arriba
+            fantasma.limite_abajo = limite_abajo
+    def desactivar_todos(self):
+        """Desactiva todos los fantasmas excepto Blinky"""
+        for fantasma in self.fantasmas[1:]:  # Todos excepto Blinky
+            fantasma.activo = False
+            fantasma.posicion = fantasma.posicion_inicial.copiar()
 
     def mostrar(self):
         for fantasma in self:

@@ -104,7 +104,13 @@ class Pacman(Entidad):
         return False
 
     def colision_con_fantasmas(self, fantasmas):
-        """Verifica colisiones con fantasmas"""
+        """
+        Verifica colisiones con los fantasmas.
+        Retorna los puntos si come un fantasma asustado,
+        0 si no hay colisión o si Pacman muere.
+        Recibe como parámetro un objeto GrupoFantasmas
+        """
+        # Iterar sobre todos los fantasmas usando el iterador de GrupoFantasmas
         for fantasma in fantasmas:
             if fantasma.visible:
                 distancia = self.posicion - fantasma.posicion
@@ -115,7 +121,7 @@ class Pacman(Entidad):
                     if fantasma.modo.current == FREIGHT:
                         # Come al fantasma
                         fantasma.iniciar_spawn()
-                        return fantasma.puntos
+                        return fantasma.puntos  # Usa los puntos del fantasma
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
                         self.morir()
