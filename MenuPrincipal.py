@@ -92,7 +92,15 @@ class MenuPrincipal:
 
     def cargar_partida(self):
         print("Cargando partida guardada...")
-        # Implementar la lógica de carga de partida aquí
+        self.musica_fondo.stop()
+        juego = Controladora()
+        if juego.cargar_estado("pacman_save.json"):
+            juego.empezar()
+            while True:
+                juego.actualizar()
+        else:
+            print("Error al cargar la partida guardada.")
+
 
 
 class TextoMenu:

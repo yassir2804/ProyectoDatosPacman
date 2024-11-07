@@ -17,7 +17,9 @@ class Fruta(Entidad):
         self.temporizador = 0
         self.desaparecer = False
         self.puntos = 100
-        self.tamano_fruta = (25, 25)  # Tamaño deseado para todas las frutas
+        self.tamano_fruta = (25, 25)# Tamaño deseado para todas las frutas
+        self.en_pantalla = False
+
 
         # Cargar la imagen de la fruta
         self.cargar_imagenes()
