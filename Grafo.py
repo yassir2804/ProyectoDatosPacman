@@ -1,178 +1,82 @@
-import numpy as np
 import pygame
 from Vector import Vector1
 from Constantes import *
-
+import numpy as np
 
 class Nodo(object):
-    def __init__(self, posicion):
-        self.posicion = posicion
+    def __init__(self, x, y):
+        self.posicion = Vector1(x, y)
         self.vecinos = {
-            DERECHA: None,
-            IZQUIERDA: None,
             ARRIBA: None,
             ABAJO: None,
+            IZQUIERDA: None,
+            DERECHA: None,
             PORTAL: None
         }
-        # Atributos para A*
-        self.costo_g = float('inf')  # Costo desde el inicio
-        self.costo_h = 0  # Costo heurístico al objetivo
-        self.costo_f = float('inf')  # Costo total (g + h)
-        self.padre = None  # Nodo padre para reconstruir el camino
-
-    
-    def reiniciar_datos_camino(self):
-        """Reinicia los datos de búsqueda de camino"""
-        self.costo_g = float('inf')
-        self.costo_h = 0
-        self.costo_f = float('inf')
-        self.padre = None
-
-    def calcular_distancia_hasta(self, otro_nodo):
-        """Calcula la distancia Manhattan entre este nodo y otro"""
-        return abs(self.posicion.x - otro_nodo.posicion.x) + \
-            abs(self.posicion.y - otro_nodo.posicion.y)
-
-    def obtener_vecinos_validos(self):
-        """Retorna lista de vecinos válidos"""
-        return [(dir, vecino) for dir, vecino in self.vecinos.items()
-                if vecino is not None]
 
     def render(self, pantalla):
         for n in self.vecinos.keys():
             if self.vecinos[n] is not None:
-                pygame.draw.line(pantalla, BLANCO, self.posicion.tupla(),
-                                 self.vecinos[n].posicion.tupla())
-        pygame.draw.circle(pantalla, AZUL, self.posicion.entero(), 12)
-
-    def agregar_vecino(self, direccion, nodo_vecino):
-        self.vecinos[direccion] = nodo_vecino
-
-    def encontrar_camino_hasta(self, nodo_objetivo):
-        """Encuentra el camino hasta el nodo objetivo usando A*"""
-        # Reinicia todos los nodos
-        self.reiniciar_datos_camino()
-
-        # Inicializa el nodo inicial
-        self.costo_g = 0
-        self.costo_h = self.calcular_distancia_hasta(nodo_objetivo)
-        self.costo_f = self.costo_g + self.costo_h
-
-        nodos_abiertos = {self}  # Nodos por explorar
-        nodos_cerrados = set()  # Nodos ya explorados
-
-        while nodos_abiertos:
-            # Obtiene el nodo con menor costo_f
-            actual = min(nodos_abiertos, key=lambda x: (x.costo_f, x.costo_h))
-
-            if actual == nodo_objetivo:
-                # Reconstruye y retorna el camino
-                camino = []
-                while actual != self:
-                    camino.append(actual)
-                    actual = actual.padre
-                return camino[::-1]
-
-            nodos_abiertos.remove(actual)
-            nodos_cerrados.add(actual)
-
-            # Explora los vecinos
-            for direccion, vecino in actual.obtener_vecinos_validos():
-                if vecino in nodos_cerrados:
-                    continue
-
-                # Calcula el nuevo costo g
-                costo_tentativo = actual.costo_g + 1
-
-                if vecino not in nodos_abiertos:
-                    nodos_abiertos.add(vecino)
-                elif costo_tentativo >= vecino.costo_g:
-                    continue
-
-                # Este camino es el mejor hasta ahora
-                vecino.padre = actual
-                vecino.costo_g = costo_tentativo
-                vecino.costo_h = vecino.calcular_distancia_hasta(nodo_objetivo)
-                vecino.costo_f = vecino.costo_g + vecino.costo_h
-
-        return None  # No se encontró camino
-
-    def obtener_siguiente_direccion_hacia(self, nodo_objetivo):
-        """Obtiene la siguiente dirección hacia el objetivo"""
-        camino = self.encontrar_camino_hasta(nodo_objetivo)
-        if not camino or not camino[0]:
-            return None
-
-        # Encuentra qué dirección lleva al siguiente nodo
-        siguiente_nodo = camino[0]
-        for direccion, vecino in self.obtener_vecinos_validos():
-            if vecino == siguiente_nodo:
-                return direccion
-
-        return None
+                linea_inicio = self.posicion.tupla()
+                linea_fin = self.vecinos[n].posicion.tupla()
+                pygame.draw.line(pantalla, BLANCO, linea_inicio, linea_fin, 4)
+                pygame.draw.circle(pantalla, ROJO, self.posicion.entero(), 12)
 
 class Grafo(object):
     def __init__(self, nivel):
+        self.nivel = nivel
         self.nodosLUT = {}
         self.simbolosNodos = ['+', 'P', 'n']
         self.simbolosCaminos = ['.', '-', '|', 'p']
+        self.casa = None
         datos = self.leer_laberinto(nivel)
         self.crear_tabla_nodos(datos)
         self.conectar_horizontal(datos)
         self.conectar_vertical(datos)
 
-    def render(self, pantalla):
-        for nodo in self.nodosLUT.values():
-            nodo.render(pantalla)
-
     def leer_laberinto(self, archivoTexto):
-        datos = np.loadtxt(archivoTexto, dtype='<U1')
-        print("Datos del laberinto:")
-        print(datos)
-        return datos
-
+        return np.loadtxt(archivoTexto, dtype='<U1')
 
     def crear_tabla_nodos(self, datos, xbalance=0, ybalance=0):
         for fila in range(datos.shape[0]):
             for col in range(datos.shape[1]):
                 if datos[fila][col] in self.simbolosNodos:
                     x, y = self.construir_clave(col + xbalance, fila + ybalance)
-                    self.nodosLUT[(x, y)] = Nodo(Vector1(x, y))
-                    print(f"Nodo creado en: {(x, y)}")
+                    self.nodosLUT[(x, y)] = Nodo(x, y)
 
     def construir_clave(self, col, fila):
         return col * ANCHOCELDA, fila * ALTURACELDA
 
-    def conectar_horizontal(self, datos):
+    def conectar_horizontal(self, datos, xbalance=0, ybalance=0):
         for fila in range(datos.shape[0]):
-            key = None
+            clave = None
             for col in range(datos.shape[1]):
                 if datos[fila][col] in self.simbolosNodos:
-                    if key is None:
-                        key = self.construir_clave(col, fila)
+                    if clave is None:
+                        clave = self.construir_clave(col + xbalance, fila + ybalance)
                     else:
-                        otrallave = self.construir_clave(col, fila)
-                        self.nodosLUT[key].vecinos[DERECHA] = self.nodosLUT[otrallave]
-                        self.nodosLUT[otrallave].vecinos[IZQUIERDA] = self.nodosLUT[key]
-                        key = otrallave
+                        otra_clave = self.construir_clave(col + xbalance, fila + ybalance)
+                        self.nodosLUT[clave].vecinos[DERECHA] = self.nodosLUT[otra_clave]
+                        self.nodosLUT[otra_clave].vecinos[IZQUIERDA] = self.nodosLUT[clave]
+                        clave = otra_clave
                 elif datos[fila][col] not in self.simbolosCaminos:
-                    key = None
+                    clave = None
 
-    def conectar_vertical(self, datos):
+    def conectar_vertical(self, datos, xbalance=0, ybalance=0):
         datos_transpuestos = datos.transpose()
         for col in range(datos_transpuestos.shape[0]):
-            key = None
+            clave = None
             for fila in range(datos_transpuestos.shape[1]):
                 if datos_transpuestos[col][fila] in self.simbolosNodos:
-                    if key is None:
-                        key = self.construir_clave(col, fila)
+                    if clave is None:
+                        clave = self.construir_clave(col + xbalance, fila + ybalance)
                     else:
-                        otrallave = self.construir_clave(col, fila)
-                        self.nodosLUT[key].vecinos[ABAJO] = self.nodosLUT[otrallave]
-                        self.nodosLUT[otrallave].vecinos[ARRIBA] = self.nodosLUT[key]
-                        key = otrallave
+                        otra_clave = self.construir_clave(col + xbalance, fila + ybalance)
+                        self.nodosLUT[clave].vecinos[ABAJO] = self.nodosLUT[otra_clave]
+                        self.nodosLUT[otra_clave].vecinos[ARRIBA] = self.nodosLUT[clave]
+                        clave = otra_clave
                 elif datos_transpuestos[col][fila] not in self.simbolosCaminos:
-                    key = None
+                    clave = None
 
     def obtener_nodo_desde_pixeles(self, pixel_x, pixel_y):
         if (pixel_x, pixel_y) in self.nodosLUT.keys():
@@ -180,15 +84,40 @@ class Grafo(object):
         return None
 
     def obtener_nodo_desde_tiles(self, col, fila):
-        clave = self.construir_clave(col, fila)
-        return self.nodosLUT.get(clave, None)
+        x, y = self.construir_clave(col, fila)
+        if (x, y) in self.nodosLUT.keys():
+            return self.nodosLUT[(x, y)]
+        return None
 
-    def punto_partida_pacman(self):
-        return self.obtener_nodo_desde_tiles(14, 32)
+    def obtener_nodo_temporal_inicio(self):
+        nodos = list(self.nodosLUT.values())
+        return nodos[0]
 
     def set_portales(self, par1, par2):
-        clave1 = self.construir_clave(*par1)  # Corrección del nombre
-        clave2 = self.construir_clave(*par2)  # Corrección del nombre
-        if clave1 in self.nodosLUT.keys() and clave2 in self.nodosLUT.keys():  # Corrección de variable
-            self.nodosLUT[clave1].vecinos[PORTAL] = self.nodosLUT[clave2]  # Asignación correcta
-            self.nodosLUT[clave2].vecinos[PORTAL] = self.nodosLUT[clave1]  # Asignación correcta
+        clave1 = self.construir_clave(*par1)
+        clave2 = self.construir_clave(*par2)
+        if clave1 in self.nodosLUT.keys() and clave2 in self.nodosLUT.keys():
+            self.nodosLUT[clave1].vecinos[PORTAL] = self.nodosLUT[clave2]
+            self.nodosLUT[clave2].vecinos[PORTAL] = self.nodosLUT[clave1]
+
+    def crear_nodos_casa(self, xbalance, ybalance):
+        datos_casa = np.array([['X','X','+','X','X'],
+                             ['X','X','.','X','X'],
+                             ['+','X','.','X','+'],
+                             ['+','.','+','.','+'],
+                             ['+','X','X','X','+']])
+
+        self.crear_tabla_nodos(datos_casa, xbalance, ybalance)
+        self.conectar_horizontal(datos_casa, xbalance, ybalance)
+        self.conectar_vertical(datos_casa, xbalance, ybalance)
+        self.casa = self.construir_clave(xbalance + 2, ybalance)
+        return self.casa
+
+    def conectar_nodos_casa(self, casa, otro, direccion):
+        clave = self.construir_clave(*otro)
+        self.nodosLUT[casa].vecinos[direccion] = self.nodosLUT[clave]
+        self.nodosLUT[clave].vecinos[direccion * -1] = self.nodosLUT[casa]
+
+    def render(self, pantalla):
+        for nodo in self.nodosLUT.values():
+            nodo.render(pantalla)
