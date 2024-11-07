@@ -28,14 +28,50 @@ class Controladora(object):
         self.menu_game_over = None
         self.reiniciar_juego = False
         # Crear Pacman primero
-        self.pacman = Pacman(self.grafo.punto_partida_pacman())
+        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(15, 26))
 
-        # Crear grupo de fantasmas
-        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(21, 18))
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(19, 17))
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+
+        # Crear grupo de fantasmas con posiciones específicas
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(6, 26), pacman=self.pacman)
+
+        # Configurar posiciones iniciales específicas para cada fantasma
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Blinky arriba
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Pinky centro
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Inky izquierda
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Clyde derecha
+
+        # Configurar nodo de spawn para todos los fantasmas
+        nodo_spawn = self.grafo.obtener_nodo_desde_tiles(12.5, 14)  # Punto de spawn común
+        self.fantasmas.setSpawnNode(nodo_spawn)
+
+        self.casa = self.grafo.crear_nodos_casa(11.5, 14)
+        # Conectar con el nodo de la izquierda (columna 9)
+        self.grafo.conectar_nodos_casa(self.casa, (12, 14), IZQUIERDA)
+
+        # Conectar con el nodo de la derecha (columna 15)
+        self.grafo.conectar_nodos_casa(self.casa, (15, 14), DERECHA)
+
+
+        # Inicializar temporizadores para la salida de fantasmas
+        self.tiempo_transcurrido = 0
+        self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
+        self.fantasmas_liberados = 0
+
+        # Lista de fantasmas en orden de salida con tiempos específicos
+        self.orden_fantasmas = [
+            (self.fantasmas.blinky, 0),  # Blinky sale inmediatamente
+            (self.fantasmas.pinky, 5),  # Pinky sale a los 5 segundos
+            (self.fantasmas.inky, 10),  # Inky sale a los 10 segundos
+            (self.fantasmas.clyde, 15)  # Clyde sale a los 15 segundos
+        ]
+
+        # Desactivar todos excepto Blinky inicialmente
+        self.fantasmas.blinky.activo = True
+        self.fantasmas.blinky.en_casa = False
+        for fantasma, _ in self.orden_fantasmas[1:]:
+            fantasma.activo = False
+            fantasma.en_casa = True
+
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
@@ -49,7 +85,7 @@ class Controladora(object):
         self.orden_fantasmas = [self.fantasmas.blinky, self.fantasmas.pinky, self.fantasmas.inky, self.fantasmas.clyde]
 
 
-    def verificacion_pellets(self):
+    def verificacion_pellets(self):  # Añadimos dt como parámetro
         """
         Verifica la colisión con pellets y actualiza el puntaje.
         También maneja la activación del modo freight y los puntos por comer fantasmas.
@@ -59,19 +95,14 @@ class Controladora(object):
         if pellet:
             self.Pellet.numComidos += 1
             if pellet.nombre == PELLETPODER:
-                self.puntaje += 50  # Más puntos por power pellet
-                self.fantasmas.modo_Freight()  # Esto ya establece los puntos base en 200
+                self.puntaje += 50
+                self.fantasmas.modo_Freight()
                 self.tiempo_poder = self.duracion_poder
+                self.power_mode_active = True
             else:
-                self.puntaje += 10  # Puntos normales por pellet regular
+                self.puntaje += 10
             self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
-
-        # Verificar colisión con fantasmas
-        puntos_fantasma = self.pacman.colision_con_fantasmas(self.fantasmas)
-        if puntos_fantasma > 0:
-            self.puntaje += puntos_fantasma
-            self.grupo_texto.actualizarPuntaje(self.puntaje)
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""
@@ -208,7 +239,7 @@ class Controladora(object):
         # Crear fruta cuando se hayan comido cierta cantidad de pellets
         if self.Pellet.numComidos == 50 or self.Pellet.numComidos == 140:
             if self.fruta is None:
-                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(12, 23))
 
         # Verificar colisiones o si la fruta debe desaparecer
         if self.fruta is not None:
