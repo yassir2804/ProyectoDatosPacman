@@ -159,6 +159,9 @@ class Pacman(Entidad):
         self.direccion_deseada = STOP
         self.visible = True
         self.muerto = False
+    def reset_vidas(self):
+        self.reset_posicion()
+        self.vidas=3
 
     def reset_vidas(self):
         self.reset_posicion()

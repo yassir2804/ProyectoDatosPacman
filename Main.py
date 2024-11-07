@@ -7,7 +7,7 @@ from Grafo import Grafo
 from Pacman import Pacman
 from Pellet import GrupoPellets, Pellet, PelletPoder
 from Texto import GrupoTexto
-
+from MenuGameOver import MenuGameOver
 from Fruta import Fruta
 from Vector import Vector1
 
@@ -24,6 +24,9 @@ class Controladora(object):
         self.game_over = False
         self.pausa = False
 
+        #
+        self.menu_game_over = None
+        self.reiniciar_juego = False
         # Crear Pacman primero
         self.pacman = Pacman(self.grafo.punto_partida_pacman())
 
@@ -103,12 +106,16 @@ class Controladora(object):
 
 
     def actualizar(self):
+        """Método principal de actualización del juego"""
+        # Si hay una señal de reinicio, reiniciar el juego
+        if self.reiniciar_juego:
+            self.reiniciar()
+            return
+            # Obtener el tiempo delta para actualizaciones consistentes
+        dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:  # Añadir verificación de pausa
-            dt = self.clock.tick(30) / 1000.0
-
             if not self.pacman.muerto:
 
-                # self.actualizar_temporizador_fantasmas(dt)
 
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
@@ -143,7 +150,15 @@ class Controladora(object):
             if event.type == QUIT:
                 exit()
 
-            if event.type == KEYDOWN:
+            if self.game_over:
+                self.menu_game_over = MenuGameOver(self.pantalla)
+                opcion = self.menu_game_over.manejar_evento(event)
+                if opcion == "Nuevo Juego":
+                    self.reiniciar_juego = True
+                    self.game_over = False
+                elif opcion == "Salir":
+                    exit()
+            elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     if not self.pausa:
                         self.crear_menu_pausa()
@@ -156,6 +171,24 @@ class Controladora(object):
                         self.opcion_seleccionada = (self.opcion_seleccionada + 1) % len(self.opciones_pausa)
                     elif event.key == K_RETURN:
                         self.ejecutar_opcion_pausa()
+
+    def reiniciar(self):
+        """Reinicia completamente el juego"""
+        pygame.init()
+        self.pacman = Pacman(self.grafo.punto_partida_pacman())
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(21, 18))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(19, 17))
+        self.Pellet = GrupoPellets("mazetest.txt")
+        self.grupo_texto = GrupoTexto()
+        self.puntaje = 0
+        self.tiempo_poder = 0
+        self.game_over = False
+        self.menu_game_over = None
+        self.reiniciar_juego = False
+        self.fruta = None
+        self.pacman.reset_vidas()
 
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
