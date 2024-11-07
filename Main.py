@@ -1,6 +1,5 @@
 import json
 import pygame
-from pygame import Vector2
 from pygame.locals import *
 from Constantes import *
 from Fantasmas import GrupoFantasmas
@@ -10,7 +9,7 @@ from Pellet import GrupoPellets, Pellet, PelletPoder
 from Texto import GrupoTexto
 from MenuGameOver import MenuGameOver
 from Fruta import Fruta
-
+from Vector import Vector1
 
 
 class Controladora(object):
@@ -36,7 +35,7 @@ class Controladora(object):
         self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
         self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(21, 18))
         self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(19, 17))
-        #self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(18, 16))
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
@@ -45,8 +44,9 @@ class Controladora(object):
         self.tiempo_poder = 0
         self.duracion_poder = 7
 
-        #Frutas
+        # Frutas
         self.fruta = None
+        self.orden_fantasmas = [self.fantasmas.blinky, self.fantasmas.pinky, self.fantasmas.inky, self.fantasmas.clyde]
 
 
     def verificacion_pellets(self):
@@ -102,6 +102,7 @@ class Controladora(object):
         for fantasma in self.fantasmas:
             fantasma.activo = False
             fantasma.en_casa = True  # Resetear estado de casa
+            fantasma.posicion = fantasma.posicion_inicial.copiar()  # Reset position
 
 
     def actualizar(self):
@@ -114,6 +115,7 @@ class Controladora(object):
         dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:  # Añadir verificación de pausa
             if not self.pacman.muerto:
+
 
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
@@ -221,6 +223,9 @@ class Controladora(object):
         estado = {
             'pacman': {
                 'posicion': [self.pacman.posicion.x, self.pacman.posicion.y],
+                'direccion': self.pacman.direccion,  # Añadir la dirección actual
+                'direccion_deseada': self.pacman.direccion_deseada,
+                'blanco': [self.pacman.blanco.posicion.x, self.pacman.blanco.posicion.y] if self.pacman.blanco != self.pacman.nodo else None,
                 'vidas': self.pacman.vidas,
                 'puntos': self.puntaje
             },
@@ -228,13 +233,19 @@ class Controladora(object):
                 {
                     'nombre': fantasma.nombre,
                     'posicion': [fantasma.posicion.x, fantasma.posicion.y],
-                    'modo': fantasma.modo.current
+                    'modo': {
+                        'current': fantasma.modo.current,
+                        'tiempo': fantasma.modo.tiempo,
+                        'temporizador': fantasma.modo.temporizador
+                    },
+                    'activo': fantasma.activo,
+                    'en_casa': fantasma.en_casa,
+                    'duracion_freight': getattr(fantasma, 'duracion_freight', 7),
+                    'tiempo_freight': getattr(fantasma, 'tiempo_freight', 0),
+                    'parpadeo_freight': getattr(fantasma, 'parpadeo_freight', False),
+                    'contador_parpadeo': getattr(fantasma, 'contador_parpadeo', 0)
                 } for fantasma in self.orden_fantasmas
             ],
-            'fruta': {
-                'posicion': [self.fruta.posicion.x, self.fruta.posicion.y] if self.fruta else None,
-                'puntos': self.fruta.puntos if self.fruta else None
-            },
             'pellets': [
                 {
                     'fila': pellet.posicion.y // ALTURACELDA,
@@ -258,26 +269,52 @@ class Controladora(object):
             with open(archivo, 'r', encoding='utf-8') as f:
                 estado = json.load(f)
 
-            # Restaurar Pacman
-            self.pacman.posicion = Vector2(estado['pacman']['posicion'][0],
-                                           estado['pacman']['posicion'][1])
+            # Restore Pacman
+            self.pacman.posicion = Vector1(estado['pacman']['posicion'][0], estado['pacman']['posicion'][1])
+            fila = self.pacman.posicion.y // ALTURACELDA
+            columna = self.pacman.posicion.x // ANCHOCELDA
+            self.pacman.nodo = self.grafo.obtener_nodo_desde_tiles(columna, fila)
+            self.pacman.direccion = estado['pacman']['direccion']  # Restaurar dirección actual
+            self.pacman.direccion_deseada = estado['pacman']['direccion_deseada']
             self.pacman.vidas = estado['pacman']['vidas']
             self.puntaje = estado['pacman']['puntos']
 
-            # Restaurar fantasmas
-            for fantasma, datos in zip(self.orden_fantasmas, estado['fantasmas']):
-                fantasma.posicion = Vector2(datos['posicion'][0], datos['posicion'][1])
-                fantasma.modo.current = datos['modo']
-
-            # Restaurar fruta
-            if estado['fruta']['posicion']:
-                pos = estado['fruta']['posicion']
-                self.fruta = Fruta(Vector2(pos[0], pos[1]))
-                self.fruta.puntos = estado['fruta']['puntos']
+            if estado['pacman'].get('blanco'):
+                blanco_x, blanco_y = estado['pacman']['blanco']
+                blanco_fila = blanco_y // ALTURACELDA
+                blanco_columna = blanco_x // ANCHOCELDA
+                self.pacman.blanco = self.grafo.obtener_nodo_desde_tiles(blanco_columna, blanco_fila)
             else:
-                self.fruta = None
+                self.pacman.blanco = self.pacman.nodo
 
-            # Restaurar pellets
+            # Restore ghosts
+            for fantasma, datos in zip(self.orden_fantasmas, estado['fantasmas']):
+                fantasma.posicion = Vector1(datos['posicion'][0], datos['posicion'][1])
+                fantasma.modo.current = datos['modo']['current']
+                fantasma.modo.tiempo = datos['modo']['tiempo']
+                fantasma.modo.temporizador = datos['modo']['temporizador']
+                fantasma.activo = datos['activo']
+                fantasma.en_casa = datos['en_casa']
+                fantasma.duracion_freight = datos.get('duracion_freight', 7)
+                fantasma.tiempo_freight = datos.get('tiempo_freight', 0)
+                fantasma.parpadeo_freight = datos.get('parpadeo_freight', False)
+                fantasma.contador_parpadeo = datos.get('contador_parpadeo', 0)
+
+                if fantasma.modo.current == FREIGHT:
+                    if fantasma.modo.tiempo is None:
+                        fantasma.modo.tiempo = fantasma.duracion_freight
+                    if fantasma.modo.temporizador is None:
+                        fantasma.modo.temporizador = 0
+
+            # Restore fruit
+            # if estado['fruta']['posicion']:
+            #     pos = estado['fruta']['posicion']
+            #     self.fruta = Fruta(Vector1(estado['fruta']['posicion'][0],estado['fruta']['posicion'][1]))
+            #     self.fruta.puntos = estado['fruta']['puntos']
+            # else:
+            #     self.fruta = None
+
+            # Restore pellets
             self.Pellet.listaPellets.clear()
             self.Pellet.pelletsPoder.clear()
             for pellet_data in estado['pellets']:
@@ -293,13 +330,12 @@ class Controladora(object):
 
             self.tiempo_poder = estado['tiempo_poder']
 
-            # Actualizar UI
+            # Update UI
             if hasattr(self, 'grupo_texto'):
                 self.grupo_texto.actualizarPuntaje(self.puntaje)
                 self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
             return True
-
         except Exception as e:
             print(f"Error al cargar el estado: {str(e)}")
             return False
@@ -351,6 +387,13 @@ class Controladora(object):
             print("Partida guardada")
         elif self.opciones_pausa[self.opcion_seleccionada] == "Salir":
             exit()
+
+    def set_initial_positions(self):
+        self.pacman.posicion = self.grafo.punto_partida_pacman()
+        self.fantasmas.blinky.posicion = self.grafo.obtener_nodo_desde_tiles(16, 16).posicion
+        self.fantasmas.clyde.posicion = self.grafo.obtener_nodo_desde_tiles(21, 18).posicion
+        self.fantasmas.inky.posicion = self.grafo.obtener_nodo_desde_tiles(19, 17).posicion
+        self.fantasmas.pinky.posicion = self.grafo.obtener_nodo_desde_tiles(18, 16).posicion
 
 
 if __name__ == '__main__':

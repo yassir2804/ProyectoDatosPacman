@@ -21,6 +21,7 @@ class Pacman(Entidad):
         self.tiempo_muerte = 0
         self.duracion_muerte = 3  # 3 segundos de pausa al morir
         self.nodo_inicial = nodo  # Guardar nodo inicial para resetear posición
+        self.porcentaje_entre_nodos = 0.0  # Nueva variable para tracking
 
         # Inicialización de la animación
         self.cargar_animaciones()
@@ -31,8 +32,6 @@ class Pacman(Entidad):
         self.comiendo = False
         self.tiempo_ultimo_pellet = 0
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
-
-       # self.establecer_entre_nodos(IZQUIERDA)
 
     def cargar_animaciones(self):
         # Diccionario para almacenar las animaciones por dirección
@@ -56,6 +55,75 @@ class Pacman(Entidad):
 
             izq = pygame.image.load(f"multimedia/{i}_Izq.png").convert_alpha()
             self.skins[IZQUIERDA].append(izq)
+
+    def set_posicion_entre_nodos(self, nodo_origen, nodo_destino, porcentaje):
+        """
+        Establece la posición del Pacman entre dos nodos.
+        nodo_origen: nodo desde donde viene
+        nodo_destino: nodo hacia donde va
+        porcentaje: valor entre 0.0 y 1.0 que indica qué tan lejos está del nodo_origen
+        """
+        self.nodo = nodo_origen
+        self.blanco = nodo_destino
+        self.porcentaje_entre_nodos = porcentaje
+        # Calcular la posición exacta
+        vec_direccion = self.blanco.posicion - self.nodo.posicion
+        self.posicion = self.nodo.posicion + vec_direccion * porcentaje
+
+        # Determinar la dirección basada en los nodos
+        for direccion, vector in self.direcciones.items():
+            if direccion != STOP:
+                if self.nodo.vecinos[direccion] == self.blanco:
+                    self.direccion = direccion
+                    break
+
+    def guardar_estado(self):
+        """
+        Guarda el estado actual del Pacman incluyendo su posición entre nodos.
+        """
+        if self.direccion != STOP and self.blanco != self.nodo:
+            vec_total = self.blanco.posicion - self.nodo.posicion
+            vec_actual = self.posicion - self.nodo.posicion
+            # Calcular el porcentaje de avance
+            if vec_total.magnitudCuadrada() > 0:
+                self.porcentaje_entre_nodos = vec_actual.magnitudCuadrada() / vec_total.magnitudCuadrada()
+            else:
+                self.porcentaje_entre_nodos = 0.0
+        else:
+            self.porcentaje_entre_nodos = 0.0
+
+        return {
+            'nodo_id': id(self.nodo),
+            'blanco_id': id(self.blanco),
+            'direccion': self.direccion,
+            'porcentaje_entre_nodos': self.porcentaje_entre_nodos,
+            'vidas': self.vidas,
+            'tiene_poder': self.tiene_poder,
+            'tiempo_poder': self.tiempo_poder,
+            'direccion_deseada': self.direccion_deseada
+        }
+
+    def cargar_estado(self, estado, obtener_nodo_por_id):
+        """
+        Carga el estado del Pacman.
+        obtener_nodo_por_id: función que devuelve un nodo dado su ID
+        """
+        nodo = obtener_nodo_por_id(estado['nodo_id'])
+        blanco = obtener_nodo_por_id(estado['blanco_id'])
+
+        # Si está entre nodos
+        if estado['porcentaje_entre_nodos'] > 0:
+            self.set_posicion_entre_nodos(nodo, blanco, estado['porcentaje_entre_nodos'])
+        else:
+            self.nodo = nodo
+            self.blanco = blanco
+            self.set_posicion()
+
+        self.direccion = estado['direccion']
+        self.direccion_deseada = estado['direccion_deseada']
+        self.vidas = estado['vidas']
+        self.tiene_poder = estado['tiene_poder']
+        self.tiempo_poder = estado['tiempo_poder']
 
     def sonido_comer_pellet(self):
         """Inicia o mantiene el sonido de comer."""
@@ -95,6 +163,10 @@ class Pacman(Entidad):
         self.reset_posicion()
         self.vidas=3
 
+    def reset_vidas(self):
+        self.reset_posicion()
+        self.vidas = 3
+
     def colision_fruta(self, fruta):
         """Verifica colisiones con la fruta."""
         if fruta and fruta.visible:
@@ -111,9 +183,7 @@ class Pacman(Entidad):
         Verifica colisiones con los fantasmas.
         Retorna los puntos si come un fantasma asustado,
         0 si no hay colisión o si Pacman muere.
-        Recibe como parámetro un objeto GrupoFantasmas
         """
-        # Iterar sobre todos los fantasmas usando el iterador de GrupoFantasmas
         for fantasma in fantasmas:
             if fantasma.visible:
                 distancia = self.posicion - fantasma.posicion
@@ -124,7 +194,7 @@ class Pacman(Entidad):
                     if fantasma.modo.current == FREIGHT:
                         # Come al fantasma
                         fantasma.iniciar_spawn()
-                        return fantasma.puntos  # Usa los puntos del fantasma
+                        return fantasma.puntos
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
                         self.morir()
@@ -180,12 +250,19 @@ class Pacman(Entidad):
         self.actualizar_sonido(dt)
 
         if not self.muerto:
+            direccion_nueva = self.entrada_teclado()
+
+            # Permitir cambio de dirección incluso entre nodos si es dirección opuesta
+            if self.direccion_opuesta(direccion_nueva):
+                self.direccion_reversa()
+                return
+
             # Actualizar posición actual
             self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
 
-            direccion = self.entrada_teclado()
-            if direccion != STOP:
-                self.direccion_deseada = direccion
+            # Guardar la dirección deseada
+            if direccion_nueva != STOP:
+                self.direccion_deseada = direccion_nueva
 
             if self.blanco_sobrepasado():
                 self.nodo = self.blanco
@@ -193,6 +270,7 @@ class Pacman(Entidad):
                 if self.nodo.vecinos[PORTAL] is not None:
                     self.nodo = self.nodo.vecinos[PORTAL]
 
+                # Intentar cambiar a la dirección deseada
                 if self.direccion_deseada != STOP:
                     if self.validar_direccion(self.direccion_deseada):
                         self.direccion = self.direccion_deseada
@@ -204,9 +282,6 @@ class Pacman(Entidad):
                     self.direccion = STOP
 
                 self.set_posicion()
-            else:
-                if self.direccion_opuesta(direccion):
-                    self.direccion_reversa()
 
     def render(self, pantalla):
         """Renderiza a Pacman en la pantalla"""
