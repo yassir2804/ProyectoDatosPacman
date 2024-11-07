@@ -241,6 +241,7 @@ class Controladora(object):
             if self.fruta is None:
                 self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(12, 23))
 
+
         # Verificar colisiones o si la fruta debe desaparecer
         if self.fruta is not None:
             if self.pacman.colision_fruta(self.fruta):
@@ -262,26 +263,30 @@ class Controladora(object):
             },
             # Guardar el estado de los fantasmas
             'fantasmas': [
-    {
-        'nombre': fantasma.nombre,
-        'posicion': [fantasma.posicion.x, fantasma.posicion.y],
-        'direccion': fantasma.direccion,
-        'modo': {
-            'current': fantasma.modo.current,
-            'tiempo': fantasma.modo.tiempo,
-            'temporizador': fantasma.modo.temporizador
-        },
-        'activo': fantasma.activo,
-        'en_casa': fantasma.en_casa,
-        'duracion_freight': getattr(fantasma, 'duracion_freight', 7),
-        'tiempo_freight': getattr(fantasma, 'tiempo_freight', 0),
-        'parpadeo_freight': getattr(fantasma, 'parpadeo_freight', False),
-        'contador_parpadeo': getattr(fantasma, 'contador_parpadeo', 0),
-        # Guardar la posición del nodo blanco
-        'blanco': [fantasma.blanco.posicion.x, fantasma.blanco.posicion.y] if fantasma.blanco else None
-    } for fantasma in self.orden_fantasmas
-]
-,
+                {
+                    'nombre': fantasma.nombre,
+                    'posicion': [fantasma.posicion.x, fantasma.posicion.y],
+                    'direccion': fantasma.direccion,
+                    'modo': {
+                        'current': fantasma.modo.current,
+                        'tiempo': fantasma.modo.tiempo,
+                        'temporizador': fantasma.modo.temporizador
+                    },
+                    'activo': fantasma.activo,
+                    'en_casa': fantasma.en_casa,
+                    'duracion_freight': getattr(fantasma, 'duracion_freight', 7),
+                    'tiempo_freight': getattr(fantasma, 'tiempo_freight', 0),
+                    'parpadeo_freight': getattr(fantasma, 'parpadeo_freight', False),
+                    'contador_parpadeo': getattr(fantasma, 'contador_parpadeo', 0),
+                    # Guardar la posición del nodo blanco
+                    'blanco': [fantasma.blanco.posicion.x, fantasma.blanco.posicion.y] if fantasma.blanco else None
+                } for fantasma in self.orden_fantasmas
+            ],'fruta':
+                {
+                    'visible': self.fruta.visible if self.fruta else False,
+                    'tiempo': self.fruta.tiempo if self.fruta else 0,
+                    'temporizador': self.fruta.temporizador if self.fruta else 0
+                },
             'pellets': [
                 {
                     'fila': pellet.posicion.y // ALTURACELDA,
@@ -367,12 +372,13 @@ class Controladora(object):
                         fantasma.modo.temporizador = 0
 
             # Restore fruit
-            # if estado['fruta']['posicion']:
-            #     pos = estado['fruta']['posicion']
-            #     self.fruta = Fruta(Vector1(estado['fruta']['posicion'][0],estado['fruta']['posicion'][1]))
-            #     self.fruta.puntos = estado['fruta']['puntos']
-            # else:
-            #     self.fruta = None
+            if estado['fruta']['visible']:
+                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(12, 23))
+                self.fruta.visible = estado['fruta']['visible']
+                self.fruta.tiempo = estado['fruta']['tiempo']
+                self.fruta.temporizador = estado['fruta']['temporizador']
+            else:
+                self.fruta = None
 
             # Restore pellets
             self.Pellet.listaPellets.clear()
