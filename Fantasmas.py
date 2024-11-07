@@ -61,7 +61,7 @@ class Fantasma(Entidad):
         self.activo = False
         self.en_casa = True
         self.posicion = self.posicion_inicial.copiar()
-        self.modo_normal()
+        self.modo.modo_chase()
 
     def cargar_animaciones_freight(self):
         self.skins_freight = [
