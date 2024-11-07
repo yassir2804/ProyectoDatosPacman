@@ -53,6 +53,9 @@ class Entidad(object):
     def set_posicion(self):
         """Establece la posición de la entidad en el nodo actual."""
         self.posicion = self.nodo.posicion.copiar()
+        # Redondear a 2 decimales para evitar errores de punto flotante
+        self.posicion.x = round(self.posicion.x, 2)
+        self.posicion.y = round(self.posicion.y, 2)
 
     def actualizar(self, dt):
         """Actualiza la posición y estado de la entidad."""
@@ -106,12 +109,16 @@ class Entidad(object):
         return self.nodo
 
     def blanco_sobrepasado(self):
-        """Verifica si la entidad ha sobrepasado su nodo blanco."""
         if self.blanco is not None:
             vec1 = self.blanco.posicion - self.nodo.posicion
             vec2 = self.posicion - self.nodo.posicion
             nodo2_blanco = vec1.magnitudCuadrada()
             nodo2_self = vec2.magnitudCuadrada()
+
+            # Añadir una condición especial para el nodo de la casa
+            if self.nodo.posicion.x == ANCHOCELDA * 12 and self.nodo.posicion.y == ALTURACELDA * 14:
+                return nodo2_self > nodo2_blanco + 1  # Añadir un margen extra
+
             return nodo2_self >= nodo2_blanco
         return False
 
