@@ -100,6 +100,7 @@ class Grafo(object):
             self.nodosLUT[clave1].vecinos[PORTAL] = self.nodosLUT[clave2]
             self.nodosLUT[clave2].vecinos[PORTAL] = self.nodosLUT[clave1]
 
+
     def crear_nodos_casa(self, xbalance, ybalance):
         datos_casa = np.array([['X','X','+','X','X'],
                              ['X','X','.','X','X'],
