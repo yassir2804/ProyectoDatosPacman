@@ -28,29 +28,29 @@ class Controladora(object):
         self.menu_game_over = None
         self.reiniciar_juego = False
         # Crear Pacman primero
-        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(15, 26))
-
-
-        # Crear grupo de fantasmas con posiciones específicas
-        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(6, 26), pacman=self.pacman)
-
-        # Configurar posiciones iniciales específicas para cada fantasma
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Blinky arriba
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Pinky centro
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Inky izquierda
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Clyde derecha
-
-        # Configurar nodo de spawn para todos los fantasmas
-        nodo_spawn = self.grafo.obtener_nodo_desde_tiles(12.5, 14)  # Punto de spawn común
-        self.fantasmas.setSpawnNode(nodo_spawn)
+        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 32))
 
         self.casa = self.grafo.crear_nodos_casa(11.5, 14)
         # Conectar con el nodo de la izquierda (columna 9)
         self.grafo.conectar_nodos_casa(self.casa, (12, 14), IZQUIERDA)
-
         # Conectar con el nodo de la derecha (columna 15)
         self.grafo.conectar_nodos_casa(self.casa, (15, 14), DERECHA)
 
+
+        # Crear grupo de fantasmas con posiciones específicas
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
+
+        # Configurar posiciones iniciales específicas para cada fantasma
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Blinky arriba
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))  # Pinky centro
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Clyde derecha
+
+
+
+        # Configurar nodo de spawn para todos los fantasmas
+        # = self.grafo.obtener_nodo_desde_tiles(13.5, 17)  # Punto de spawn común
+        #self.fantasmas.setSpawnNode(nodo_spawn)
 
         # Inicializar temporizadores para la salida de fantasmas
         self.tiempo_transcurrido = 0
@@ -120,6 +120,7 @@ class Controladora(object):
             self.game_over = True
             self.fantasmas.esconder()  # Ocultar fantasmas
             self.grupo_texto.mostrar_game_over()
+            self.menu_game_over = MenuGameOver(self.pantalla)
 
     def reset_nivel(self):
         """Resetea las posiciones de todos los personajes"""
@@ -129,12 +130,6 @@ class Controladora(object):
         # Resetear temporizadores de fantasmas
         self.tiempo_transcurrido = 0
         self.fantasmas_liberados = 0
-        # Desactivar todos los fantasmas excepto Blinky
-        for fantasma in self.fantasmas:
-            fantasma.activo = False
-            fantasma.en_casa = True  # Resetear estado de casa
-            fantasma.posicion = fantasma.posicion_inicial.copiar()  # Reset position
-
 
     def actualizar(self):
         """Método principal de actualización del juego"""
@@ -182,7 +177,6 @@ class Controladora(object):
                 exit()
 
             if self.game_over:
-                self.menu_game_over = MenuGameOver(self.pantalla)
                 opcion = self.menu_game_over.manejar_evento(event)
                 if opcion == "Nuevo Juego":
                     self.reiniciar_juego = True
@@ -206,11 +200,10 @@ class Controladora(object):
     def reiniciar(self):
         """Reinicia completamente el juego"""
         pygame.init()
-        self.pacman = Pacman(self.grafo.punto_partida_pacman())
-        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(21, 18))
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(19, 17))
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
         self.puntaje = 0
@@ -230,6 +223,8 @@ class Controladora(object):
         if self.fruta is not None:
             self.fruta.render(self.pantalla)
         self.grupo_texto.renderizar(self.pantalla)
+        if self.game_over:
+            self.menu_game_over.dibujar()
         if self.pausa:
             self.dibujar_menu_pausa()
         pygame.display.update()
