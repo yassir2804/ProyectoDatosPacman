@@ -49,9 +49,6 @@ class Controladora(object):
         self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
         self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Clyde derecha
 
-
-
-
         # Configurar nodo de spawn para todos los fantasmas
         # = self.grafo.obtener_nodo_desde_tiles(13.5, 17)  # Punto de spawn común
         #self.fantasmas.setSpawnNode(nodo_spawn)
@@ -132,7 +129,6 @@ class Controladora(object):
         if self.pacman.vidas <= 0 and not self.game_over:
             self.game_over = True
             self.fantasmas.esconder()  # Ocultar fantasmas
-            self.grupo_texto.mostrar_game_over()
             self.menu_game_over = MenuGameOver(self.pantalla)
 
     def reset_nivel(self):
@@ -164,6 +160,8 @@ class Controladora(object):
                 self.verificacion_pellets()
             else:
                 self.pacman.actualizar(dt)
+                self.fantasmas.reset()
+
                 if not self.pacman.muerto:
                     self.reset_nivel()
 
@@ -271,12 +269,13 @@ class Controladora(object):
     def reiniciar(self):
         """Reinicia completamente el juego"""
         pygame.init()
-        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
         self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
         self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))  # Pinky centro
         self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
+        self.fantasmas.reset()
+        self.fantasmas.mostrar()
         self.Pellet = GrupoPellets("mazetest.txt")
-        self.grupo_texto = GrupoTexto()
         self.puntaje = 0
         self.tiempo_poder = 0
         self.game_over = False
@@ -284,6 +283,7 @@ class Controladora(object):
         self.reiniciar_juego = False
         self.fruta = None
         self.pacman.reset_vidas()
+        self.grupo_texto = GrupoTexto()
 
     def manejar_fin_de_juego(self):
         """Llama a este método cuando el juego termine y se deba mostrar el menú de Game Over."""
