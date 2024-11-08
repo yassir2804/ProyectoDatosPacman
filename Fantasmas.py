@@ -52,7 +52,11 @@ class Fantasma(Entidad):
         self.parpadeo_freight = False
         self.contador_parpadeo = 0
         self.velocidad = 100
-        self.direccion = DERECHA  # Initialize to a valid direction
+        self.direccion = DERECHA
+
+        self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")
+        self.sonido_freightmode.set_volume(0.2)
+        self.sonidoFreightSonando = False
 
     def reset(self):
         self.puntos = 200
@@ -156,13 +160,20 @@ class Fantasma(Entidad):
             self.spawn()
 
         if self.modo.current == FREIGHT:
+            if not self.sonidoFreightSonando:  # Check if the sound is already playing
+                self.sonido_freightmode.play(-1)  # Start playing the sound in loop
+                self.sonidoFreightSonando = True  # Set the flag to indicate the sound is playing
             self.actualizar_skin_freight(dt)
         elif self.modo.current == SPAWN:
+            self.sonidoFreightSonando = False  # Reset the flag when exiting FREIGHT mode
+            self.sonido_freightmode.stop()  # Stop the freight sound
             if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
                 self.skin = self.skins_ojos[self.direccion]
             if self.posicion == self.meta:
                 self.modo_normal()
         else:
+            self.sonidoFreightSonando = False  # Reset the flag when in any other mode
+            self.sonido_freightmode.stop()  # Ensure the freight sound stops
             self.actualizar_animacion(dt)
 
         # Ensure self.direccion is valid before calling super().actualizar(dt)

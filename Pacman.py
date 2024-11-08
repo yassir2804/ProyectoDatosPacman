@@ -16,7 +16,7 @@ class Pacman(Entidad):
         self.duracion_poder = 7
         self.fantasmas = []
         # Variables para el sistema de vidas
-        self.vidas = 2
+        self.vidas = 3
         self.muerto = False
         self.tiempo_muerte = 0
         self.duracion_muerte = 3  # 3 segundos de pausa al morir
@@ -29,6 +29,8 @@ class Pacman(Entidad):
 
         # Variables para el control del sonido
         self.sonido_pellet = pygame.mixer.Sound("multimedia/wakawakalargo.wav")
+        self.sonido_comerfantasma = pygame.mixer.Sound("multimedia/sonidocomerfantasma.wav")
+        self.sonido_colisionfantasma = pygame.mixer.Sound("multimedia/muerte.wav")
         self.comiendo = False
         self.tiempo_ultimo_pellet = 0
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
@@ -194,10 +196,12 @@ class Pacman(Entidad):
                     if fantasma.modo.current == FREIGHT:
                         # Come al fantasma
                         fantasma.iniciar_spawn()
+                        self.sonido_comerfantasma.play()
                         return fantasma.puntos
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
                         self.morir()
+                        self.sonido_colisionfantasma.play()
                         return 0
         return 0
 
