@@ -1,6 +1,7 @@
 import pygame
 from Vector import Vector1
 from Constantes import *
+from Entidad import *
 import numpy as np
 
 class Nodo(object):
@@ -13,6 +14,18 @@ class Nodo(object):
             DERECHA: None,
             PORTAL: None
         }
+        self.acceso = {ARRIBA: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUTA],
+                       ABAJO: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUTA],
+                       IZQUIERDA: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUTA],
+                       DERECHA: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUTA]}
+
+    def denegar_acceso(self, direccion, entidad):
+        if entidad.nombre in self.acceso[direccion]:
+            self.acceso[direccion].remove(entidad.nombre)
+
+    def dar_acceso(self, direccion, entidad):
+        if entidad.nombre not in self.acceso[direccion]:
+            self.acceso[direccion].append(entidad.nombre)
 
     def render(self, pantalla):
         for n in self.vecinos.keys():
@@ -21,6 +34,9 @@ class Nodo(object):
                 linea_fin = self.vecinos[n].posicion.tupla()
                 pygame.draw.line(pantalla, BLANCO, linea_inicio, linea_fin, 4)
                 pygame.draw.circle(pantalla, ROJO, self.posicion.entero(), 12)
+
+
+
 
 class Grafo(object):
     def __init__(self, nivel):
@@ -122,3 +138,35 @@ class Grafo(object):
     def render(self, pantalla):
         for nodo in self.nodosLUT.values():
             nodo.render(pantalla)
+
+    def denegar_acceso(self, col, row, direccion, entidad):
+        nodo = self.obtener_nodo_desde_tiles(col, row)
+        if nodo is not None:
+            nodo.denegar_acceso(direccion, entidad)
+
+    def dar_acceso(self, col, row, direccion, entidad):
+        nodo = self.obtener_nodo_desde_tiles(col, row)
+        if nodo is not None:
+            nodo.dar_acceso(direccion, entidad)
+
+    def denegar_acceso_entidades(self, col, row, direccion, entidades):
+        for entity in entidades:
+            self.denegar_acceso(col, row, direccion, entity)
+
+    def dar_acceso_entidades(self, col, row, direccion, entidades):
+        for entidad in entidades:
+            self.dar_acceso(col, row, direccion, entidad)
+
+    def denegar_acceso_a_casa(self, entidad):
+        self.nodosLUT[self.casa].denegar_acceso(ABAJO, entidad)
+
+    def dar_acceso_a_casa(self, entidad):
+        self.nodosLUT[self.casa].dar_acceso(ABAJO, entidad)
+
+    def denegar_acceso_a_casa_entidades(self, entidades):
+        for entidad in entidades:
+            self.denegar_acceso_a_casa(entidad)
+
+    def dar_acceso_a_casa_entidades(self, entidades):
+        for entidad in entidades:
+            self.dar_acceso_a_casa(entidad)

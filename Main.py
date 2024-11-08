@@ -10,6 +10,7 @@ from Pellet import GrupoPellets, Pellet, PelletPoder
 from Texto import GrupoTexto
 from MenuGameOver import MenuGameOver
 from Fruta import Fruta
+from TextoTemporal import TextoTemporal
 from Vector import Vector1
 
 
@@ -28,7 +29,7 @@ class Controladora(object):
         self.pausa = False
 
         #
-        self.menu_game_over = None
+        self.menu_game_over = MenuGameOver(self.pantalla)
         self.reiniciar_juego = False
         # Crear Pacman primero
         self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 32))
@@ -44,10 +45,10 @@ class Controladora(object):
         self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
 
         # Configurar posiciones iniciales específicas para cada fantasma
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Blinky arriba
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))  # Pinky centro
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))  # Blinky arriba
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Pinky centro
         self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Clyde derecha
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 16))  # Clyde derecha
 
         # Configurar nodo de spawn para todos los fantasmas
         # = self.grafo.obtener_nodo_desde_tiles(13.5, 17)  # Punto de spawn común
@@ -87,6 +88,9 @@ class Controladora(object):
         # Frutas
         self.fruta = None
         self.orden_fantasmas = [self.fantasmas.blinky, self.fantasmas.pinky, self.fantasmas.inky, self.fantasmas.clyde]
+        self.textos_temporales = []
+
+
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
@@ -101,6 +105,11 @@ class Controladora(object):
             self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
 
+            if self.Pellet.numComidos == 30:
+                self.fantasmas.inky.nodoInicial.dar_acceso(DERECHA, self.fantasmas.inky)
+            if self.Pellet.numComidos == 70:
+                self.fantasmas.clyde.nodoInicial.dar_acceso(IZQUIERDA, self.fantasmas.clyde)
+
             # Verificar si se completó el nivel
             if self.level_manager.verificar_nivel_completado(self.Pellet):
                 if self.level_manager.subir_nivel():
@@ -111,13 +120,12 @@ class Controladora(object):
                 else:
                     # El juego ha terminado (después del nivel 3)
                     self.game_over = True
-                    self.grupo_texto.mostrar_game_over()
 
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""
         # Verificar colisiones con fantasmas
-        puntos = self.pacman.colision_con_fantasmas(self.fantasmas)
+        puntos = self.pacman.colision_con_fantasmas(self.fantasmas,self.grafo,self.textos_temporales)
         if puntos > 0:
             self.puntaje += puntos
             self.grupo_texto.actualizarPuntaje(self.puntaje)
@@ -129,7 +137,7 @@ class Controladora(object):
         if self.pacman.vidas <= 0 and not self.game_over:
             self.game_over = True
             self.fantasmas.esconder()  # Ocultar fantasmas
-            self.menu_game_over = MenuGameOver(self.pantalla)
+
 
     def reset_nivel(self):
         """Resetea las posiciones de todos los personajes"""
@@ -142,7 +150,7 @@ class Controladora(object):
 
 
     def actualizar(self):
-        """Método principal de actualización del juego"""
+        """Méto do principal de actualización del juego"""
         # Si hay una señal de reinicio, reiniciar el juego
         if self.reiniciar_juego:
             self.reiniciar()
@@ -162,6 +170,7 @@ class Controladora(object):
                 self.pacman.actualizar(dt)
                 self.fantasmas.reset()
 
+
                 if not self.pacman.muerto:
                     self.reset_nivel()
 
@@ -169,6 +178,9 @@ class Controladora(object):
             self.verificar_vidas()
             self.verificar_eventos()
             self.verificar_fruta()
+
+            self.textos_temporales = [texto for texto in self.textos_temporales if texto.actualizar()]
+
             self.render()
         else:
             self.verificar_eventos()
@@ -191,6 +203,10 @@ class Controladora(object):
         for fantasma in [self.fantasmas.blinky, self.fantasmas.pinky,
                          self.fantasmas.inky, self.fantasmas.clyde]:
             fantasma.velocidad = nueva_velocidad
+            # fantasma.modo.current = SCATTER  # Restablecer el modo a CHASE
+            fantasma.actualizar_skin()  # Asegurarse de que la skin se actualice
+
+        self.denegar_accesos()
 
         # Crear una pausa de 5 segundos
         tiempo_inicio = pygame.time.get_ticks()
@@ -232,6 +248,19 @@ class Controladora(object):
 
     def empezar(self):
         self.setFondo()
+        self.denegar_accesos()
+
+    def denegar_accesos(self):
+        self.grafo.denegar_acceso_a_casa(self.pacman)
+        self.grafo.denegar_acceso_a_casa_entidades(self.fantasmas)
+        self.grafo.denegar_acceso_entidades(2 + 11.5, 3 + 14, IZQUIERDA, self.fantasmas)
+        self.grafo.denegar_acceso_entidades(2 + 11.5, 3 + 14, DERECHA, self.fantasmas)
+        self.fantasmas.inky.nodoInicial.denegar_acceso(DERECHA, self.fantasmas.inky)
+        self.fantasmas.clyde.nodoInicial.denegar_acceso(IZQUIERDA, self.fantasmas.clyde)
+        self.grafo.denegar_acceso_entidades(12, 14, ARRIBA, self.fantasmas)
+        self.grafo.denegar_acceso_entidades(15, 14, ARRIBA, self.fantasmas)
+        self.grafo.denegar_acceso_entidades(12, 26, ARRIBA, self.fantasmas)
+        self.grafo.denegar_acceso_entidades(15, 26, ARRIBA, self.fantasmas)
 
     def verificar_eventos(self):
         for event in pygame.event.get():
@@ -269,10 +298,10 @@ class Controladora(object):
     def reiniciar(self):
         """Reinicia completamente el juego"""
         pygame.init()
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))  # Pinky centro
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))  # Blinky arriba
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Pinky centro
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 16))  # Clyde derecha
         self.fantasmas.reset()
         self.fantasmas.mostrar()
         self.Pellet = GrupoPellets("mazetest.txt")
@@ -285,10 +314,7 @@ class Controladora(object):
         self.pacman.reset_vidas()
         self.grupo_texto = GrupoTexto()
 
-    def manejar_fin_de_juego(self):
-        """Llama a este método cuando el juego termine y se deba mostrar el menú de Game Over."""
-        if self.game_over and self.menu_game_over is None:
-            self.menu_game_over = MenuGameOver(self.pantalla)
+
 
 
     def render(self):
@@ -297,9 +323,12 @@ class Controladora(object):
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         self.fantasmas.render(self.pantalla)
+
         if self.fruta is not None:
             self.fruta.render(self.pantalla)
         self.grupo_texto.renderizar(self.pantalla)
+        for texto in self.textos_temporales:
+            texto.render(self.pantalla)
         if self.game_over:
             self.menu_game_over.dibujar()
         if self.pausa:
@@ -317,7 +346,21 @@ class Controladora(object):
         # Verificar colisiones o si la fruta debe desaparecer
         if self.fruta is not None:
             if self.pacman.colision_fruta(self.fruta):
-                self.puntaje += self.fruta.puntos  # Aumentar puntaje al comer la fruta
+                # Guardar la posición y puntos antes de eliminar la fruta
+                pos_x = int(self.fruta.posicion.x - 20)  # Ajustar según necesites
+                pos_y = int(self.fruta.posicion.y - 20)  # Ajustar según necesites
+                puntos_fruta = self.fruta.puntos
+                # Crear texto temporal
+                texto = TextoTemporal(
+                    texto=str(puntos_fruta),
+                    posicion=(pos_x, pos_y),
+                    duracion=1000,  # 1 segundo
+                    fuente=pygame.font.Font(None, 20),  # O tu fuente personalizada
+                    color=(255, 255, 255)  # Color blanco
+                )
+                self.textos_temporales.append(texto)
+                # Actualizar puntaje y eliminar la fruta
+                self.puntaje += puntos_fruta
                 self.grupo_texto.actualizarPuntaje(self.puntaje)
                 self.fruta = None
             elif self.fruta.desaparecer:
@@ -526,12 +569,7 @@ class Controladora(object):
         elif self.opciones_pausa[self.opcion_seleccionada] == "Salir":
             exit()
 
-    def set_initial_positions(self):
-        self.pacman.posicion = self.grafo.punto_partida_pacman()
-        self.fantasmas.blinky.posicion = self.grafo.obtener_nodo_desde_tiles(16, 16).posicion
-        self.fantasmas.clyde.posicion = self.grafo.obtener_nodo_desde_tiles(21, 18).posicion
-        self.fantasmas.inky.posicion = self.grafo.obtener_nodo_desde_tiles(19, 17).posicion
-        self.fantasmas.pinky.posicion = self.grafo.obtener_nodo_desde_tiles(18, 16).posicion
+
 
 
 if __name__ == '__main__':
