@@ -56,12 +56,7 @@ class Fantasma(Entidad):
 
     def reset(self):
         self.puntos = 200
-        self.metodo_direccion = self.direccion_meta
-        self.nodo_inicio(self.nodoInicial)
-        self.activo = False
-        self.en_casa = True
-        self.posicion = self.posicion_inicial.copiar()
-        self.modo.modo_chase()
+        self.scatter()
 
     def cargar_animaciones_freight(self):
         self.skins_freight = [
@@ -254,6 +249,13 @@ class Blinky(Fantasma):
     def chase(self):
         self.meta = self.pacman.posicion
 
+    def reset(self):
+        self.activo = True
+        self.en_casa = False
+        self.metodo_direccion = self.direccion_meta
+        self.nodo_inicio(self.nodoInicial)
+        self.posicion = self.posicion_inicial.copiar()
+
     def cargar_animaciones(self):
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/BlinkyArr.png").convert_alpha()],
@@ -278,6 +280,13 @@ class Pinky(Fantasma):
     def chase(self):
         # Pinky aims 4 tiles ahead of Pacman's current direction
         self.meta = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 4
+
+    def reset(self):
+        self.activo = False
+        self.en_casa = True
+        self.metodo_direccion = self.direccion_meta
+        self.nodo_inicio(self.nodoInicial)
+        self.posicion = self.posicion_inicial.copiar()
 
     def cargar_animaciones(self):
         self.skins = {
@@ -315,6 +324,12 @@ class Inky(Fantasma):
             # Si hay algún error en el cálculo, perseguir directamente a Pacman
             self.meta = self.pacman.posicion
 
+    def reset(self):
+        self.activo = False
+        self.en_casa = True
+        self.metodo_direccion = self.direccion_meta
+        self.nodo_inicio(self.nodoInicial)
+        self.posicion = self.posicion_inicial.copiar()
     def cargar_animaciones(self):
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/InkyArr.png").convert_alpha()],
@@ -348,6 +363,14 @@ class Clyde(Fantasma):
         else:
             # Otherwise chase Pacman like Blinky
             self.meta = self.pacman.posicion
+
+    def reset(self):
+        self.activo = False
+        self.en_casa = True
+        self.metodo_direccion = self.direccion_meta
+        self.nodo_inicio(self.nodoSpawn)
+
+        self.posicion = self.posicion_inicial.copiar()
 
     def cargar_animaciones(self):
         self.skins = {
@@ -425,10 +448,10 @@ class GrupoFantasmas(object):
     def reset(self):
         for fantasma in self:
             fantasma.reset()
-            # Reactivar solo a Blinky
-            self.blinky.activo = True
-            self.tiempo_transcurrido = 0
-            self.fantasmas_liberados = 0
+
+
+        self.tiempo_transcurrido = 0
+        self.fantasmas_liberados = 0
 
     def esconder(self):
         for fantasma in self:
