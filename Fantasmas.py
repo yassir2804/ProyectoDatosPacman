@@ -120,7 +120,7 @@ class Fantasma(Entidad):
         self.activo = True
         self.en_casa = False
         self.estado_salida = "esperando"
-        self.modo_normal()
+        self.scatter()
         self.metodo_direccion = self.direccion_meta
         print(f"{self.nombre} ha salido de casa")
 
@@ -227,6 +227,7 @@ class Fantasma(Entidad):
         self.set_velocidad(100)
         self.metodo_direccion = self.direccion_meta
         self.modo.current = CHASE
+        self.nodoSpawn.denegar_acceso(ABAJO, self)
         if hasattr(self, 'direccion') and self.direccion in self.skins:
             self.skin = self.skins[self.direccion][0]
 
@@ -264,8 +265,7 @@ class Blinky(Fantasma):
         self.activo = True
         self.en_casa = False
         self.metodo_direccion = self.direccion_meta
-        self.nodo_inicio(self.nodoInicial)
-        self.posicion = self.posicion_inicial.copiar()
+
 
     def cargar_animaciones(self):
         self.skins = {
@@ -296,8 +296,7 @@ class Pinky(Fantasma):
         self.activo = False
         self.en_casa = True
         self.metodo_direccion = self.direccion_meta
-        self.nodo_inicio(self.nodoInicial)
-        self.posicion = self.posicion_inicial.copiar()
+
 
     def cargar_animaciones(self):
         self.skins = {
@@ -339,8 +338,7 @@ class Inky(Fantasma):
         self.activo = False
         self.en_casa = True
         self.metodo_direccion = self.direccion_meta
-        self.nodo_inicio(self.nodoInicial)
-        self.posicion = self.posicion_inicial.copiar()
+
     def cargar_animaciones(self):
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/InkyArr.png").convert_alpha()],
@@ -379,9 +377,7 @@ class Clyde(Fantasma):
         self.activo = False
         self.en_casa = True
         self.metodo_direccion = self.direccion_meta
-        self.nodo_inicio(self.nodoSpawn)
 
-        self.posicion = self.posicion_inicial.copiar()
 
     def cargar_animaciones(self):
         self.skins = {

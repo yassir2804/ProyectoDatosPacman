@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *
+
+from TextoTemporal import TextoTemporal
 from Vector import Vector1
 from Constantes import *
 from Entidad import Entidad
@@ -180,7 +182,7 @@ class Pacman(Entidad):
                 return True
         return False
 
-    def colision_con_fantasmas(self, fantasmas):
+    def colision_con_fantasmas(self, fantasmas,grafo,textos_temporales):
         """
         Verifica colisiones con los fantasmas.
         Retorna los puntos si come un fantasma asustado,
@@ -194,9 +196,22 @@ class Pacman(Entidad):
 
                 if distancia_cuadrada <= radio_total:
                     if fantasma.modo.current == FREIGHT:
-                        # Come al fantasma
+                        grafo.dar_acceso_a_casa(fantasma)
                         fantasma.iniciar_spawn()
+
                         self.sonido_comerfantasma.play()
+
+                        pos_x = int(fantasma.posicion.x - 20)  # Ajusta estos valores según necesites
+                        pos_y = int(fantasma.posicion.y - 20)  # para centrar el texto
+                        texto = TextoTemporal(
+                            texto=str(fantasma.puntos),
+                            posicion=(pos_x, pos_y),
+                            duracion=1000,
+                            fuente=pygame.font.Font(None, 20),  # None usa la fuente predeterminada
+                            color=(255, 255, 255)
+                        )
+                        textos_temporales.append(texto)
+
                         return fantasma.puntos
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
