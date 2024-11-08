@@ -4,6 +4,7 @@ from pygame.locals import *
 from Constantes import *
 from Fantasmas import GrupoFantasmas
 from Grafo import Grafo
+from LevelManager import LevelManager
 from Pacman import Pacman
 from Pellet import GrupoPellets, Pellet, PelletPoder
 from Texto import GrupoTexto
@@ -12,8 +13,10 @@ from Fruta import Fruta
 from Vector import Vector1
 
 
+
 class Controladora(object):
     def __init__(self):
+
         pygame.init()
         self.pantalla = pygame.display.set_mode(TAMANIOPANTALLA, 0, 32)
         self.fondo = None
@@ -28,29 +31,30 @@ class Controladora(object):
         self.menu_game_over = None
         self.reiniciar_juego = False
         # Crear Pacman primero
-        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(15, 26))
-
-
-        # Crear grupo de fantasmas con posiciones específicas
-        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(6, 26), pacman=self.pacman)
-
-        # Configurar posiciones iniciales específicas para cada fantasma
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Blinky arriba
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Pinky centro
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Inky izquierda
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(6, 26))  # Clyde derecha
-
-        # Configurar nodo de spawn para todos los fantasmas
-        nodo_spawn = self.grafo.obtener_nodo_desde_tiles(12.5, 14)  # Punto de spawn común
-        self.fantasmas.setSpawnNode(nodo_spawn)
+        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 32))
 
         self.casa = self.grafo.crear_nodos_casa(11.5, 14)
         # Conectar con el nodo de la izquierda (columna 9)
         self.grafo.conectar_nodos_casa(self.casa, (12, 14), IZQUIERDA)
-
         # Conectar con el nodo de la derecha (columna 15)
         self.grafo.conectar_nodos_casa(self.casa, (15, 14), DERECHA)
 
+
+        # Crear grupo de fantasmas con posiciones específicas
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
+
+        # Configurar posiciones iniciales específicas para cada fantasma
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Blinky arriba
+        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))  # Pinky centro
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Clyde derecha
+
+
+
+
+        # Configurar nodo de spawn para todos los fantasmas
+        # = self.grafo.obtener_nodo_desde_tiles(13.5, 17)  # Punto de spawn común
+        #self.fantasmas.setSpawnNode(nodo_spawn)
 
         # Inicializar temporizadores para la salida de fantasmas
         self.tiempo_transcurrido = 0
@@ -72,10 +76,13 @@ class Controladora(object):
             fantasma.activo = False
             fantasma.en_casa = True
 
+        self.sonido_reinicio = pygame.mixer.Sound("multimedia/levelup.wav")
+        self.sonido_sirena = pygame.mixer.Sound("multimedia/sonidosirena.wav")
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
+        self.level_manager = LevelManager()
         self.puntaje = 0
         self.tiempo_poder = 0
         self.duracion_poder = 7
@@ -84,13 +91,7 @@ class Controladora(object):
         self.fruta = None
         self.orden_fantasmas = [self.fantasmas.blinky, self.fantasmas.pinky, self.fantasmas.inky, self.fantasmas.clyde]
 
-
-    def verificacion_pellets(self):  # Añadimos dt como parámetro
-        """
-        Verifica la colisión con pellets y actualiza el puntaje.
-        También maneja la activación del modo freight y los puntos por comer fantasmas.
-        """
-        # Verificar colisión con pellets
+    def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
         if pellet:
             self.Pellet.numComidos += 1
@@ -98,11 +99,23 @@ class Controladora(object):
                 self.puntaje += 50
                 self.fantasmas.modo_Freight()
                 self.tiempo_poder = self.duracion_poder
-                self.power_mode_active = True
             else:
                 self.puntaje += 10
             self.grupo_texto.actualizarPuntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
+
+            # Verificar si se completó el nivel
+            if self.level_manager.verificar_nivel_completado(self.Pellet):
+                if self.level_manager.subir_nivel():
+                    # Actualizar texto del nivel
+                    self.grupo_texto.todos_los_textos[LEVELTXT].setTexto(str(self.level_manager.nivel_actual).zfill(3))
+                    # Reiniciar el nivel con la nueva velocidad
+                    self.reiniciar_nivel()
+                else:
+                    # El juego ha terminado (después del nivel 3)
+                    self.game_over = True
+                    self.grupo_texto.mostrar_game_over()
+
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""
@@ -120,6 +133,7 @@ class Controladora(object):
             self.game_over = True
             self.fantasmas.esconder()  # Ocultar fantasmas
             self.grupo_texto.mostrar_game_over()
+            self.menu_game_over = MenuGameOver(self.pantalla)
 
     def reset_nivel(self):
         """Resetea las posiciones de todos los personajes"""
@@ -129,11 +143,6 @@ class Controladora(object):
         # Resetear temporizadores de fantasmas
         self.tiempo_transcurrido = 0
         self.fantasmas_liberados = 0
-        # Desactivar todos los fantasmas excepto Blinky
-        for fantasma in self.fantasmas:
-            fantasma.activo = False
-            fantasma.en_casa = True  # Resetear estado de casa
-            fantasma.posicion = fantasma.posicion_inicial.copiar()  # Reset position
 
 
     def actualizar(self):
@@ -142,12 +151,10 @@ class Controladora(object):
         if self.reiniciar_juego:
             self.reiniciar()
             return
-            # Obtener el tiempo delta para actualizaciones consistentes
+
         dt = self.clock.tick(30) / 1000.0
-        if not self.game_over and not self.pausa:  # Añadir verificación de pausa
+        if not self.game_over and not self.pausa:
             if not self.pacman.muerto:
-
-
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
                 self.Pellet.actualizar(dt)
@@ -169,6 +176,58 @@ class Controladora(object):
             self.verificar_eventos()
             self.render()
 
+    def reiniciar_nivel(self):
+        # Detener todos los sonidos actuales
+        pygame.mixer.stop()  # Detiene todos los sonidos que se estén reproduciendo
+
+        # Reiniciar posiciones de Pacman y fantasmas
+        self.sonido_reinicio.play()
+        self.pacman.reset_posicion()
+        self.fantasmas.reset()
+
+        # Recargar los pellets
+        self.Pellet = GrupoPellets("mazetest.txt")
+
+        # Actualizar velocidad de fantasmas
+        nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
+        for fantasma in [self.fantasmas.blinky, self.fantasmas.pinky,
+                         self.fantasmas.inky, self.fantasmas.clyde]:
+            fantasma.velocidad = nueva_velocidad
+
+        # Crear una pausa de 5 segundos
+        tiempo_inicio = pygame.time.get_ticks()
+
+        # Usar la fuente personalizada
+        font = pygame.font.Font("Fuentes/PressStart2P-Regular.ttf", 74)  # Fuente personalizada
+        texto_nivel = font.render(f"NIVEL {self.level_manager.nivel_actual}", True, (255, 255, 0))
+        rect_texto = texto_nivel.get_rect(center=(TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2))
+
+        while pygame.time.get_ticks() - tiempo_inicio < 5000:  # 5000 ms = 5 segundos
+            # Manejo de eventos durante la pausa
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    exit()
+
+            # Dibujar la pantalla durante la pausa
+            self.pantalla.fill(NEGRO)
+            self.grafo.render(self.pantalla)
+            self.Pellet.render(self.pantalla)
+            self.pacman.render(self.pantalla)
+            self.fantasmas.render(self.pantalla)
+
+            # Crear una superficie semitransparente para oscurecer el fondo
+            s = pygame.Surface(TAMANIOPANTALLA)
+            s.set_alpha(128)
+            s.fill(NEGRO)
+            self.pantalla.blit(s, (0, 0))
+
+            # Mostrar el texto del nivel
+            self.pantalla.blit(texto_nivel, rect_texto)
+            pygame.display.update()
+
+            # Mantener el framerate consistente
+            self.clock.tick(30)
+
     def setFondo(self):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
         self.fondo.fill(NEGRO)
@@ -181,14 +240,15 @@ class Controladora(object):
             if event.type == QUIT:
                 exit()
 
+            # Si el juego está en game over, manejar eventos del menú
             if self.game_over:
-                self.menu_game_over = MenuGameOver(self.pantalla)
                 opcion = self.menu_game_over.manejar_evento(event)
                 if opcion == "Nuevo Juego":
                     self.reiniciar_juego = True
                     self.game_over = False
                 elif opcion == "Salir":
                     exit()
+
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     if not self.pausa:
@@ -203,14 +263,18 @@ class Controladora(object):
                     elif event.key == K_RETURN:
                         self.ejecutar_opcion_pausa()
 
+        # Reproducir la sirena continuamente mientras el juego esté en curso
+        if not pygame.mixer.get_busy():  # Si no hay sonido en reproducción
+            self.sonido_sirena.set_volume(0.5)
+            self.sonido_sirena.play(-1)  # -1 significa que se reproduce infinitamente
+
     def reiniciar(self):
         """Reinicia completamente el juego"""
         pygame.init()
-        self.pacman = Pacman(self.grafo.punto_partida_pacman())
-        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13, 16), pacman=self.pacman)
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(16, 16))
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(21, 18))
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(19, 17))
+        self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
+        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
+        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))
+        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
         self.puntaje = 0
@@ -221,6 +285,12 @@ class Controladora(object):
         self.fruta = None
         self.pacman.reset_vidas()
 
+    def manejar_fin_de_juego(self):
+        """Llama a este método cuando el juego termine y se deba mostrar el menú de Game Over."""
+        if self.game_over and self.menu_game_over is None:
+            self.menu_game_over = MenuGameOver(self.pantalla)
+
+
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
         self.grafo.render(self.pantalla)
@@ -230,6 +300,8 @@ class Controladora(object):
         if self.fruta is not None:
             self.fruta.render(self.pantalla)
         self.grupo_texto.renderizar(self.pantalla)
+        if self.game_over:
+            self.menu_game_over.dibujar()
         if self.pausa:
             self.dibujar_menu_pausa()
         pygame.display.update()
