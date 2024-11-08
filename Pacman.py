@@ -16,7 +16,7 @@ class Pacman(Entidad):
         self.duracion_poder = 7
         self.fantasmas = []
         # Variables para el sistema de vidas
-        self.vidas = 3
+        self.vidas = 2
         self.muerto = False
         self.tiempo_muerte = 0
         self.duracion_muerte = 3  # 3 segundos de pausa al morir
