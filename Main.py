@@ -75,6 +75,7 @@ class Controladora(object):
 
         self.sonido_reinicio = pygame.mixer.Sound("multimedia/levelup.wav")
         self.sonido_sirena = pygame.mixer.Sound("multimedia/sonidosirena.wav")
+        self.fuente_pausa = None
 
         # Grupo de pellets y texto
         self.Pellet = GrupoPellets("mazetest.txt")
@@ -87,6 +88,10 @@ class Controladora(object):
         # Frutas
         self.fruta = None
         self.orden_fantasmas = [self.fantasmas.blinky, self.fantasmas.pinky, self.fantasmas.inky, self.fantasmas.clyde]
+
+    def configurarFuente(self, ruta_fuente, tamanio):
+        """Configura la fuente del menú de pausa"""
+        self.fuente_pausa = pygame.font.Font(ruta_fuente, tamanio)
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
@@ -483,11 +488,15 @@ class Controladora(object):
         self.opciones_pausa = ["Reanudar", "Guardar Partida", "Salir"]
         self.opcion_seleccionada = 0
 
+        # Configurar la fuente personalizada
+        if self.fuente_pausa is None:
+            self.configurarFuente("Fuentes/PressStart2P-Regular.ttf", 20)
+
         # Configuración del menú
-        ANCHO_MENU = 300
+        ANCHO_MENU = 320
         ALTO_MENU = 200
         self.superficie_pausa = pygame.Surface((ANCHO_MENU, ALTO_MENU))
-        self.superficie_pausa.fill(NEGRO)  # Usar tu constante NEGRO
+        self.superficie_pausa.fill(NEGRO)
         self.rect_pausa = self.superficie_pausa.get_rect()
         self.rect_pausa.center = (TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2)
 
@@ -505,11 +514,10 @@ class Controladora(object):
         pygame.draw.rect(self.superficie_pausa, NEGRO, self.superficie_pausa.get_rect())
         pygame.draw.rect(self.superficie_pausa, (255, 255, 255), self.superficie_pausa.get_rect(), 2)
 
-        # Dibujar opciones
-        font = pygame.font.Font(None, 36)
+        # Dibujar opciones usando la fuente personalizada
         for i, opcion in enumerate(self.opciones_pausa):
             color = (255, 255, 0) if i == self.opcion_seleccionada else (255, 255, 255)
-            texto = font.render(opcion, True, color)
+            texto = self.fuente_pausa.render(opcion, True, color)
             rect_texto = texto.get_rect()
             rect_texto.centerx = self.superficie_pausa.get_width() // 2
             rect_texto.y = 50 + i * 50

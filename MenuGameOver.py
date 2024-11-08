@@ -1,3 +1,4 @@
+import pygame
 from pygame import font, Surface, draw, KEYDOWN, K_UP, K_DOWN, K_RETURN
 
 from Constantes import *
@@ -10,15 +11,25 @@ class MenuGameOver:
         self.opcion_seleccionada = 0
 
         # Configuración del menú
-        self.fuente = font.Font(None, 36)
+        self.configurarFuente("Fuentes/PressStart2P-Regular.ttf", 20)
         ANCHO_MENU = 300
         ALTO_MENU = 200
         self.superficie = Surface((ANCHO_MENU, ALTO_MENU))
         self.superficie.fill(NEGRO)
         self.rect = self.superficie.get_rect()
         self.rect.center = (TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2)
+        self.sonido_gameover = pygame.mixer.Sound("multimedia/gameover.wav")
+        pygame.mixer.stop()
+        self.sonido_gameover.play()
+
+
+
+    def configurarFuente(self, ruta_fuente, tamano):
+        """Configura la fuente para el menú."""
+        self.fuente = font.Font(ruta_fuente, tamano)
 
     def dibujar(self):
+
         # Oscurecer el fondo
         s = Surface(TAMANIOPANTALLA)
         s.set_alpha(128)
