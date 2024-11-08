@@ -51,7 +51,7 @@ LEVELTXT = 1
 READYTXT = 2
 PAUSETXT = 3
 GAMEOVERTXT = 4
-
+LEVELUPTXT= 5
 
 
 #Constantes Fantasmas
