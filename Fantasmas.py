@@ -52,16 +52,15 @@ class Fantasma(Entidad):
         self.parpadeo_freight = False
         self.contador_parpadeo = 0
         self.velocidad = 100
-        self.direccion = DERECHA  # Initialize to a valid direction
+        self.direccion = DERECHA
+
+        self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")
+        self.sonido_freightmode.set_volume(0.2)
+        self.sonidoFreightSonando = False
 
     def reset(self):
         self.puntos = 200
-        self.metodo_direccion = self.direccion_meta
-        self.nodo_inicio(self.nodoInicial)
-        self.activo = False
-        self.en_casa = True
-        self.posicion = self.posicion_inicial.copiar()
-        self.modo.modo_chase()
+        self.scatter()
 
     def cargar_animaciones_freight(self):
         self.skins_freight = [
@@ -121,7 +120,7 @@ class Fantasma(Entidad):
         self.activo = True
         self.en_casa = False
         self.estado_salida = "esperando"
-        self.modo_normal()
+        self.scatter()
         self.metodo_direccion = self.direccion_meta
         print(f"{self.nombre} ha salido de casa")
 
@@ -161,13 +160,20 @@ class Fantasma(Entidad):
             self.spawn()
 
         if self.modo.current == FREIGHT:
+            if not self.sonidoFreightSonando:  # Check if the sound is already playing
+                self.sonido_freightmode.play(-1)  # Start playing the sound in loop
+                self.sonidoFreightSonando = True  # Set the flag to indicate the sound is playing
             self.actualizar_skin_freight(dt)
         elif self.modo.current == SPAWN:
+            self.sonidoFreightSonando = False  # Reset the flag when exiting FREIGHT mode
+            self.sonido_freightmode.stop()  # Stop the freight sound
             if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
                 self.skin = self.skins_ojos[self.direccion]
             if self.posicion == self.meta:
                 self.modo_normal()
         else:
+            self.sonidoFreightSonando = False  # Reset the flag when in any other mode
+            self.sonido_freightmode.stop()  # Ensure the freight sound stops
             self.actualizar_animacion(dt)
 
         # Ensure self.direccion is valid before calling super().actualizar(dt)
@@ -221,6 +227,7 @@ class Fantasma(Entidad):
         self.set_velocidad(100)
         self.metodo_direccion = self.direccion_meta
         self.modo.current = CHASE
+        self.nodoSpawn.denegar_acceso(ABAJO, self)
         if hasattr(self, 'direccion') and self.direccion in self.skins:
             self.skin = self.skins[self.direccion][0]
 
@@ -254,6 +261,12 @@ class Blinky(Fantasma):
     def chase(self):
         self.meta = self.pacman.posicion
 
+    def reset(self):
+        self.activo = True
+        self.en_casa = False
+        self.metodo_direccion = self.direccion_meta
+
+
     def cargar_animaciones(self):
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/BlinkyArr.png").convert_alpha()],
@@ -278,6 +291,12 @@ class Pinky(Fantasma):
     def chase(self):
         # Pinky aims 4 tiles ahead of Pacman's current direction
         self.meta = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 4
+
+    def reset(self):
+        self.activo = False
+        self.en_casa = True
+        self.metodo_direccion = self.direccion_meta
+
 
     def cargar_animaciones(self):
         self.skins = {
@@ -315,6 +334,11 @@ class Inky(Fantasma):
             # Si hay algún error en el cálculo, perseguir directamente a Pacman
             self.meta = self.pacman.posicion
 
+    def reset(self):
+        self.activo = False
+        self.en_casa = True
+        self.metodo_direccion = self.direccion_meta
+
     def cargar_animaciones(self):
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/InkyArr.png").convert_alpha()],
@@ -348,6 +372,12 @@ class Clyde(Fantasma):
         else:
             # Otherwise chase Pacman like Blinky
             self.meta = self.pacman.posicion
+
+    def reset(self):
+        self.activo = False
+        self.en_casa = True
+        self.metodo_direccion = self.direccion_meta
+
 
     def cargar_animaciones(self):
         self.skins = {
@@ -425,10 +455,10 @@ class GrupoFantasmas(object):
     def reset(self):
         for fantasma in self:
             fantasma.reset()
-            # Reactivar solo a Blinky
-            self.blinky.activo = True
-            self.tiempo_transcurrido = 0
-            self.fantasmas_liberados = 0
+
+
+        self.tiempo_transcurrido = 0
+        self.fantasmas_liberados = 0
 
     def esconder(self):
         for fantasma in self:
