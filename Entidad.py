@@ -116,8 +116,8 @@ class Entidad(object):
             nodo2_self = vec2.magnitudCuadrada()
 
             # Añadir una condición especial para el nodo de la casa
-            if self.nodo.posicion.x == ANCHOCELDA * 12 and self.nodo.posicion.y == ALTURACELDA * 14:
-                return nodo2_self > nodo2_blanco + 1  # Añadir un margen extra
+            # if self.nodo.posicion.x == ANCHOCELDA * 12 and self.nodo.posicion.y == ALTURACELDA * 14:
+               # return nodo2_self > nodo2_blanco + 1  # Añadir un margen extra
 
             return nodo2_self >= nodo2_blanco
         return False
