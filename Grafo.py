@@ -45,7 +45,18 @@ class Nodo:
         """Otorga permiso a una entidad para moverse en una dirección"""
         if entidad.nombre not in self.acceso[direccion]:
             self.acceso[direccion].append(entidad.nombre)
+    def acceso_permitido(self, direccion, entidad):
+        """
+        Verifica si una entidad tiene acceso permitido en una dirección específica.
 
+        Args:
+            direccion (str): La dirección en la que se quiere mover la entidad.
+            entidad (str): El tipo de entidad que se quiere mover.
+
+        Returns:
+            bool: True si la entidad tiene acceso permitido, False en caso contrario.
+        """
+        return entidad in self.acceso[direccion]
 
 class Grafo:
     """
