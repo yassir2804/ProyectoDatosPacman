@@ -455,6 +455,25 @@ class Controladora(object):
         self.grupo_texto.actualizarPuntaje(self.puntaje)
         self.fruta = None
 
+    def configurar_nivel_cargado(self):
+        """
+        Configura todos los elementos necesarios para el nivel actual cuando se carga una partida.
+        Incluye color del mapa, velocidad de fantasmas y textos UI.
+        """
+        # Actualizar color del mapa según el nivel
+        self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
+
+        # Actualizar velocidades de fantasmas para el nivel actual
+        nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
+        for fantasma in self.fantasmas:
+            fantasma.velocidad = nueva_velocidad
+            fantasma.actualizar_skin()  # Actualizar apariencia según el nivel
+
+        # Actualizar textos en la UI
+        self.grupo_texto.todos_los_textos[LEVELTXT].setTexto(str(self.level_manager.nivel_actual).zfill(3))
+        self.grupo_texto.actualizarPuntaje(self.puntaje)
+        self.grupo_texto.actualizarVidas(self.pacman.vidas)
+
     def guardar_estado(self, archivo):
         estado = {
             'pacman': {
@@ -496,7 +515,9 @@ class Controladora(object):
                     'tipo': pellet.nombre
                 } for pellet in self.Pellet.listaPellets
             ],
-            'tiempo_poder': self.tiempo_poder
+            'tiempo_poder': self.tiempo_poder,
+            'nivel': self.level_manager.nivel_actual
+            , 'velocidad': self.level_manager.velocidad_base_fantasmas
         }
         try:
             with open(archivo, 'w', encoding='utf-8') as f:
@@ -612,7 +633,11 @@ class Controladora(object):
                     self.Pellet.pelletsPoder.append(nuevo_pellet)
 
             self.tiempo_poder = estado['tiempo_poder']
+            self.level_manager.nivel_actual = estado['nivel']
+            self.level_manager.velocidad_base_fantasmas = estado['velocidad']
 
+            # Configurar todo lo relacionado con el nivel
+            self.configurar_nivel_cargado()
             # Update UI
             if hasattr(self, 'grupo_texto'):
                 self.grupo_texto.actualizarPuntaje(self.puntaje)
