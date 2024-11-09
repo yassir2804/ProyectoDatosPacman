@@ -37,6 +37,8 @@ class Pacman(Entidad):
         self.tiempo_ultimo_pellet = 0
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
 
+        self.sonido_muerte_reproducido = False
+
     def cargar_animaciones(self):
         # Diccionario para almacenar las animaciones por dirección
         self.skins = {
@@ -156,13 +158,19 @@ class Pacman(Entidad):
                 self.sonido_pellet.stop()
                 self.comiendo = False
 
+            if not self.sonido_muerte_reproducido:
+                self.sonido_colisionfantasma.play()
+                self.sonido_muerte_reproducido = True
+
     def reset_posicion(self):
         """Resetea la posición de Pacman al punto inicial"""
-        self.nodo_inicio(self.nodo_inicial)
+        self.set_nodo_inicio(self.nodo_inicial)
         self.direccion = STOP
         self.direccion_deseada = STOP
         self.visible = True
         self.muerto = False
+        self.sonido_muerte_reproducido = False
+
     def reset_vidas(self):
         self.reset_posicion()
         self.vidas=3
@@ -216,7 +224,6 @@ class Pacman(Entidad):
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
                         self.morir()
-                        self.sonido_colisionfantasma.play()
                         return 0
         return 0
 
