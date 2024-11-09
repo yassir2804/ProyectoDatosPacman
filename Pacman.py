@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *
+
+from TextoTemporal import TextoTemporal
 from Vector import Vector1
 from Constantes import *
 from Entidad import Entidad
@@ -34,6 +36,8 @@ class Pacman(Entidad):
         self.comiendo = False
         self.tiempo_ultimo_pellet = 0
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
+
+        self.sonido_muerte_reproducido = False
 
     def cargar_animaciones(self):
         # Diccionario para almacenar las animaciones por dirección
@@ -154,13 +158,19 @@ class Pacman(Entidad):
                 self.sonido_pellet.stop()
                 self.comiendo = False
 
+            if not self.sonido_muerte_reproducido:
+                self.sonido_colisionfantasma.play()
+                self.sonido_muerte_reproducido = True
+
     def reset_posicion(self):
         """Resetea la posición de Pacman al punto inicial"""
-        self.nodo_inicio(self.nodo_inicial)
+        self.set_nodo_inicio(self.nodo_inicial)
         self.direccion = STOP
         self.direccion_deseada = STOP
         self.visible = True
         self.muerto = False
+        self.sonido_muerte_reproducido = False
+
     def reset_vidas(self):
         self.reset_posicion()
         self.vidas=3
@@ -180,7 +190,7 @@ class Pacman(Entidad):
                 return True
         return False
 
-    def colision_con_fantasmas(self, fantasmas):
+    def colision_con_fantasmas(self, fantasmas,grafo,textos_temporales):
         """
         Verifica colisiones con los fantasmas.
         Retorna los puntos si come un fantasma asustado,
@@ -194,14 +204,26 @@ class Pacman(Entidad):
 
                 if distancia_cuadrada <= radio_total:
                     if fantasma.modo.current == FREIGHT:
-                        # Come al fantasma
+                        grafo.dar_acceso_a_casa(fantasma)
                         fantasma.iniciar_spawn()
+
                         self.sonido_comerfantasma.play()
+
+                        pos_x = int(fantasma.posicion.x - 20)  # Ajusta estos valores según necesites
+                        pos_y = int(fantasma.posicion.y - 20)  # para centrar el texto
+                        texto = TextoTemporal(
+                            texto=str(fantasma.puntos),
+                            posicion=(pos_x, pos_y),
+                            duracion=1000,
+                            fuente=pygame.font.Font(None, 20),  # None usa la fuente predeterminada
+                            color=(255, 255, 255)
+                        )
+                        textos_temporales.append(texto)
+
                         return fantasma.puntos
                     elif fantasma.modo.current != SPAWN:
                         # Pacman muere
                         self.morir()
-                        self.sonido_colisionfantasma.play()
                         return 0
         return 0
 
