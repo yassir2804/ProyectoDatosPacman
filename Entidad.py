@@ -17,21 +17,35 @@ class Entidad(object):
         self.radio_colision = 5
         self.color = BLANCO
         self.nodo = nodo
-        self.nodo_inicio(nodo)
+        self.nodo_inicio = nodo
+        self.set_nodo_inicio(nodo)
         self.set_posicion()
         self.blanco = nodo
         self.visible = True
         self.desactivar_portal = False
         self.metodo_direccion = self.direccion_meta
+        # Sistema de animación mejorado
         self.animation_timer = 0
-        self.animation_interval = 0.05  # 50ms entre frames
-        self.skins = {}  # Diccionario para almacenar las animaciones
+        self.animation_interval = 0.05
+        self.skins = {}
         self.skin_index = 0
         self.skin = None
+        self.usar_skin_especial = False  # Nuevo flag para control de skins especiales
+        self.skin_especial = None  # Para al
+
+    def actualizar_skin(self):
+        """Metodo base para actualizar la skin actual"""
+        if self.usar_skin_especial and self.skin_especial is not None:
+            self.skin = self.skin_especial
+            return
+
+        if self.direccion in self.skins and len(self.skins[self.direccion]) > 0:
+            self.skin_index = (self.skin_index + 1) % len(self.skins[self.direccion])
+            self.skin = self.skins[self.direccion][self.skin_index]
 
     def actualizar_animacion(self, dt):
-        """Actualiza el frame de la animación basado en el tiempo transcurrido"""
-        if not self.skins:  # Si no hay skins cargadas, no actualizar
+        """Actualiza la animación basada en el tiempo"""
+        if not self.skins and not self.usar_skin_especial:
             return
 
         self.animation_timer += dt
@@ -39,12 +53,11 @@ class Entidad(object):
             self.animation_timer = 0
             self.actualizar_skin()
 
-    def actualizar_skin(self):
-        """Actualiza al siguiente frame de la animación actual"""
-        if self.direccion in self.skins:
-            self.skin_index = (self.skin_index + 1) % len(self.skins[self.direccion])
-            self.skin = self.skins[self.direccion][self.skin_index]
-
+    def reset(self):
+        self.set_nodo_inicio(self.nodo_inicio)
+        self.direccion = STOP
+        self.velocidad = 100
+        self.visible = True
 
     def establecer_entre_nodos(self, direccion):
         """Coloca la fruta exactamente en medio de dos nodos"""
@@ -215,7 +228,9 @@ class Entidad(object):
 
         return mejor_direccion
 
-    def nodo_inicio(self,nodo):
+
+    def set_nodo_inicio(self, nodo):
         self.nodo=nodo
         self.blanco=nodo
+        self.nodo_inicio =nodo
         self.set_posicion()

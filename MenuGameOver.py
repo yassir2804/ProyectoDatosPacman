@@ -19,8 +19,9 @@ class MenuGameOver:
         self.rect = self.superficie.get_rect()
         self.rect.center = (TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2)
         self.sonido_gameover = pygame.mixer.Sound("multimedia/gameover.wav")
+        self.sonido_reproducido = False  # Nueva variable para controlar la reproducción
         pygame.mixer.stop()
-        self.sonido_gameover.play()
+
 
 
 
@@ -29,6 +30,12 @@ class MenuGameOver:
         self.fuente = font.Font(ruta_fuente, tamano)
 
     def dibujar(self):
+
+
+        if not self.sonido_reproducido:
+            pygame.mixer.stop()
+            self.sonido_gameover.play()
+            self.sonido_reproducido = True
 
         # Oscurecer el fondo
         s = Surface(TAMANIOPANTALLA)
@@ -65,5 +72,6 @@ class MenuGameOver:
             elif event.key == K_DOWN:
                 self.opcion_seleccionada = (self.opcion_seleccionada + 1) % len(self.opciones)
             elif event.key == K_RETURN:
+                self.sonido_reproducido = False
                 return self.opciones[self.opcion_seleccionada]
         return None
