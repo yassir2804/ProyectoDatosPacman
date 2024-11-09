@@ -40,6 +40,7 @@ class Controladora(object):
         self.game_over = False
         self.pausa = False
         self.reiniciar_juego = False
+        self.game_over_ganado = False
 
         # Inicialización de Pac-Man
         self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 26))
@@ -144,8 +145,9 @@ class Controladora(object):
                     self.reiniciar_nivel()
                 else:
                     # El juego ha terminado (después del nivel 3)
-                    self.game_over = True
-
+                    self.game_over_ganado = True
+                    pygame.mixer.stop()
+                    self.mostrar_pantalla_victoria()
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""
@@ -154,9 +156,6 @@ class Controladora(object):
         if puntos > 0:
             self.puntaje += puntos
             self.grupo_texto.actualizarPuntaje(self.puntaje)
-
-
-
         # Actualizar display de vidas cuando cambian
         self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
@@ -196,9 +195,6 @@ class Controladora(object):
 
         dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:
-
-
-
             self.mapa_renderer.actualizar(dt, self.fantasmas.modo_freight_activo())
             if not self.pacman.muerto:
                 self.pacman.actualizar(dt)
@@ -254,6 +250,7 @@ class Controladora(object):
         self.inicializar_fantasmas()
 
         # Actualizar elementos visuales
+
         self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
         self.Pellet = GrupoPellets("mazetest.txt")
 
@@ -282,13 +279,44 @@ class Controladora(object):
         # self.pacman.reset_posicion()
         self.fantasmas.reset()
 
+    def mostrar_pantalla_victoria(self):
+        """Muestra la pantalla de victoria cuando se completa el juego"""
+        tiempo_inicio = pygame.time.get_ticks()
+        font_grande = pygame.font.Font("Fuentes/PressStart2P-Regular.ttf", 50)
+        font_pequeña = pygame.font.Font("Fuentes/PressStart2P-Regular.ttf", 36)
+        sonido_victoria = pygame.mixer.Sound("multimedia/victoriafinal.mp3")
 
+        texto_game_over = font_grande.render("GAME OVER", True, (255, 255, 0))
+        texto_victoria = font_pequeña.render("¡HAS GANADO!", True, (255, 255, 0))
 
+        rect_game_over = texto_game_over.get_rect(center=(TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2 - 50))
+        rect_victoria = texto_victoria.get_rect(center=(TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2 + 50))
 
+        sonido_victoria.play()
 
+        while pygame.time.get_ticks() - tiempo_inicio < 5000:  # 5 segundos
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    exit()
 
+            # Renderizar fondo negro
+            self.pantalla.fill(NEGRO)
 
+            # Overlay semitransparente
+            s = pygame.Surface(TAMANIOPANTALLA)
+            s.set_alpha(128)
+            s.fill(NEGRO)
+            self.pantalla.blit(s, (0, 0))
 
+            # Mostrar textos
+            self.pantalla.blit(texto_game_over, rect_game_over)
+            self.pantalla.blit(texto_victoria, rect_victoria)
+
+            pygame.display.update()
+            self.clock.tick(30)
+
+        # Al finalizar la pantalla de victoria, activar game over
+        self.game_over = True
 
     def mostrar_pantalla_nivel(self):
         """Muestra la pantalla de transición entre niveles"""
@@ -378,9 +406,11 @@ class Controladora(object):
         self.game_over = False
         self.menu_game_over = MenuGameOver(self.pantalla)
         self.reiniciar_juego = False
+        self.level_manager.nivel_actual=1
         self.fruta = None
         self.pacman.reset_vidas()
         self.grupo_texto = GrupoTexto()
+        self.mapa_renderer.color_mapa(1)
 
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
@@ -395,7 +425,7 @@ class Controladora(object):
         for texto in self.textos_temporales:
             texto.render(self.pantalla)
         if self.game_over:
-            self.menu_game_over.dibujar()
+            self.menu_game_over.dibujar(self.game_over_ganado)
         if self.pausa:
             self.dibujar_menu_pausa()
         pygame.display.update()

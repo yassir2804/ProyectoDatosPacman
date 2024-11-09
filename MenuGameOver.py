@@ -1,6 +1,5 @@
 import pygame
 from pygame import font, Surface, draw, KEYDOWN, K_UP, K_DOWN, K_RETURN
-
 from Constantes import *
 
 
@@ -19,20 +18,16 @@ class MenuGameOver:
         self.rect = self.superficie.get_rect()
         self.rect.center = (TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2)
         self.sonido_gameover = pygame.mixer.Sound("multimedia/gameover.wav")
-        self.sonido_reproducido = False  # Nueva variable para controlar la reproducción
+        self.sonido_reproducido = False
         pygame.mixer.stop()
-
-
-
 
     def configurarFuente(self, ruta_fuente, tamano):
         """Configura la fuente para el menú."""
         self.fuente = font.Font(ruta_fuente, tamano)
 
-    def dibujar(self):
-
-
-        if not self.sonido_reproducido:
+    def dibujar(self, game_over_ganado=False):
+        # Solo reproducir el sonido si no es game over por victoria y no se ha reproducido antes
+        if not self.sonido_reproducido and not game_over_ganado:
             pygame.mixer.stop()
             self.sonido_gameover.play()
             self.sonido_reproducido = True
@@ -48,7 +43,7 @@ class MenuGameOver:
         draw.rect(self.superficie, BLANCO, self.superficie.get_rect(), 2)
 
         # Dibujar texto "GAME OVER"
-        texto_game_over = self.fuente.render("GAME OVER", True, ROJO)
+        texto_game_over = self.fuente.render("GAME OVER", True, AMARILLO if game_over_ganado else ROJO)
         rect_game_over = texto_game_over.get_rect()
         rect_game_over.centerx = self.superficie.get_width() // 2
         rect_game_over.y = 20
