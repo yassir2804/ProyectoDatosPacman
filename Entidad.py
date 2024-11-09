@@ -9,6 +9,7 @@ import heapq
 import pygame
 from Vector import Vector1
 
+
 class Entidad(object):
     def __init__(self, nodo):
         self.nombre = None
