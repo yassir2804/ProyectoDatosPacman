@@ -27,15 +27,6 @@ class Nodo(object):
         if entidad.nombre not in self.acceso[direccion]:
             self.acceso[direccion].append(entidad.nombre)
 
-    def render(self, pantalla):
-        for n in self.vecinos.keys():
-            if self.vecinos[n] is not None:
-                linea_inicio = self.posicion.tupla()
-                linea_fin = self.vecinos[n].posicion.tupla()
-                pygame.draw.line(pantalla, BLANCO, linea_inicio, linea_fin, 4)
-                pygame.draw.circle(pantalla, ROJO, self.posicion.entero(), 12)
-
-
 
 
 class Grafo(object):
@@ -140,9 +131,6 @@ class Grafo(object):
         self.nodosLUT[casa].vecinos[direccion] = self.nodosLUT[clave]
         self.nodosLUT[clave].vecinos[direccion * -1] = self.nodosLUT[casa]
 
-    def render(self, pantalla):
-        for nodo in self.nodosLUT.values():
-            nodo.render(pantalla)
 
     def denegar_acceso(self, col, row, direccion, entidad):
         nodo = self.obtener_nodo_desde_tiles(col, row)
