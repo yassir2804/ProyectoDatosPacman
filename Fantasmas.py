@@ -16,7 +16,7 @@ class Fantasma(Entidad):
         self.modo = Controladora_Modos(self)
         self.nodoSpawn = nodo
 
-        # Atributos de movimiento
+        """Configura de movimiento"""
         self.velocidad = 100
         self.direccion = DERECHA
 
@@ -28,7 +28,7 @@ class Fantasma(Entidad):
         self.parpadeo_freight = False
         self.contador_parpadeo = 0
 
-
+        """Configura los atributos relacionados con la aparacion en la casa de fantasmas"""
         self.estado_salida = "esperando"
         self.posicion_salida = None
 
@@ -188,6 +188,7 @@ class Fantasma(Entidad):
                 self.metodo_direccion = self.direccion_aleatoria
                 self.tiempo_freight = 0
                 self.duracion_freight = 7
+                self.puntos=200
                 self.tiempo_parpadeo = 0
                 self.skin = self.skins_freight[0]
 
@@ -201,6 +202,12 @@ class Fantasma(Entidad):
 
     def cargar_animaciones(self):
         pass
+
+    def actualizarPuntos(self):
+        """Duplica los puntos del siguiente fantasma que será comido"""
+        for fantasma in self:
+            if fantasma.modo.current == FREIGHT:
+                fantasma.puntos *= 2
 
     def render(self, pantalla):
         if self.visible:
