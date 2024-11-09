@@ -1,3 +1,5 @@
+import pygame
+
 class LevelManager:
     """
     Clase que gestiona los niveles del juego Pac-Man.
@@ -18,6 +20,8 @@ class LevelManager:
         # Factor de multiplicación de velocidad entre niveles
         # Cada nivel incrementa la velocidad en un 20%
         self.factor_velocidad = 1.2
+
+
 
     def subir_nivel(self):
         """
