@@ -154,7 +154,6 @@ class Entidad(object):
     def reset(self):
         self.set_nodo_inicio(self.nodo_inicio)
         self.direccion = STOP
-        self.velocidad = 100
         self.visible = True
 
     #Metodo para poner a las entidades entre nodos
