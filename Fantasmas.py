@@ -1,10 +1,3 @@
-
-
-from Entidad import *
-from Modo import Controladora_Modos
-from Grafo import *
-
-
 import pygame
 from Entidad import Entidad
 from Vector import Vector1
@@ -14,35 +7,43 @@ from Constantes import *
 class Fantasma(Entidad):
     def __init__(self, nodo, pacman=None, blinky=None):
         super().__init__(nodo)
+        """Inicializa los atributos básicos del fantasma"""
         self.nombre = FANTASMA
         self.puntos = 200
         self.meta = Vector1(0, 0)
         self.pacman = pacman
-        self.modo = Controladora_Modos(self)
         self.blinky = blinky
-        self.nodoSpawn = nodo # Ensure initial position is set
+        self.modo = Controladora_Modos(self)
+        self.nodoSpawn = nodo
 
+        # Atributos de movimiento
+        self.velocidad = 100
+        self.direccion = DERECHA
+
+        """Configura los atributos relacionados con el modo freight"""
+        self.tiempo_freight = 0
+        self.intervalo_freight = 0.2
+        self.indice_freight = 0
+        self.duracion_freight = 7
+        self.parpadeo_freight = False
+        self.contador_parpadeo = 0
+
+
+        self.estado_salida = "esperando"
+        self.posicion_salida = None
+
+        """Configura de sonidos para cada fantasmas y animaciones"""
+        self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")
+        self.sonido_freightmode.set_volume(0.2)
+        self.sonidoFreightSonando = False
+
+        """Configuración de las animacionesojos,modos, skin_iniciall"""
 
         self.cargar_animaciones()
         self.cargar_animaciones_freight()
         self.cargar_animaciones_ojos()
         self.skin_inicial = self.skins[DERECHA][0]
         self.skin = self.skin_inicial
-        self.tiempo_freight = 0
-        self.intervalo_freight = 0.2
-        self.indice_freight = 0
-        self.estado_salida = "esperando"
-        self.posicion_salida = None
-
-        self.duracion_freight = 7
-        self.parpadeo_freight = False
-        self.contador_parpadeo = 0
-        self.velocidad = 100
-        self.direccion = DERECHA
-
-        self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")
-        self.sonido_freightmode.set_volume(0.2)
-        self.sonidoFreightSonando = False
 
     def reset(self):
         """Reinicia el fantasma a su estado inicial"""
@@ -60,6 +61,7 @@ class Fantasma(Entidad):
 
 
     def cargar_animaciones_ojos(self):
+        """Actualiza el skin del fantasmas mientras este en modo inactivo """
         self.skins_ojos = {
             ARRIBA: pygame.image.load("multimedia/OjosArriba.png").convert_alpha(),
             ABAJO: pygame.image.load("multimedia/OjosAbajo.png").convert_alpha(),
@@ -68,6 +70,7 @@ class Fantasma(Entidad):
         }
 
     def actualizar_skin_freight(self, dt):
+        """Actualiza el skin durante el modo freight"""
         self.tiempo_freight += dt
         tiempo_restante = self.duracion_freight - self.tiempo_freight
 
@@ -82,8 +85,14 @@ class Fantasma(Entidad):
             self.contador_parpadeo = 0
 
     def actualizar(self, dt):
-
+        """Actualiza el estado del fantasma"""
         self.modo.actualizar(dt)
+        self._actualizar_modo_actual()
+        self._actualizar_sonidos_y_sprites(dt)
+        super().actualizar(dt)
+
+    def _actualizar_modo_actual(self):
+        """Actualiza el comportamiento según el modo actual"""
         if self.modo.current == SCATTER:
             self.scatter()
         elif self.modo.current == CHASE:
@@ -91,28 +100,55 @@ class Fantasma(Entidad):
         elif self.modo.current == SPAWN:
             self.spawn()
 
+    def _actualizar_sonidos_y_sprites(self, dt):
+        """Actualiza sonidos y sprites según el modo actual"""
         if self.modo.current == FREIGHT:
-            if not self.sonidoFreightSonando:  # Check if the sound is already playing
-                self.sonido_freightmode.play(-1)  # Start playing the sound in loop
-                self.sonidoFreightSonando = True  # Set the flag to indicate the sound is playing
-            self.actualizar_skin_freight(dt)
+            self._manejar_modo_freight(dt)
         elif self.modo.current == SPAWN:
-            self.sonidoFreightSonando = False  # Reset the flag when exiting FREIGHT mode
-            self.sonido_freightmode.stop()  # Stop the freight sound
-            if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
-                self.skin = self.skins_ojos[self.direccion]
-            if self.posicion == self.meta:
-                self.modo_normal()
+            self._manejar_modo_spawn()
         else:
-            self.sonidoFreightSonando = False  # Reset the flag when in any other mode
-            self.sonido_freightmode.stop()  # Ensure the freight sound stops
-            self.actualizar_animacion(dt)
+            self._manejar_modo_normal(dt)
 
-        # Ensure self.direccion is valid before calling super().actualizar(dt)
-        if self.direccion not in self.direcciones:
-            self.direccion = DERECHA  # Default to a valid direction
+    def _manejar_modo_freight(self, dt):
+        """Maneja la actualización en modo freight"""
+        if not self.sonidoFreightSonando:
+            self.sonido_freightmode.play(-1)
+            self.sonidoFreightSonando = True
+        self._actualizar_skin_freight(dt)
 
-        super().actualizar(dt)
+    def _manejar_modo_spawn(self):
+        """Maneja la actualización en modo spawn"""
+        self.sonidoFreightSonando = False
+        self.sonido_freightmode.stop()
+        if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
+            self.skin = self.skins_ojos[self.direccion]
+        if self.posicion == self.meta:
+            self.modo_normal()
+
+    def _manejar_modo_normal(self, dt):
+        """Maneja la actualización en modo normal"""
+        self.sonidoFreightSonando = False
+        self.sonido_freightmode.stop()
+        self.actualizar_animacion(dt)
+
+    def _actualizar_skin_freight(self, dt):
+        """Actualiza el skin durante el modo freight"""
+        self.tiempo_freight += dt
+        tiempo_restante = self.duracion_freight - self.tiempo_freight
+
+        if tiempo_restante <= 3:
+            self._actualizar_parpadeo_freight(dt)
+        else:
+            self.skin = self.skins_freight[0]
+            self.contador_parpadeo = 0
+
+    def _actualizar_parpadeo_freight(self, dt):
+        """Actualiza el parpadeo durante el modo freight"""
+        self.contador_parpadeo += dt
+        if self.contador_parpadeo >= self.intervalo_freight:
+            self.contador_parpadeo = 0
+            self.indice_freight = (self.indice_freight + 1) % len(self.skins_freight)
+            self.skin = self.skins_freight[self.indice_freight]
 
     def chase(self):
         self.meta = Vector1(0, 0)
@@ -121,6 +157,7 @@ class Fantasma(Entidad):
         self.meta = Vector1(0, 0)
 
     def spawn(self):
+        """Comportamiento de spawn común"""
         if hasattr(self, 'nodoSpawn') and self.nodoSpawn is not None:
             self.meta = self.nodoSpawn.posicion
         else:
@@ -177,6 +214,7 @@ class Fantasma(Entidad):
 
 
 class Blinky(Fantasma):
+    """Fantasma rojo que persigue directamente a Pac-Man"""
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
 
@@ -206,6 +244,7 @@ class Blinky(Fantasma):
 
 
 class Pinky(Fantasma):
+    """Fantasma rosa que intenta emboscar a Pac-Man"""
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
         self.nombre = PINKY
@@ -236,6 +275,7 @@ class Pinky(Fantasma):
 
 
 class Inky(Fantasma):
+    """Fantasma azul que utiliza la posición de Blinky para calcular su objetivo"""
     def __init__(self, nodo, pacman=None, blinky=None):
         super().__init__(nodo, pacman, blinky)
         self.nombre = INKY
@@ -276,6 +316,7 @@ class Inky(Fantasma):
 
 
 class Clyde(Fantasma):
+    """Fantasma naranja que alterna entre perseguir y huir de Pac-Man"""
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
         self.nombre = CLYDE
@@ -325,7 +366,6 @@ class GrupoFantasmas(object):
         self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
         self.fantasmas_liberados = 0
         self.orden_fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
-
 
     def __iter__(self):
         return iter(self.fantasmas)
