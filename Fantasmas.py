@@ -384,6 +384,7 @@ class GrupoFantasmas(object):
     def modo_Freight(self):
         for fantasma in self:
             fantasma.modo_Freight()
+
         self.resetear_puntos()
 
     def modo_Chase(self):
