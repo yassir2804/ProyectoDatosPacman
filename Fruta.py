@@ -1,8 +1,7 @@
-from tkinter.constants import RIGHT
 import pygame
+from random import random
 from Entidad import Entidad
 from Constantes import *
-from random import choice
 
 
 class Fruta(Entidad):
@@ -11,106 +10,101 @@ class Fruta(Entidad):
     Hereda de la clase Entidad y maneja la lógica de aparición, visualización
     y desaparición de frutas con diferentes sprites.
     """
-    # Variable de clase para evitar que se repita la misma fruta consecutivamente
-    ultima_fruta = None
 
-    def __init__(self, nodo):
+    def __init__(self, nodo, nivel):
         """
         Inicializa una nueva fruta.
-
-        Args:
-            nodo: Nodo del grafo donde aparecerá la fruta
         """
         Entidad.__init__(self, nodo)
 
-        # Atributos de identificación
+        # Atributos básicos
         self.nombre = FRUTA
         self.color = BLANCO
+        self.visible = True
+        self.tiempo = 5
+        self.temporizador = 0
+        self.desaparecer = False
 
-        # Atributos de tiempo y estado
-        self.tiempo = 5  # Duración en pantalla en segundos
-        self.temporizador = 0  # Contador de tiempo transcurrido
-        self.desaparecer = False  # Indica si la fruta debe desaparecer
-        self.puntos = 100  # Puntos que otorga al ser comida
+        # Mapeo de frutas por nivel
+        self.frutas_por_nivel = {
+            1: ('fres', 100),  # (nombre_archivo, puntos)
+            2: ('vai', 200),
+            3: ('choco', 300)
+        }
 
         # Atributos de visualización
-        self.tamano_fruta = (25, 25)  # Dimensiones uniformes para todas las frutas
-        self.en_pantalla = False  # Estado de visualización
-
-        # Inicialización de sprites
+        self.tamano_fruta = (30, 30)
         self.cargar_imagenes()
-        # Selecciona una fruta diferente a la última que apareció
-        self.skin = self.seleccionar_fruta_diferente()
 
-        # Configuración inicial de posición
+        # 20% de probabilidad de que aparezca la pacha
+        if random() < 0.2:
+            self.skin = self.pacha
+            self.puntos = 500
+        else:
+            self.skin = self.seleccionar_fruta_por_nivel(nivel)
+            self.puntos = self.frutas_por_nivel.get(nivel, (None, 100))[1]
+
+        # Configuración de posición
         self.establecer_entre_nodos(DERECHA)
 
     def cargar_imagenes(self):
         """
-        Carga y prepara los sprites de las frutas.
-        Cada fruta tiene un comodín único y se redimensiona al tamaño estándar.
+        Carga y prepara los imagenes para cada frutas.
         """
-        self.imagenes = []
-        # Lista de comodines para los nombres de archivo
-        comodines = ['fres', 'vai', 'choco', 'pach']
+        self.imagenes = {}  # Usamos un diccionario para mapear nivel->imagen
 
-        # Intenta cargar cada imagen de fruta
-        for comodin in comodines:
+        # Cargar frutas normales
+        for nivel, (comodin, _) in self.frutas_por_nivel.items():
+            ruta = f"multimedia/comodin_{comodin}.png"
             try:
-                # Carga la imagen original
-                imagen_original = pygame.image.load(f"multimedia/comodin_{comodin}.png").convert_alpha()
-                # Redimensiona la imagen al tamaño estándar
-                imagen_redimensionada = pygame.transform.scale(imagen_original, self.tamano_fruta)
-                # Almacena el tipo de fruta y su imagen
-                self.imagenes.append((comodin, imagen_redimensionada))
-            except pygame.error:
-                print(f"No se pudo cargar la imagen de {comodin}")
+                imagen = pygame.image.load(ruta)
+                imagen = pygame.transform.scale(imagen, self.tamano_fruta)
+                self.imagenes[nivel] = imagen
+                print(f"Fruta nivel {nivel} cargada: {comodin}")
+            except pygame.error as e:
+                print(f"Error al cargar la imagen {ruta}: {e}")
+                # Crear una superficie de fallback para este nivel
+                superficie = pygame.Surface(self.tamano_fruta)
+                superficie.fill((255, 0, 0))
+                self.imagenes[nivel] = superficie
 
-        # Si no se pudo cargar ninguna imagen, crea una superficie por defecto
-        if not self.imagenes:
-            print("No se pudieron cargar las imágenes de frutas")
-            superficie_default = pygame.Surface(self.tamano_fruta)
-            superficie_default.fill(self.color)
-            self.imagenes = [('default', superficie_default)]
+        # Cargar la pacha
+        try:
+            ruta_pacha = "multimedia/comodin_pach.png"
+            self.pacha = pygame.image.load(ruta_pacha)
+            self.pacha = pygame.transform.scale(self.pacha, self.tamano_fruta)
+            print("Pacha cargada exitosamente")
+        except pygame.error as e:
+            print(f"Error al cargar la pacha: {e}")
+            superficie = pygame.Surface(self.tamano_fruta)
+            superficie.fill((0, 255, 0))  # Verde para distinguir el error de pacha
+            self.pacha = superficie
 
-    def seleccionar_fruta_diferente(self):
+    def seleccionar_fruta_por_nivel(self, nivel):
         """
-        Selecciona aleatoriamente una fruta diferente a la última utilizada.
-
-        Returns:
-            Surface: Imagen de la fruta seleccionada
+        Selecciona la fruta específica para el nivel actual.
         """
-        # Filtra las frutas disponibles excluyendo la última utilizada
-        frutas_disponibles = [fruta for fruta in self.imagenes if fruta[0] != Fruta.ultima_fruta]
-
-        # Si no hay frutas diferentes disponibles, usa todas
-        if not frutas_disponibles:
-            frutas_disponibles = self.imagenes
-
-        # Selecciona una fruta aleatoria
-        fruta_seleccionada = choice(frutas_disponibles)
-
-        # Actualiza el registro de la última fruta
-        Fruta.ultima_fruta = fruta_seleccionada[0]
-
-        # Retorna la imagen de la fruta
-        return fruta_seleccionada[1]
+        return self.imagenes.get(nivel, self.imagenes.get(1))  # Fallback al nivel 1 si el nivel no existe
 
     def actualizar(self, dt):
+        """
+        Actualiza el estado de la fruta.
+        """
         self.temporizador += dt
         if self.temporizador >= self.tiempo:
             self.desaparecer = True
 
     def render(self, pantalla):
+        """
+        Renderiza la fruta en pantalla.
+        """
         if self.visible and not self.desaparecer:
             if self.skin:
-                # Obtiene la posición como tupla de enteros
                 p = self.posicion.entero()
-                # Centra la imagen en la posición actual
                 rect = self.skin.get_rect(center=p)
-                # Dibuja la imagen de la fruta
                 pantalla.blit(self.skin, rect)
             else:
-                # Dibuja un círculo como fallback si no hay imagen
                 p = self.posicion.entero()
-                pygame.draw.circle(pantalla, self.color, p, self.radio)
+                pygame.draw.circle(pantalla, (255, 0, 0), p, 15)
+
+

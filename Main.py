@@ -110,7 +110,7 @@ class Controladora(object):
         """Maneja la aparición y colisión con frutas"""
         # Crear fruta en momentos específicos
         if self.Pellet.numComidos in [50, 140] and self.fruta is None:
-            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20), self.level_manager.nivel_actual)
 
         if self.fruta is not None:
             if self.pacman.colision_fruta(self.fruta):
@@ -247,6 +247,7 @@ class Controladora(object):
         pygame.mixer.stop()
         self.pacman.reset_posicion()
         self.fantasmas.reset()
+        self.fantasmas.actualizar_velocidades_nivel(self.level_manager.nivel_actual)
         self.inicializar_fantasmas()
 
         # Actualizar elementos visuales
@@ -267,8 +268,10 @@ class Controladora(object):
     def reiniciar_por_muerte(self):
         """Reinicia el nivel cuando Pacman muere"""
 
-        # Mantener el mismo nivel y velocidad
+        # Actualizar velocidad de fantasmas para el nuevo nivel
+        nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
         for fantasma in self.fantasmas:
+            fantasma.velocidad = nueva_velocidad
             fantasma.modo.current = SCATTER
             fantasma.actualizar_skin()
 
