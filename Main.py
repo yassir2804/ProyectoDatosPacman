@@ -5,6 +5,7 @@ from Constantes import *
 from Fantasmas import GrupoFantasmas
 from Grafo import Grafo
 from LevelManager import LevelManager
+from MapaVisual import MapaRenderer
 from Pacman import Pacman
 from Pellet import GrupoPellets, Pellet, PelletPoder
 from Texto import GrupoTexto
@@ -91,6 +92,8 @@ class Controladora(object):
         self.orden_fantasmas = [self.fantasmas.blinky, self.fantasmas.pinky, self.fantasmas.inky, self.fantasmas.clyde]
         self.textos_temporales = []
 
+        self.mapa_renderer = MapaRenderer()
+        self.mapa_renderer.cargar_mapa("mazetest.txt")
 
 
     def configurarFuente(self, ruta_fuente, tamanio):
@@ -118,6 +121,7 @@ class Controladora(object):
             # Verificar si se completó el nivel
             if self.level_manager.verificar_nivel_completado(self.Pellet):
                 if self.level_manager.subir_nivel():
+                    self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
                     # Actualizar texto del nivel
                     self.grupo_texto.todos_los_textos[LEVELTXT].setTexto(str(self.level_manager.nivel_actual).zfill(3))
                     # Reiniciar el nivel con la nueva velocidad
@@ -147,6 +151,7 @@ class Controladora(object):
     def reset_nivel(self):
         """Resetea las posiciones de todos los personajes"""
         self.pacman.reset_posicion()
+        self.mapa_renderer.color_mapa(1)
         self.fantasmas.reset()
         self.fantasmas.mostrar()
         # Resetear temporizadores de fantasmas
@@ -163,6 +168,7 @@ class Controladora(object):
 
         dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:
+            self.mapa_renderer.actualizar(dt, self.fantasmas.modo_freight_activo())
             if not self.pacman.muerto:
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
@@ -229,7 +235,6 @@ class Controladora(object):
 
             # Dibujar la pantalla durante la pausa
             self.pantalla.fill(NEGRO)
-            self.grafo.render(self.pantalla)
             self.Pellet.render(self.pantalla)
             self.pacman.render(self.pantalla)
             self.fantasmas.render(self.pantalla)
@@ -324,7 +329,7 @@ class Controladora(object):
 
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
-        self.grafo.render(self.pantalla)
+        self.mapa_renderer.render(self.pantalla)
         self.Pellet.render(self.pantalla)
         self.pacman.render(self.pantalla)
         self.fantasmas.render(self.pantalla)

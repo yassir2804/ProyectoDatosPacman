@@ -518,6 +518,9 @@ class GrupoFantasmas(object):
         for fantasma in self:
             fantasma.visible = True
 
+    def modo_freight_activo(self):
+        return any(fantasma.modo.current == FREIGHT for fantasma in [self.blinky, self.pinky, self.inky, self.clyde])
+
     def render(self, pantalla):
         for fantasma in self:
             fantasma.render(pantalla)
