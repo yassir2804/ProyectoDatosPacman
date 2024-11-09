@@ -19,7 +19,7 @@ class LevelManager:
 
         # Factor de multiplicación de velocidad entre niveles
         # Cada nivel incrementa la velocidad en un 20%
-        self.factor_velocidad = 3.3
+        self.factor_velocidad = 1.20
 
     def subir_nivel(self):
         """

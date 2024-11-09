@@ -15,7 +15,7 @@ class Entidad(object):
         self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
         self.direccion = STOP
-        self.set_velocidad(300)
+        self.set_velocidad(150)
         self.radio = 10
         self.radio_colision = 5
         self.color = BLANCO
