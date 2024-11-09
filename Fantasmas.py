@@ -16,9 +16,11 @@ class Fantasma(Entidad):
         self.modo = Controladora_Modos(self)
         self.nodoSpawn = nodo
 
+
         # Velocidad base y actual
         self.velocidad_base = 100  # Velocidad inicial
         self.set_velocidad(self.velocidad_base)
+
         self.direccion = DERECHA
 
         # Atributos del modo freight
@@ -184,14 +186,16 @@ class Fantasma(Entidad):
             self.spawn()
 
     def modo_Freight(self):
-        self.modo.modo_freight()
-        if self.modo.current == FREIGHT:
-            self.set_velocidad(50)  # Velocidad reducida en modo freight
-            self.metodo_direccion = self.direccion_aleatoria
-            self.tiempo_freight = 0
-            self.duracion_freight = 7
-            self.tiempo_parpadeo = 0
-            self.skin = self.skins_freight[0]
+
+            self.modo.modo_freight()
+            if self.modo.current == FREIGHT:
+                self.set_velocidad(50)
+                self.metodo_direccion = self.direccion_aleatoria
+                self.tiempo_freight = 0
+                self.duracion_freight = 7
+                self.puntos=200
+                self.tiempo_parpadeo = 0
+                self.skin = self.skins_freight[0]
 
     def modo_normal(self):
         self.set_velocidad(self.velocidad_base)  # Usa la velocidad base actual
@@ -203,6 +207,12 @@ class Fantasma(Entidad):
 
     def cargar_animaciones(self):
         pass
+
+    def actualizarPuntos(self):
+        """Duplica los puntos del siguiente fantasma que será comido"""
+        for fantasma in self:
+            if fantasma.modo.current == FREIGHT:
+                fantasma.puntos *= 2
 
     def render(self, pantalla):
         if self.visible:

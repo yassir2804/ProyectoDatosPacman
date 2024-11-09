@@ -110,7 +110,7 @@ class Controladora(object):
         """Maneja la aparición y colisión con frutas"""
         # Crear fruta en momentos específicos
         if self.Pellet.numComidos in [50, 140] and self.fruta is None:
-            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20), self.level_manager.nivel_actual)
 
         if self.fruta is not None:
             if self.pacman.colision_fruta(self.fruta):

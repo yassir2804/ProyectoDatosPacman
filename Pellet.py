@@ -1,13 +1,24 @@
 import pygame
-from Vector import Vector1  # Importando Vector1 en lugar de Vector2
+from Vector import Vector1
 from Constantes import *
 import numpy as np
 
-class Pellet(object):
+
+class Pellet:
+    """
+    Clase base que representa los puntos (pellets) que Pac-Man puede comer.
+    Son los objetos básicos de puntuación en el juego.
+    """
+
     def __init__(self, fila, columna):
+        """
+        Inicializa un pellet básico.
+        """
         self.nombre = PELLET
-        self.posicion = Vector1(columna * ANCHOCELDA, fila * ALTURACELDA)  # Cambiado a Vector1
+        # Convierte la posición de cuadrícula a píxeles
+        self.posicion = Vector1(columna * ANCHOCELDA, fila * ALTURACELDA)
         self.color = BLANCO
+        # Radio visual y de colisión proporcional al tamaño de la celda
         self.radio = int(4 * ANCHOCELDA / 16)
         self.radioColision = int(4 * ANCHOCELDA / 16)
         self.puntos = 10
@@ -18,33 +29,59 @@ class Pellet(object):
             p = self.posicion.entero()
             pygame.draw.circle(pantalla, self.color, p, self.radio)
 
+
 class PelletPoder(Pellet):
+    """
+    Pellet especial que otorga a Pac-Man la habilidad de comer fantasmas.
+    Hereda de la clase Pellet pero tiene características adicionales.
+    """
+
     def __init__(self, fila, columna):
-        Pellet.__init__(self, fila, columna)
+        super().__init__(fila, columna)
         self.nombre = PELLETPODER
-        self.radio = int(8 * ANCHOCELDA / 16)
-        self.puntos = 50
+        self.radio = int(8 * ANCHOCELDA / 16)  # Radio más grande que el pellet normal
+        self.puntos = 50  # Más puntos que el pellet normal
+        # Atributos para el efecto de parpadeo
         self.tiempoParpadeo = 0.2
         self.temporizador = 0
 
     def actualizar(self, dt):
         self.temporizador += dt
         if self.temporizador >= self.tiempoParpadeo:
-            self.visible = not self.visible
+            self.visible = not self.visible  # Alterna visibilidad
             self.temporizador = 0
 
-class GrupoPellets(object):
+
+class GrupoPellets:
+    """
+    Gestiona todos los pellets del nivel como una colección.
+    Maneja la creación, actualización y renderizado de todos los pellets.
+    """
+
     def __init__(self, archivoPellets):
-        self.listaPellets = []
-        self.pelletsPoder = []
+        """
+        Inicializa el grupo de pellets desde un archivo.
+        """
+        self.listaPellets = []  # Todos los pellets (normales y poder)
+        self.pelletsPoder = []  # Solo power pellets
         self.crearListaPellets(archivoPellets)
-        self.numComidos = 0
+        self.numComidos = 0  # Contador de pellets comidos
 
     def actualizar(self, dt):
         for pelletPoder in self.pelletsPoder:
             pelletPoder.actualizar(dt)
 
     def crearListaPellets(self, archivoPellets):
+        """
+        Crea los pellets basándose en el archivo de nivel.
+
+        Args:
+            archivoPellets (str): Ruta al archivo con el layout de pellets
+
+        Símbolos del archivo:
+            '.' o '+': Pellet normal
+            'P' o 'p': Power Pellet
+        """
         datos = self.leerArchivoPellets(archivoPellets)
         for fila in range(datos.shape[0]):
             for col in range(datos.shape[1]):
@@ -56,11 +93,18 @@ class GrupoPellets(object):
                     self.pelletsPoder.append(pp)
 
     def leerArchivoPellets(self, archivoTexto):
+        """
+        Lee el archivo que define la disposición de pellets.
+        """
         return np.loadtxt(archivoTexto, dtype='<U1')
 
     def estaVacio(self):
+        """
+        Verifica si quedan pellets por comer.
+        """
         return len(self.listaPellets) == 0
 
     def render(self, pantalla):
+
         for pellet in self.listaPellets:
             pellet.render(pantalla)

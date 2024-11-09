@@ -214,10 +214,13 @@ class Pacman(Entidad):
 
                         self.sonido_comerfantasma.play()
 
+                        puntos = fantasma.puntos
+                        fantasmas.actualizarPuntos()  # Duplica los puntos para el siguiente
+
                         pos_x = int(fantasma.posicion.x - 20)  # Ajusta estos valores según necesites
                         pos_y = int(fantasma.posicion.y - 20)  # para centrar el texto
                         texto = TextoTemporal(
-                            texto=str(fantasma.puntos),
+                            texto=str(puntos),
                             posicion=(pos_x, pos_y),
                             duracion=1000,
                             fuente=pygame.font.Font(None, 20),  # None usa la fuente predeterminada
@@ -227,7 +230,7 @@ class Pacman(Entidad):
 
                         return fantasma.puntos
                     elif fantasma.modo.current != SPAWN:
-                        # Pacman muer
+                        # Pacman muerte
                         self.morir()
                         return 0
         return 0
