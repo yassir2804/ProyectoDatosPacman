@@ -4,33 +4,17 @@ from Vector import Vector1
 from Constantes import *
 
 
-class NodoMapa:
-    def __init__(self, x, y, tipo):
-        self.posicion = Vector1(x, y)
-        self.tipo = tipo
-        self.tiene_pared = {
-            'arriba': False,
-            'abajo': False,
-            'izquierda': False,
-            'derecha': False
-        }
-        self.es_esquina = {
-            'superior-izquierda': False,
-            'superior-derecha': False,
-            'inferior-izquierda': False,
-            'inferior-derecha': False
-        }
-
-
 class MapaRenderer:
     def __init__(self):
         self.tiempo_parpadeo = 0
-        self.color=AZUL
+        self.color = AZUL
         self.intervalo_parpadeo = 0.3
         self.parpadeo_activo = False
-        self.grosor_linea = 1  # Línea más delgada para la cuadrícula
-        self.tamano_celda = 16  # Tamaño de cada celda de la cuadrícula
-        self.TAMANO_PARED = 8  # Reducimos el tamaño de las paredes para hacer el camino más grande
+        self.grosor_linea = 2
+        self.tamano_celda = 16
+        self.TAMANO_PARED = 8
+        self.OFFSET_X = -11  # Aumentamos el offset horizontal para mover más a la izquierda
+        self.OFFSET_Y = -10  # Añadimos offset vertical para mover hacia arriba
 
     def es_pared(self, x, y):
         if 0 <= y < self.datos.shape[0] and 0 <= x < self.datos.shape[1]:
@@ -42,13 +26,10 @@ class MapaRenderer:
             return self.datos[y][x] == '='
         return False
 
-
     def cargar_mapa(self, archivo):
         self.datos = np.loadtxt(archivo, dtype='<U1')
         self.altura = self.datos.shape[0]
         self.ancho = self.datos.shape[1]
-
-
 
     def actualizar(self, dt, modo_freight=False):
         if modo_freight:
@@ -60,43 +41,74 @@ class MapaRenderer:
             self.parpadeo_activo = False
             self.tiempo_parpadeo = 0
 
-    def color_mapa(self,nivel):
-        if nivel ==1:
-            self.color=AZUL
-            if nivel==2:
-                self.color=ROJO
-        elif nivel==3:
-            self.color=AMARILLO
+    def color_mapa(self, nivel):
+        if nivel == 1:
+            self.color = AZUL
+        elif nivel == 2:
+            self.color = ROJO
+        elif nivel == 3:
+            self.color = AMARILLO
+
+    def tiene_pared_adyacente(self, x, y, direccion):
+        dx, dy = 0, 0
+        if direccion == 'arriba':
+            dy = -1
+        elif direccion == 'abajo':
+            dy = 1
+        elif direccion == 'izquierda':
+            dx = -1
+        elif direccion == 'derecha':
+            dx = 1
+
+        return self.es_pared(x + dx, y + dy)
 
     def render(self, superficie):
         color_actual = BLANCO if self.parpadeo_activo else self.color
-
-        # Primero dibujamos el fondo negro para todo el mapa
         superficie.fill(NEGRO)
 
-        # Dibujar las paredes como bloques sólidos pero más pequeños
+        # Recorremos el mapa para dibujar los perímetros
         for y in range(self.altura):
             for x in range(self.ancho):
                 if self.es_pared(x, y):
-                    # Posición de la celda
-                    px = x * ANCHOCELDA
-                    py = y * ALTURACELDA
+                    # Aplicamos ambos offsets a las coordenadas
+                    px = x * ANCHOCELDA + self.OFFSET_X
+                    py = y * ALTURACELDA + self.OFFSET_Y
 
-                    # Calculamos el offset para centrar la pared más pequeña en la celda
-                    offset_x = (ANCHOCELDA - self.TAMANO_PARED) // 2
-                    offset_y = (ALTURACELDA - self.TAMANO_PARED) // 2
+                    # Verificamos cada lado para ver si necesitamos dibujar una línea
+                    # Línea superior
+                    if not self.tiene_pared_adyacente(x, y, 'arriba'):
+                        pygame.draw.line(superficie, color_actual,
+                                         (px, py),
+                                         (px + ANCHOCELDA, py),
+                                         self.grosor_linea)
 
-                    # Dibujar un rectángulo más pequeño para cada celda de pared
-                    pygame.draw.rect(superficie, color_actual,
-                                     (px + offset_x, py + offset_y,
-                                      self.TAMANO_PARED, self.TAMANO_PARED))
+                    # Línea inferior
+                    if not self.tiene_pared_adyacente(x, y, 'abajo'):
+                        pygame.draw.line(superficie, color_actual,
+                                         (px, py + ALTURACELDA),
+                                         (px + ANCHOCELDA, py + ALTURACELDA),
+                                         self.grosor_linea)
 
-        # Dibujar la casa de los fantasmas (líneas blancas)
+                    # Línea izquierda
+                    if not self.tiene_pared_adyacente(x, y, 'izquierda'):
+                        pygame.draw.line(superficie, color_actual,
+                                         (px, py),
+                                         (px, py + ALTURACELDA),
+                                         self.grosor_linea)
+
+                    # Línea derecha
+                    if not self.tiene_pared_adyacente(x, y, 'derecha'):
+                        pygame.draw.line(superficie, color_actual,
+                                         (px + ANCHOCELDA, py),
+                                         (px + ANCHOCELDA, py + ALTURACELDA),
+                                         self.grosor_linea)
+
+        # Dibujar la casa de los fantasmas
         for y in range(self.altura):
             for x in range(self.ancho):
                 if self.es_casa_fantasmas(x, y):
-                    px = x * ANCHOCELDA * 2
-                    py = y * ALTURACELDA * 2
+                    px = x * ANCHOCELDA * 2 + self.OFFSET_X
+                    py = y * ALTURACELDA * 2 + self.OFFSET_Y  # Aplicamos también el offset vertical
                     pygame.draw.line(superficie, BLANCO,
                                      (px, py),
                                      (px + ANCHOCELDA, py),
