@@ -50,6 +50,8 @@ class Grafo(object):
                 if datos[fila][col] in self.simbolosNodos:
                     x, y = self.construir_clave(col + xbalance, fila + ybalance)
                     self.nodosLUT[(x, y)] = Nodo(x, y)
+                    # Debug: muestra la posición del tile donde se crea el nodo
+                    print(f"Nodo creado en tile: ({col + xbalance}, {fila + ybalance}) - Símbolo: {datos[fila][col]}")
 
     def construir_clave(self, col, fila):
         return col * ANCHOCELDA, fila * ALTURACELDA
@@ -107,18 +109,21 @@ class Grafo(object):
             self.nodosLUT[clave1].vecinos[PORTAL] = self.nodosLUT[clave2]
             self.nodosLUT[clave2].vecinos[PORTAL] = self.nodosLUT[clave1]
 
-
     def crear_nodos_casa(self, xbalance, ybalance):
-        datos_casa = np.array([['X','X','+','X','X'],
-                             ['X','X','.','X','X'],
-                             ['+','X','.','X','+'],
-                             ['+','.','+','.','+'],
-                             ['+','X','X','X','+']])
+        print("\n=== CREANDO NODOS DE LA CASA ===")
+        datos_casa = np.array([['X', 'X', '+', 'X', 'X'],
+                               ['X', 'X', '.', 'X', 'X'],
+                               ['+', 'X', '.', 'X', '+'],
+                               ['+', '.', '+', '.', '+'],
+                               ['+', 'X', 'X', 'X', '+']])
+        print("\nMatriz de la casa:")
+        print(datos_casa)
 
         self.crear_tabla_nodos(datos_casa, xbalance, ybalance)
         self.conectar_horizontal(datos_casa, xbalance, ybalance)
         self.conectar_vertical(datos_casa, xbalance, ybalance)
         self.casa = self.construir_clave(xbalance + 2, ybalance)
+        print(f"\nNodo casa establecido en: ({xbalance + 2}, {ybalance})")
         return self.casa
 
     def conectar_nodos_casa(self, casa, otro, direccion):

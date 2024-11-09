@@ -20,22 +20,8 @@ class Fantasma(Entidad):
         self.pacman = pacman
         self.modo = Controladora_Modos(self)
         self.blinky = blinky
-        self.nodoInicial = nodo
-        self.nodoSpawn = nodo
-        self.metodo_direccion = self.direccion_meta
+        self.nodoSpawn = nodo # Ensure initial position is set
 
-        self.activo = False
-        self.en_casa = True
-        self.posicion_inicial = nodo.posicion.copiar()
-        self.posicion = self.posicion_inicial.copiar()  # Ensure initial position is set
-
-        self.movimiento_casa = ARRIBA
-        self.velocidad_casa = 50
-
-        self.limite_izquierdo = 0
-        self.limite_derecho = 0
-        self.limite_arriba = 0
-        self.limite_abajo = 0
 
         self.cargar_animaciones()
         self.cargar_animaciones_freight()
@@ -59,8 +45,12 @@ class Fantasma(Entidad):
         self.sonidoFreightSonando = False
 
     def reset(self):
+        """Reinicia el fantasma a su estado inicial"""
+        # Reset de la entidad padre
+        super().reset()
+        # Reset de atributos básicos
         self.puntos = 200
-        self.scatter()
+        self.metodo_direccion = self.direccion_meta
 
     def cargar_animaciones_freight(self):
         self.skins_freight = [
@@ -68,61 +58,6 @@ class Fantasma(Entidad):
             pygame.image.load("multimedia/FreightBlanco.png").convert_alpha()
         ]
 
-    def mover_en_casa(self, dt):
-
-        """Método mejorado para mover el fantasma dentro y fuera de la casa"""
-        if not self.en_casa:
-            return
-
-        if self.estado_salida == "esperando":
-            # Movimiento vertical normal dentro de la casa
-            if self.movimiento_casa == 'arriba':
-                self.posicion.y -= self.velocidad_casa * dt
-                if self.posicion.y <= self.limite_arriba:
-                    self.posicion.y = self.limite_arriba
-                    self.movimiento_casa = 'abajo'
-            else:
-                self.posicion.y += self.velocidad_casa * dt
-                if self.posicion.y >= self.limite_abajo:
-                    self.posicion.y = self.limite_abajo
-                    self.movimiento_casa = 'arriba'
-
-        elif self.estado_salida == "subiendo":
-            # Mover hacia el punto de salida
-            if self.posicion.y > self.limite_arriba:
-                self.posicion.y -= self.velocidad_casa * dt
-            else:
-
-                self.posicion.y = self.limite_arriba
-                self.estado_salida = "saliendo"
-
-        elif self.estado_salida == "saliendo":
-            # Mover hacia la posición de salida
-            if abs(self.posicion.x - self.posicion_salida.x) > 1:
-                direccion = 1 if self.posicion_salida.x > self.posicion.x else -1
-                self.posicion.x += self.velocidad_casa * dt * direccion
-            else:
-                self.completar_salida()
-
-    def liberar_de_casa(self):
-        """Método mejorado para iniciar el proceso de salida"""
-        if self.en_casa:
-            self.estado_salida = "subiendo"
-            # El punto de salida debería estar en el centro superior de la casa
-            self.posicion_salida = Vector1(
-                (self.limite_izquierdo + self.limite_derecho) / 2,
-                self.limite_arriba - ALTURACELDA
-            )
-
-    def completar_salida(self):
-        """Método nuevo para finalizar el proceso de salida"""
-
-        self.activo = True
-        self.en_casa = False
-        self.estado_salida = "esperando"
-        self.scatter()
-        self.metodo_direccion = self.direccion_meta
-        print(f"{self.nombre} ha salido de casa")
 
     def cargar_animaciones_ojos(self):
         self.skins_ojos = {
@@ -147,9 +82,6 @@ class Fantasma(Entidad):
             self.contador_parpadeo = 0
 
     def actualizar(self, dt):
-        if not self.activo and self.en_casa:
-            self.mover_en_casa(dt)
-            return
 
         self.modo.actualizar(dt)
         if self.modo.current == SCATTER:
@@ -213,7 +145,6 @@ class Fantasma(Entidad):
             self.spawn()
 
     def modo_Freight(self):
-        if not self.en_casa:
             self.modo.modo_freight()
             if self.modo.current == FREIGHT:
                 self.set_velocidad(50)
@@ -262,9 +193,7 @@ class Blinky(Fantasma):
         self.meta = self.pacman.posicion
 
     def reset(self):
-        self.activo = True
-        self.en_casa = False
-        self.metodo_direccion = self.direccion_meta
+        super().reset()
 
 
     def cargar_animaciones(self):
@@ -293,9 +222,8 @@ class Pinky(Fantasma):
         self.meta = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 4
 
     def reset(self):
-        self.activo = False
-        self.en_casa = True
-        self.metodo_direccion = self.direccion_meta
+        super().reset()
+        self.velocidad = 100 * ANCHOCELDA / 16
 
 
     def cargar_animaciones(self):
@@ -335,9 +263,8 @@ class Inky(Fantasma):
             self.meta = self.pacman.posicion
 
     def reset(self):
-        self.activo = False
-        self.en_casa = True
-        self.metodo_direccion = self.direccion_meta
+        super().reset()
+        self.velocidad = 100 * ANCHOCELDA / 16
 
     def cargar_animaciones(self):
         self.skins = {
@@ -374,9 +301,8 @@ class Clyde(Fantasma):
             self.meta = self.pacman.posicion
 
     def reset(self):
-        self.activo = False
-        self.en_casa = True
-        self.metodo_direccion = self.direccion_meta
+        super().reset()
+        self.velocidad = 100 * ANCHOCELDA / 16
 
 
     def cargar_animaciones(self):
@@ -398,49 +324,26 @@ class GrupoFantasmas(object):
         self.tiempo_transcurrido = 0
         self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
         self.fantasmas_liberados = 0
-        self.orden_fantasmas = [self.blinky,self.pinky,self.inky,self.clyde]
-        # Activar solo a Blinky inicialmente
-        self.blinky.activo = True
-        # Calcular límites de la casa basados en las posiciones iniciales
-        self.calcular_limites_casa()
-
-        # Establecer el nodo spawn por defecto
+        self.orden_fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
 
 
     def __iter__(self):
         return iter(self.fantasmas)
 
-
-    def actualizar_temporizador_fantasmas(self, dt):
-        """Maneja la liberación temporizada de los fantasmas"""
-        if self.fantasmas_liberados < len(self.orden_fantasmas):
-            self.tiempo_transcurrido += dt
-
-            # Calcular cuántos fantasmas deberían estar activos
-            fantasmas_a_liberar = int(self.tiempo_transcurrido // self.tiempo_entre_fantasmas)
-
-            # Activar los fantasmas que correspondan
-            while self.fantasmas_liberados < fantasmas_a_liberar and \
-                    self.fantasmas_liberados < len(self.orden_fantasmas):
-                fantasma = self.orden_fantasmas[self.fantasmas_liberados]
-                fantasma.liberar_de_casa()
-                self.fantasmas_liberados += 1
-
     def actualizar(self, dt):
-        self.actualizar_temporizador_fantasmas(dt)
         for fantasma in self.fantasmas:
             fantasma.actualizar(dt)
 
     def modo_Freight(self):
         for fantasma in self:
             fantasma.modo_Freight()
-        self.resetearPuntos()
+        self.resetear_puntos()
 
     def modo_Chase(self):
         for fantasma in self:
             fantasma.modo_normal()
 
-    def setSpawnNode(self, nodo):
+    def set_nodo_spawn(self, nodo):
         for fantasma in self:
             fantasma.setSpawnNode(nodo)
 
@@ -448,71 +351,19 @@ class GrupoFantasmas(object):
         for fantasma in self:
             fantasma.puntos *= 2
 
-    def resetearPuntos(self):
+    def resetear_puntos(self):
         for fantasma in self:
             fantasma.puntos = 200
 
     def reset(self):
-        for fantasma in self:
+        """Reset all ghosts to their initial positions"""
+        for fantasma in self.fantasmas:
             fantasma.reset()
 
-
-        self.tiempo_transcurrido = 0
-        self.fantasmas_liberados = 0
 
     def esconder(self):
         for fantasma in self:
             fantasma.visible = False
-
-    def activar_fantasma(self, fantasma):
-        """Activa un fantasma específico"""
-        fantasma.activo = True
-        fantasma.modo_normal()  # Asegurar que empiece en modo normal
-
-    def configurar_posiciones_iniciales(self):
-        """Método nuevo para configurar las posiciones iniciales y la casa"""
-        # Definir el centro de la casa (ajustar según tu mapa)
-        centro_casa_x = (COLUMNAS // 2) * ANCHOCELDA
-        centro_casa_y = ((FILAS // 2) + 1) * ALTURACELDA
-
-        # Configurar posiciones específicas para cada fantasma
-        offsets = {
-            self.blinky: Vector1(0, -ALTURACELDA),  # Blinky arriba
-            self.pinky: Vector1(-ANCHOCELDA, 0),  # Pinky izquierda
-            self.inky: Vector1(0, 0),  # Inky centro
-            self.clyde: Vector1(ANCHOCELDA, 0)  # Clyde derecha
-        }
-
-        for fantasma, offset in offsets.items():
-            pos_inicial = Vector1(centro_casa_x + offset.x, centro_casa_y + offset.y)
-            fantasma.posicion = pos_inicial.copiar()
-            fantasma.posicion_inicial = pos_inicial.copiar()
-
-    def calcular_limites_casa(self):
-        """Calcula los límites de la casa basados en las posiciones de los fantasmas"""
-        posiciones_x = [fantasma.posicion_inicial.x for fantasma in self.fantasmas]
-        posiciones_y = [fantasma.posicion_inicial.y for fantasma in self.fantasmas]
-
-        # Añadir un margen de movimiento
-        margen = ALTURACELDA * 2  # Ajusta este valor según necesites
-
-        # Calcular límites
-        limite_izquierda = min(posiciones_x) - ANCHOCELDA
-        limite_derecha = max(posiciones_x) + ANCHOCELDA
-        limite_arriba = min(posiciones_y) - margen / 2
-        limite_abajo = max(posiciones_y) + margen / 2
-
-        # Asignar límites a cada fantasma
-        for fantasma in self.fantasmas:
-            fantasma.limite_izquierdo = limite_izquierda
-            fantasma.limite_derecho = limite_derecha
-            fantasma.limite_arriba = limite_arriba
-            fantasma.limite_abajo = limite_abajo
-    def desactivar_todos(self):
-        """Desactiva todos los fantasmas excepto Blinky"""
-        for fantasma in self.fantasmas[1:]:  # Todos excepto Blinky
-            fantasma.activo = False
-            fantasma.posicion = fantasma.posicion_inicial.copiar()
 
     def mostrar(self):
         for fantasma in self:

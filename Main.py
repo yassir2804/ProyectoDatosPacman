@@ -46,34 +46,14 @@ class Controladora(object):
         self.fantasmas = GrupoFantasmas(nodo=self.grafo.obtener_nodo_desde_tiles(13.5, 17), pacman=self.pacman)
 
         # Configurar posiciones iniciales específicas para cada fantasma
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))  # Blinky arriba
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Pinky centro
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 16))  # Clyde derecha
+        self.fantasmas.blinky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))  # Blinky arriba
+        self.fantasmas.pinky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Pinky centro
+        self.fantasmas.inky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))  # Inky izquierda
+        self.fantasmas.clyde.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 17))  # Clyde derecha
 
-        # Configurar nodo de spawn para todos los fantasmas
-        # = self.grafo.obtener_nodo_desde_tiles(13.5, 17)  # Punto de spawn común
-        #self.fantasmas.setSpawnNode(nodo_spawn)
+        nodo_spawn= self.grafo.obtener_nodo_desde_tiles(13.5, 17)  # Punto de spawn común
+        self.fantasmas.set_nodo_spawn(nodo_spawn)
 
-        # Inicializar temporizadores para la salida de fantasmas
-        self.tiempo_transcurrido = 0
-        self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
-        self.fantasmas_liberados = 0
-
-        # Lista de fantasmas en orden de salida con tiempos específicos
-        self.orden_fantasmas = [
-            (self.fantasmas.blinky, 0),  # Blinky sale inmediatamente
-            (self.fantasmas.pinky, 5),  # Pinky sale a los 5 segundos
-            (self.fantasmas.inky, 10),  # Inky sale a los 10 segundos
-            (self.fantasmas.clyde, 15)  # Clyde sale a los 15 segundos
-        ]
-
-        # Desactivar todos excepto Blinky inicialmente
-        self.fantasmas.blinky.activo = True
-        self.fantasmas.blinky.en_casa = False
-        for fantasma, _ in self.orden_fantasmas[1:]:
-            fantasma.activo = False
-            fantasma.en_casa = True
 
         self.sonido_reinicio = pygame.mixer.Sound("multimedia/levelup.wav")
         self.sonido_sirena = pygame.mixer.Sound("multimedia/sonidosirena.wav")
@@ -114,9 +94,9 @@ class Controladora(object):
             self.Pellet.listaPellets.remove(pellet)
 
             if self.Pellet.numComidos == 30:
-                self.fantasmas.inky.nodoInicial.dar_acceso(DERECHA, self.fantasmas.inky)
+                self.fantasmas.inky.nodo_inicio.dar_acceso(DERECHA, self.fantasmas.inky)
             if self.Pellet.numComidos == 70:
-                self.fantasmas.clyde.nodoInicial.dar_acceso(IZQUIERDA, self.fantasmas.clyde)
+                self.fantasmas.clyde.nodo_inicio.dar_acceso(IZQUIERDA, self.fantasmas.clyde)
 
             # Verificar si se completó el nivel
             if self.level_manager.verificar_nivel_completado(self.Pellet):
@@ -182,8 +162,8 @@ class Controladora(object):
                 self.fantasmas.reset()
 
 
-                if not self.pacman.muerto:
-                    self.reset_nivel()
+                # if not self.pacman.muerto:
+                #     self.reset_nivel()
 
             self.grupo_texto.actualizar(dt)
             self.verificar_vidas()
@@ -214,7 +194,7 @@ class Controladora(object):
         for fantasma in [self.fantasmas.blinky, self.fantasmas.pinky,
                          self.fantasmas.inky, self.fantasmas.clyde]:
             fantasma.velocidad = nueva_velocidad
-            # fantasma.modo.current = SCATTER  # Restablecer el modo a CHASE
+            fantasma.scatter()  # Restablecer el modo a CHASE
             fantasma.actualizar_skin()  # Asegurarse de que la skin se actualice
 
         self.denegar_accesos()
@@ -263,14 +243,14 @@ class Controladora(object):
     def denegar_accesos(self):
         self.grafo.denegar_acceso_a_casa(self.pacman)
         self.grafo.denegar_acceso_a_casa_entidades(self.fantasmas)
-        self.grafo.denegar_acceso_entidades(2 + 11.5, 3 + 14, IZQUIERDA, self.fantasmas)
+        self.grafo.denegar_acceso_entidades(13.5, 17, IZQUIERDA, self.fantasmas)
         self.grafo.denegar_acceso_entidades(2 + 11.5, 3 + 14, DERECHA, self.fantasmas)
-        self.fantasmas.inky.nodoInicial.denegar_acceso(DERECHA, self.fantasmas.inky)
-        self.fantasmas.clyde.nodoInicial.denegar_acceso(IZQUIERDA, self.fantasmas.clyde)
-        self.grafo.denegar_acceso_entidades(12, 14, ARRIBA, self.fantasmas)
-        self.grafo.denegar_acceso_entidades(15, 14, ARRIBA, self.fantasmas)
-        self.grafo.denegar_acceso_entidades(12, 26, ARRIBA, self.fantasmas)
-        self.grafo.denegar_acceso_entidades(15, 26, ARRIBA, self.fantasmas)
+        self.fantasmas.inky.nodo.denegar_acceso(DERECHA, self.fantasmas.inky)
+        self.fantasmas.clyde.nodo.denegar_acceso(IZQUIERDA, self.fantasmas.clyde)
+        # self.grafo.denegar_acceso_entidades(12, 14, ARRIBA, self.fantasmas)
+        # self.grafo.denegar_acceso_entidades(15, 14, ARRIBA, self.fantasmas)
+        # self.grafo.denegar_acceso_entidades(12, 26, ARRIBA, self.fantasmas)
+        # self.grafo.denegar_acceso_entidades(15, 26, ARRIBA, self.fantasmas)
 
     def verificar_eventos(self):
         for event in pygame.event.get():
@@ -308,17 +288,17 @@ class Controladora(object):
     def reiniciar(self):
         """Reinicia completamente el juego"""
         pygame.init()
-        self.fantasmas.blinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))  # Blinky arriba
-        self.fantasmas.pinky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Pinky centro
-        self.fantasmas.inky.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
-        self.fantasmas.clyde.nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 16))  # Clyde derecha
+        self.fantasmas.blinky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))  # Blinky arriba
+        self.fantasmas.pinky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))  # Pinky centro
+        self.fantasmas.inky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(15.5, 16))  # Inky izquierda
+        self.fantasmas.clyde.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 16))  # Clyde derecha
         self.fantasmas.reset()
         self.fantasmas.mostrar()
         self.Pellet = GrupoPellets("mazetest.txt")
         self.puntaje = 0
         self.tiempo_poder = 0
         self.game_over = False
-        self.menu_game_over = None
+        self.menu_game_over = MenuGameOver(self.pantalla)
         self.reiniciar_juego = False
         self.fruta = None
         self.pacman.reset_vidas()
