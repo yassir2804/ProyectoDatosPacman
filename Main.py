@@ -503,18 +503,32 @@ class Controladora(object):
                 fantasma.posicion = Vector1(datos['posicion'][0], datos['posicion'][1])
 
                 # Calcular nodo basado en la posición
-                fila = round(fantasma.posicion.y // ALTURACELDA)
-                columna = round(fantasma.posicion.x // ANCHOCELDA)
+                fila = fantasma.posicion.y // ALTURACELDA
+                columna = fantasma.posicion.x // ANCHOCELDA
                 fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(columna, fila)
+
+                # Asegurarse de que el nodo no sea None
+                if fantasma.nodo is None:
+                    if fantasma.nombre == 98:
+                        fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(15.5, 17)
+                    if fantasma.nombre == 96:
+                        fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(11.5, 17)
+                    # raise ValueError(f"El nodo para la posición ({columna}, {fila}) es None")
+
 
                 # Restaurar el nodo blanco
                 if 'blanco' in datos and datos['blanco'] is not None:
                     blanco_x, blanco_y = datos['blanco']
-                    blanco_fila = round(blanco_y // ALTURACELDA)
-                    blanco_columna = round(blanco_x // ANCHOCELDA)
+                    blanco_fila = blanco_y // ALTURACELDA
+                    blanco_columna = blanco_x //ANCHOCELDA
                     fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(blanco_columna, blanco_fila)
                 else:
                     fantasma.blanco = fantasma.nodo  # O el valor por defecto que prefieras
+                if fantasma.blanco is None:
+                    if fantasma.nombre == 98:
+                        fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(15.5, 16)
+                    if fantasma.nombre == 96:
+                        fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(11.5, 16)
 
                 # Restaurar dirección
                 if 'direccion' in datos:
@@ -524,7 +538,6 @@ class Controladora(object):
                 fantasma.modo.current = datos['modo']['current']
                 fantasma.modo.tiempo = datos['modo']['tiempo']
                 fantasma.modo.temporizador = datos['modo']['temporizador']
-
 
                 # Restaurar estados de freight
                 fantasma.duracion_freight = datos.get('duracion_freight', 7)
@@ -538,6 +551,9 @@ class Controladora(object):
                         fantasma.modo.tiempo = fantasma.duracion_freight
                     if fantasma.modo.temporizador is None:
                         fantasma.modo.temporizador = 0
+
+                if fantasma.modo.current == SPAWN:
+                    self.grafo.dar_acceso_a_casa(fantasma)
 
             # Restore fruit
             if estado['fruta']['visible']:
