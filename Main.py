@@ -247,6 +247,7 @@ class Controladora(object):
         pygame.mixer.stop()
         self.pacman.reset_posicion()
         self.fantasmas.reset()
+        self.fantasmas.actualizar_velocidades_nivel(self.level_manager.nivel_actual)
         self.inicializar_fantasmas()
 
         # Actualizar elementos visuales
@@ -267,8 +268,10 @@ class Controladora(object):
     def reiniciar_por_muerte(self):
         """Reinicia el nivel cuando Pacman muere"""
 
-        # Mantener el mismo nivel y velocidad
+        # Actualizar velocidad de fantasmas para el nuevo nivel
+        nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
         for fantasma in self.fantasmas:
+            fantasma.velocidad = nueva_velocidad
             fantasma.modo.current = SCATTER
             fantasma.actualizar_skin()
 

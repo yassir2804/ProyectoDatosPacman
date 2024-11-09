@@ -258,7 +258,7 @@ class Entidad(object):
 
     #Establece la velocidad de la entidad
     def set_velocidad(self, velocidad):
-        self.velocidad = velocidad * ANCHOCELDA / 16
+        self.velocidad = velocidad
 
     def render(self, pantalla):
         """Dibuja la entidad en la pantalla."""
