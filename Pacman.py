@@ -10,8 +10,10 @@ from Entidad import Entidad
 class Pacman(Entidad):
     def __init__(self, nodo):
         super().__init__(nodo)  # Llamada al constructor de la clase padre
+        self.animacion_muerte_completa = True
         self.nombre = PACMAN
         self.color = AMARILLO
+        self.direccion = STOP
         self.direccion_deseada = STOP
         self.tiene_poder = False
         self.tiempo_poder = 0
@@ -38,6 +40,8 @@ class Pacman(Entidad):
         self.tiempo_maximo_entre_pellets = 0.25  # 250ms entre pellets para considerar que sigue comiendo
 
         self.sonido_muerte_reproducido = False
+
+
 
     def cargar_animaciones(self):
         # Diccionario para almacenar las animaciones por dirección
@@ -159,6 +163,7 @@ class Pacman(Entidad):
                 self.comiendo = False
 
             if not self.sonido_muerte_reproducido:
+                pygame.mixer.stop()
                 self.sonido_colisionfantasma.play()
                 self.sonido_muerte_reproducido = True
 
@@ -222,10 +227,14 @@ class Pacman(Entidad):
 
                         return fantasma.puntos
                     elif fantasma.modo.current != SPAWN:
-                        # Pacman muere
+                        # Pacman muer
                         self.morir()
                         return 0
         return 0
+
+    def animacion_muerte_terminada(self):
+        """Verifica si la animación de muerte ha terminado"""
+        return self.muerto and hasattr(self, 'animacion_muerte_completa') and self.animacion_muerte_completa
 
     def activar_poder(self):
         """Activa el poder y cambia el modo de los fantasmas."""
@@ -269,6 +278,7 @@ class Pacman(Entidad):
             self.tiempo_muerte -= dt
             if self.tiempo_muerte <= 0:
                 self.reset_posicion()
+                self.animacion_muerte_completa = True
                 return
 
         self.actualizar_animacion(dt)

@@ -42,7 +42,7 @@ class Controladora(object):
         self.reiniciar_juego = False
 
         # Inicialización de Pac-Man
-        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 32))
+        self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 26))
 
         # Configuración de la casa de los fantasmas
         self.configurar_casa_fantasmas()
@@ -79,21 +79,13 @@ class Controladora(object):
         # Establecer punto de spawn común
         self.fantasmas.set_nodo_spawn(nodo_spawn)
 
-        # Lista de fantasmas para referencia
-        self.orden_fantasmas = [
-            self.fantasmas.blinky,
-            self.fantasmas.pinky,
-            self.fantasmas.inky,
-            self.fantasmas.clyde
-        ]
-
     def configurar_audio(self):
         """Configura los efectos de sonido del juego"""
         self.sonido_reinicio = pygame.mixer.Sound("multimedia/levelup.wav")
         self.sonido_sirena = pygame.mixer.Sound("multimedia/sonidosirena.wav")
 
     def inicializar_elementos_juego(self):
-        """Inicializa los elementos básicos del juego como pellets, texto, etc."""
+
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
         self.level_manager = LevelManager()
@@ -112,6 +104,18 @@ class Controladora(object):
     def configurarFuente(self, ruta_fuente, tamanio):
         """Configura la fuente del menú de pausa"""
         self.fuente_pausa = pygame.font.Font(ruta_fuente, tamanio)
+
+    def verificar_fruta(self):
+        """Maneja la aparición y colisión con frutas"""
+        # Crear fruta en momentos específicos
+        if self.Pellet.numComidos in [50, 140] and self.fruta is None:
+            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+
+        if self.fruta is not None:
+            if self.pacman.colision_fruta(self.fruta):
+                self.manejar_colision_fruta()
+            elif self.fruta.desaparecer:
+                self.fruta = None
 
     def verificacion_pellets(self):
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
@@ -151,6 +155,8 @@ class Controladora(object):
             self.puntaje += puntos
             self.grupo_texto.actualizarPuntaje(self.puntaje)
 
+
+
         # Actualizar display de vidas cuando cambian
         self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
@@ -159,6 +165,27 @@ class Controladora(object):
             self.game_over = True
             self.fantasmas.esconder()  # Ocultar fantasmas
 
+    def verificar_eventos(self):
+        """Maneja los eventos del juego"""
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                exit()
+
+            if self.game_over:
+                self.manejar_eventos_game_over(event)
+            elif event.type == KEYDOWN:
+                self.manejar_eventos_teclado(event)
+
+        # Mantener sonido de sirena
+        if not pygame.mixer.get_busy():
+            self.sonido_sirena.set_volume(0.5)
+            self.sonido_sirena.play(-1)
+
+    def verificar_fatasmas(self):
+        for fantasma in self.fantasmas:
+            if self.pacman.colision_fruta(fantasma):
+                if fantasma.modo.current is FREIGHT:
+                    fantasma.iniciar_spawn()
 
     def actualizar(self):
         """Méto do principal de actualización del juego"""
@@ -169,6 +196,9 @@ class Controladora(object):
 
         dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:
+
+
+
             self.mapa_renderer.actualizar(dt, self.fantasmas.modo_freight_activo())
             if not self.pacman.muerto:
                 self.pacman.actualizar(dt)
@@ -179,12 +209,15 @@ class Controladora(object):
 
                 self.verificacion_pellets()
             else:
+                self.grupo_texto.actualizar(dt)
+                self.verificar_vidas()
+                self.verificar_eventos()
+                self.verificar_fruta()
+
                 self.pacman.actualizar(dt)
-                self.fantasmas.reset()
+                if self.pacman.animacion_muerte_terminada():
+                    self.reiniciar_nivel()
 
-
-                # if not self.pacman.muerto:
-                #     self.reset_nivel()
 
             self.grupo_texto.actualizar(dt)
             self.verificar_vidas()
@@ -199,31 +232,69 @@ class Controladora(object):
             self.render()
 
     def reiniciar_nivel(self):
-        """Reinicia el nivel actual manteniendo el progreso"""
-        # Detener sonidos y reiniciar posiciones
+        """Reinicia el nivel actual dependiendo si es por muerte o por paso de nivel"""
+        # Detener sonidos
+
+        if self.level_manager.verificar_nivel_completado(self.Pellet):
+            # Caso 1: Paso de nivel
+            self.reiniciar_por_nuevo_nivel()
+        else:
+            # Caso 2: Muerte de Pacman
+            self.reiniciar_por_muerte()
+
+    def reiniciar_por_nuevo_nivel(self):
+        """Reinicia el nivel cuando se pasa a uno nuevo"""
+        # Resetear posiciones
+        for fantasma in self.fantasmas:
+            fantasma.modo.current = SCATTER
+
         pygame.mixer.stop()
-        self.sonido_reinicio.play()
         self.pacman.reset_posicion()
         self.fantasmas.reset()
         self.inicializar_fantasmas()
+
         # Actualizar elementos visuales
         self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
         self.Pellet = GrupoPellets("mazetest.txt")
 
-        # Actualizar velocidad de fantasmas
+        # Actualizar velocidad de fantasmas para el nuevo nivel
         nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
-        for fantasma in self.orden_fantasmas:
+        for fantasma in self.fantasmas:
             fantasma.velocidad = nueva_velocidad
-            fantasma.scatter()
+            fantasma.modo.current = SCATTER
             fantasma.actualizar_skin()
 
         self.denegar_accesos()
         self.mostrar_pantalla_nivel()
 
+    def reiniciar_por_muerte(self):
+        """Reinicia el nivel cuando Pacman muere"""
+
+        # Mantener el mismo nivel y velocidad
+        for fantasma in self.fantasmas:
+            fantasma.modo.current = SCATTER
+            fantasma.actualizar_skin()
+
+        # Resetear posiciones
+        self.pacman.direccion = STOP
+        self.verificar_vidas()
+
+        # self.pacman.reset_posicion()
+        self.fantasmas.reset()
+
+
+
+
+
+
+
+
+
     def mostrar_pantalla_nivel(self):
         """Muestra la pantalla de transición entre niveles"""
         tiempo_inicio = pygame.time.get_ticks()
         font = pygame.font.Font("Fuentes/PressStart2P-Regular.ttf", 74)
+        sonido_pasa_nivel = pygame.mixer.Sound("multimedia/efecto de sonido victoria happy wheels.mp3")
         texto_nivel = font.render(f"NIVEL {self.level_manager.nivel_actual}", True, (255, 255, 0))
         rect_texto = texto_nivel.get_rect(center=(TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2))
 
@@ -234,9 +305,6 @@ class Controladora(object):
 
             # Renderizar pantalla de nivel
             self.pantalla.fill(NEGRO)
-            self.Pellet.render(self.pantalla)
-            self.pacman.render(self.pantalla)
-            self.fantasmas.render(self.pantalla)
 
             # Overlay semitransparente
             s = pygame.Surface(TAMANIOPANTALLA)
@@ -246,6 +314,7 @@ class Controladora(object):
 
             # Mostrar texto del nivel
             self.pantalla.blit(texto_nivel, rect_texto)
+            sonido_pasa_nivel.play()
             pygame.display.update()
             self.clock.tick(30)
     def setFondo(self):
@@ -267,22 +336,6 @@ class Controladora(object):
         # self.grafo.denegar_acceso_entidades(15, 14, ARRIBA, self.fantasmas)
         # self.grafo.denegar_acceso_entidades(12, 26, ARRIBA, self.fantasmas)
         # self.grafo.denegar_acceso_entidades(15, 26, ARRIBA, self.fantasmas)
-
-    def verificar_eventos(self):
-        """Maneja los eventos del juego"""
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                exit()
-
-            if self.game_over:
-                self.manejar_eventos_game_over(event)
-            elif event.type == KEYDOWN:
-                self.manejar_eventos_teclado(event)
-
-        # Mantener sonido de sirena
-        if not pygame.mixer.get_busy():
-            self.sonido_sirena.set_volume(0.5)
-            self.sonido_sirena.play(-1)
 
     def manejar_eventos_game_over(self, event):
         """Maneja los eventos durante la pantalla de game over"""
@@ -307,6 +360,11 @@ class Controladora(object):
         """Reinicia completamente el juego"""
         pygame.init()
 
+        for fantasma in self.fantasmas:
+            fantasma.modo.current = SCATTER
+
+        self.pacman.direccion = STOP
+        self.denegar_accesos()
         self.inicializar_fantasmas()
 
         # Reiniciar estado de fantasmas
@@ -342,17 +400,6 @@ class Controladora(object):
             self.dibujar_menu_pausa()
         pygame.display.update()
 
-    def verificar_fruta(self):
-        """Maneja la aparición y colisión con frutas"""
-        # Crear fruta en momentos específicos
-        if self.Pellet.numComidos in [50, 140] and self.fruta is None:
-            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(12, 23))
-
-        if self.fruta is not None:
-            if self.pacman.colision_fruta(self.fruta):
-                self.manejar_colision_fruta()
-            elif self.fruta.desaparecer:
-                self.fruta = None
 
     def manejar_colision_fruta(self):
         """Maneja la colisión con una fruta"""
@@ -402,7 +449,7 @@ class Controladora(object):
                     'contador_parpadeo': getattr(fantasma, 'contador_parpadeo', 0),
                     # Guardar la posición del nodo blanco
                     'blanco': [fantasma.blanco.posicion.x, fantasma.blanco.posicion.y] if fantasma.blanco else None
-                } for fantasma in self.orden_fantasmas
+                } for fantasma in self.fantasmas
             ],'fruta':
                 {
                     'visible': self.fruta.visible if self.fruta else False,
@@ -451,23 +498,37 @@ class Controladora(object):
                 self.pacman.blanco = self.pacman.nodo
 
             # Restore ghosts
-            for fantasma, datos in zip(self.orden_fantasmas, estado['fantasmas']):
+            for fantasma, datos in zip(self.fantasmas, estado['fantasmas']):
                 # Restaurar posición y nodo
                 fantasma.posicion = Vector1(datos['posicion'][0], datos['posicion'][1])
 
                 # Calcular nodo basado en la posición
-                fila = round(fantasma.posicion.y // ALTURACELDA)
-                columna = round(fantasma.posicion.x // ANCHOCELDA)
+                fila = fantasma.posicion.y // ALTURACELDA
+                columna = fantasma.posicion.x // ANCHOCELDA
                 fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(columna, fila)
+
+                # Asegurarse de que el nodo no sea None
+                if fantasma.nodo is None:
+                    if fantasma.nombre == 98:
+                        fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(15.5, 17)
+                    if fantasma.nombre == 96:
+                        fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(11.5, 17)
+                    # raise ValueError(f"El nodo para la posición ({columna}, {fila}) es None")
+
 
                 # Restaurar el nodo blanco
                 if 'blanco' in datos and datos['blanco'] is not None:
                     blanco_x, blanco_y = datos['blanco']
-                    blanco_fila = round(blanco_y // ALTURACELDA)
-                    blanco_columna = round(blanco_x // ANCHOCELDA)
+                    blanco_fila = blanco_y // ALTURACELDA
+                    blanco_columna = blanco_x //ANCHOCELDA
                     fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(blanco_columna, blanco_fila)
                 else:
                     fantasma.blanco = fantasma.nodo  # O el valor por defecto que prefieras
+                if fantasma.blanco is None:
+                    if fantasma.nombre == 98:
+                        fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(15.5, 16)
+                    if fantasma.nombre == 96:
+                        fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(11.5, 16)
 
                 # Restaurar dirección
                 if 'direccion' in datos:
@@ -477,7 +538,6 @@ class Controladora(object):
                 fantasma.modo.current = datos['modo']['current']
                 fantasma.modo.tiempo = datos['modo']['tiempo']
                 fantasma.modo.temporizador = datos['modo']['temporizador']
-
 
                 # Restaurar estados de freight
                 fantasma.duracion_freight = datos.get('duracion_freight', 7)
@@ -491,6 +551,9 @@ class Controladora(object):
                         fantasma.modo.tiempo = fantasma.duracion_freight
                     if fantasma.modo.temporizador is None:
                         fantasma.modo.temporizador = 0
+
+                if fantasma.modo.current == SPAWN:
+                    self.grafo.dar_acceso_a_casa(fantasma)
 
             # Restore fruit
             if estado['fruta']['visible']:
