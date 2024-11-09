@@ -15,7 +15,7 @@ class Entidad(object):
         self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
         self.direccion = STOP
-        self.set_velocidad(200)
+        self.set_velocidad(300)
         self.radio = 10
         self.radio_colision = 5
         self.color = BLANCO
@@ -154,7 +154,6 @@ class Entidad(object):
     def reset(self):
         self.set_nodo_inicio(self.nodo_inicio)
         self.direccion = STOP
-        self.velocidad = 100
         self.visible = True
 
     #Metodo para poner a las entidades entre nodos
