@@ -1,0 +1,472 @@
+{
+    "pacman": {
+        "posicion": [
+            420.0,
+            190.1
+        ],
+        "direccion": 1,
+        "direccion_deseada": 0,
+        "blanco": [
+            420,
+            180
+        ],
+        "vidas": 2,
+        "puntos": 3060
+    },
+    "fantasmas": [
+        {
+            "nombre": 99,
+            "posicion": [
+                240.0,
+                510.0
+            ],
+            "direccion": -1,
+            "modo": {
+                "current": 1,
+                "tiempo": null,
+                "temporizador": 7.063000000000005
+            },
+            "duracion_freight": 7,
+            "tiempo_freight": 6.997000000000004,
+            "parpadeo_freight": false,
+            "contador_parpadeo": 0.067,
+            "blanco": [
+                240,
+                520
+            ]
+        },
+        {
+            "nombre": 97,
+            "posicion": [
+                413.4,
+                460.0
+            ],
+            "direccion": -2,
+            "modo": {
+                "current": 1,
+                "tiempo": null,
+                "temporizador": 0
+            },
+            "duracion_freight": 7,
+            "tiempo_freight": 6.964000000000004,
+            "parpadeo_freight": false,
+            "contador_parpadeo": 0.034,
+            "blanco": [
+                420,
+                460
+            ]
+        },
+        {
+            "nombre": 96,
+            "posicion": [
+                360.0,
+                573.4000000000001
+            ],
+            "direccion": 1,
+            "modo": {
+                "current": 1,
+                "tiempo": null,
+                "temporizador": 7.063000000000005
+            },
+            "duracion_freight": 7,
+            "tiempo_freight": 6.997000000000004,
+            "parpadeo_freight": false,
+            "contador_parpadeo": 0.067,
+            "blanco": [
+                360,
+                560
+            ]
+        },
+        {
+            "nombre": 98,
+            "posicion": [
+                60.0,
+                573.4000000000001
+            ],
+            "direccion": 1,
+            "modo": {
+                "current": 1,
+                "tiempo": null,
+                "temporizador": 0
+            },
+            "duracion_freight": 7,
+            "tiempo_freight": 6.730000000000003,
+            "parpadeo_freight": false,
+            "contador_parpadeo": 0,
+            "blanco": [
+                60,
+                560
+            ]
+        }
+    ],
+    "fruta": {
+        "visible": false,
+        "tiempo": 0,
+        "temporizador": 0
+    },
+    "pellets": [
+        {
+            "fila": 4,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 16,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 17,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 19,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 20,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 22,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 23,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 25,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 5,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 5,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 5,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 5,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 6,
+            "columna": 1,
+            "tipo": 2
+        },
+        {
+            "fila": 6,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 6,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 6,
+            "columna": 26,
+            "tipo": 2
+        },
+        {
+            "fila": 7,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 7,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 7,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 7,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 13,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 14,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 16,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 17,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 19,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 20,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 22,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 23,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 25,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 9,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 9,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 9,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 10,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 10,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 16,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 17,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 22,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 23,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 25,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 16,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 17,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 19,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 20,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 22,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 23,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 25,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 24,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 24,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 25,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 25,
+            "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 25,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 26,
+            "tipo": 2
+        },
+        {
+            "fila": 27,
+            "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 28,
+            "columna": 24,
+            "tipo": 1
+        }
+    ],
+    "tiempo_poder": 7,
+    "nivel": 1,
+    "velocidad": 100
+}
