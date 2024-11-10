@@ -55,7 +55,7 @@ class GrupoTexto(object):
         self.vidas = 3  # Número inicial de vidas
         self.cargar_imagen_vida()
         self.cargar_imagen_frutas()
-        self.frutas_comidas = 4  # Inicializa el contador de frutas
+        self.frutas_comidas = [] # Inicializa el contador de frutas
         self.game_over_visible = False
         self.nombres_frutas = ["Cereza", "Naranja", "Manzana"]  # Nombres de las frutas para referencia
 
@@ -91,6 +91,11 @@ class GrupoTexto(object):
         self.todos_los_textos[self.proximo_id] = Texto(texto, color, x, y, tamaño, tiempo=tiempo, id=id)
         return self.proximo_id
 
+    def agregarFruta(self, tipo_fruta):
+        self.frutas_comidas+=1
+        if len(self.frutas_comidas) < 4:
+            self.frutas_comidas.append(tipo_fruta)
+
     def configurarTextos(self):
         tamaño = ALTURACELDA
         self.todos_los_textos[SCORETXT] = Texto("0".zfill(8), BLANCO, 0, ALTURACELDA, tamaño)
@@ -116,9 +121,6 @@ class GrupoTexto(object):
     def actualizarVidas(self, vidas):
         self.vidas = vidas
 
-    def agregarFruta(self):
-        self.frutas_comidas += 1
-
     def obtenerNombreFruta(self, indice):
         """Retorna el nombre de la fruta según el índice"""
         return self.nombres_frutas[indice % len(self.nombres_frutas)]
@@ -136,24 +138,27 @@ class GrupoTexto(object):
             y = TAMANIOPANTALLA[1] - self.imagen_vida.get_height() - margen
             pantalla.blit(self.imagen_vida, (x, y))
 
-        # Renderizar las diferentes frutas en la esquina inferior derecha
-        for i in range(self.frutas_comidas):
+        # Renderizar solo las frutas que han sido comidas
+        for i, tipo_fruta in enumerate(self.frutas_comidas):
             x = TAMANIOPANTALLA[0] - (margen + (i + 1) * (45 + separacion))
             y = TAMANIOPANTALLA[1] - 45 - margen
-            # Usar el módulo para alternar entre las tres frutas
-            indice_fruta = i % len(self.imagenes_frutas)
-            pantalla.blit(self.imagenes_frutas[indice_fruta], (x, y))
 
-        # Mostrar el texto "GAME OVER" si es necesario
-        if self.game_over_visible:
-            if GAMEOVERTXT in self.todos_los_textos:
-                self.todos_los_textos[GAMEOVERTXT].visible = True
+            # Determinar qué imagen usar basado en el tipo de fruta
+            if tipo_fruta == 'fres':
+                indice_fruta = 0
+            elif tipo_fruta == 'vai':
+                indice_fruta = 1
+            elif tipo_fruta == 'choco':
+                indice_fruta = 2
+            elif tipo_fruta == 'pach':
+                indice_fruta = 3
 
+            if 0 <= indice_fruta < len(self.imagenes_frutas):
+                pantalla.blit(self.imagenes_frutas[indice_fruta], (x, y))
     def mostrar_game_over(self):
         self.game_over_visible = True
 
     def reset(self):
         """Reinicia el estado de las frutas y otros elementos"""
-        self.frutas_comidas = 0
+        self.frutas_comidas = []  # Vaciar la lista de frutas comidas
         self.game_over_visible = False
-        # Reiniciar otros elementos según sea necesario

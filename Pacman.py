@@ -199,7 +199,9 @@ class Pacman(Entidad):
             radio_total = (self.radio_colision + fruta.radio_colision) ** 2
 
             if distancia_cuadrada <= radio_total:
+                fruta.ser_comido()
                 return True
+
         return False
 
     def colision_con_fantasmas(self, fantasmas,grafo,textos_temporales):

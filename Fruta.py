@@ -11,10 +11,12 @@ class Fruta(Entidad):
     y desaparición de frutas con diferentes sprites.
     """
 
-    def __init__(self, nodo, nivel):
+    def __init__(self, nodo, nivel,grupo_texto):
         """
         Inicializa una nueva fruta.
         """
+        Entidad.__init__(self, nodo)
+
         Entidad.__init__(self, nodo)
 
         # Atributos básicos
@@ -24,6 +26,8 @@ class Fruta(Entidad):
         self.tiempo = 5
         self.temporizador = 0
         self.desaparecer = False
+        self.grupo_texto = grupo_texto  # Guardamos la referencia a grupo_texto
+        self.nivel = nivel  # Guardamos el nivel para saber qué fruta es
 
         # Mapeo de frutas por nivel
         self.frutas_por_nivel = {
@@ -37,12 +41,14 @@ class Fruta(Entidad):
         self.cargar_imagenes()
 
         # 20% de probabilidad de que aparezca la pacha
-        if random() < 0.2:  # Eliminamos random.random()
+        if random() < 0.2:
             self.skin = self.pacha
             self.puntos = 500
+            self.tipo_fruta = 'pach'
         else:
             self.skin = self.seleccionar_fruta_por_nivel(nivel)
             self.puntos = self.frutas_por_nivel.get(nivel, (None, 100))[1]
+            self.tipo_fruta = self.frutas_por_nivel.get(nivel, ('fres', 100))[0]  # Por defecto 'fres'
 
         # Configuración de posición
         self.establecer_entre_nodos(DERECHA)
@@ -106,5 +112,9 @@ class Fruta(Entidad):
             else:
                 p = self.posicion.entero()
                 pygame.draw.circle(pantalla, (255, 0, 0), p, 15)
+
+    def ser_comido(self):
+        self.grupo_texto.agregarFruta(self.tipo_fruta)
+        self.desaparecer = True
 
 
