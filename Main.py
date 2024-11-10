@@ -476,6 +476,11 @@ class Controladora(object):
         # Actualizar color del mapa según el nivel
         self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
 
+        if self.Pellet.numComidos >= 30:
+            self.fantasmas.inky.nodo_inicio.dar_acceso(DERECHA, self.fantasmas.inky)
+        if self.Pellet.numComidos >= 70:
+            self.fantasmas.clyde.nodo_inicio.dar_acceso(IZQUIERDA, self.fantasmas.clyde)
+
         # Actualizar velocidades de fantasmas para el nivel actual
         nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
         for fantasma in self.fantasmas:
@@ -525,12 +530,14 @@ class Controladora(object):
                 {
                     'fila': pellet.posicion.y // ALTURACELDA,
                     'columna': pellet.posicion.x // ANCHOCELDA,
-                    'tipo': pellet.nombre
+                    'tipo': pellet.nombre,
+
                 } for pellet in self.Pellet.listaPellets
             ],
             'tiempo_poder': self.tiempo_poder,
             'nivel': self.level_manager.nivel_actual
-            , 'velocidad': self.level_manager.velocidad_base_fantasmas
+            , 'velocidad': self.level_manager.velocidad_base_fantasmas,
+            'pellets_comidos': self.Pellet.numComidos  # Añadido: guardar número de pellets comidos
         }
         try:
             with open(archivo, 'w', encoding='utf-8') as f:
@@ -578,6 +585,8 @@ class Controladora(object):
                 if fantasma.nodo is None:
                     if fantasma.nombre == 98:
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(15.5, 17)
+                    if fantasma.nombre == 97:
+                        fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(13.5, 17)
                     if fantasma.nombre == 96:
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(11.5, 17)
                     # raise ValueError(f"El nodo para la posición ({columna}, {fila}) es None")
@@ -594,8 +603,11 @@ class Controladora(object):
                 if fantasma.blanco is None:
                     if fantasma.nombre == 98:
                         fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(15.5, 16)
+                    if fantasma.nombre == 97:
+                        fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(13.5, 16)
                     if fantasma.nombre == 96:
                         fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(11.5, 16)
+
 
                 # Restaurar dirección
                 if 'direccion' in datos:
@@ -638,6 +650,8 @@ class Controladora(object):
                     nuevo_pellet = PelletPoder(fila, columna)
                     self.Pellet.listaPellets.append(nuevo_pellet)
                     self.Pellet.pelletsPoder.append(nuevo_pellet)
+
+            self.Pellet.numComidos = estado.get('pellets_comidos', 0)
 
             self.tiempo_poder = estado['tiempo_poder']
             self.level_manager.nivel_actual = estado['nivel']
