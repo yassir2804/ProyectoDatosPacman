@@ -14,6 +14,8 @@ class LevelManager:
         # Nivel actual del juego (comienza en 1)
         self.nivel_actual = 1
 
+
+
         # Velocidad base de los fantasmas en píxeles por segundo
         self.velocidad_base_fantasmas = 100
 

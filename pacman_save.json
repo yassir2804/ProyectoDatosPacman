@@ -1,45 +1,21 @@
 {
     "pacman": {
         "posicion": [
-            420.0,
-            190.1
+            280,
+            520
         ],
-        "direccion": 1,
+        "direccion": 0,
         "direccion_deseada": 0,
-        "blanco": [
-            420,
-            180
-        ],
+        "blanco": null,
         "vidas": 2,
-        "puntos": 3060
+        "puntos": 840
     },
     "fantasmas": [
         {
             "nombre": 99,
             "posicion": [
-                240.0,
-                510.0
-            ],
-            "direccion": -1,
-            "modo": {
-                "current": 1,
-                "tiempo": null,
-                "temporizador": 7.063000000000005
-            },
-            "duracion_freight": 7,
-            "tiempo_freight": 6.997000000000004,
-            "parpadeo_freight": false,
-            "contador_parpadeo": 0.067,
-            "blanco": [
-                240,
-                520
-            ]
-        },
-        {
-            "nombre": 97,
-            "posicion": [
-                413.4,
-                460.0
+                296.7,
+                280.0
             ],
             "direccion": -2,
             "modo": {
@@ -48,40 +24,19 @@
                 "temporizador": 0
             },
             "duracion_freight": 7,
-            "tiempo_freight": 6.964000000000004,
+            "tiempo_freight": 0,
             "parpadeo_freight": false,
-            "contador_parpadeo": 0.034,
+            "contador_parpadeo": 0,
             "blanco": [
-                420,
-                460
+                300,
+                280
             ]
         },
         {
-            "nombre": 96,
+            "nombre": 97,
             "posicion": [
-                360.0,
-                573.4000000000001
-            ],
-            "direccion": 1,
-            "modo": {
-                "current": 1,
-                "tiempo": null,
-                "temporizador": 7.063000000000005
-            },
-            "duracion_freight": 7,
-            "tiempo_freight": 6.997000000000004,
-            "parpadeo_freight": false,
-            "contador_parpadeo": 0.067,
-            "blanco": [
-                360,
-                560
-            ]
-        },
-        {
-            "nombre": 98,
-            "posicion": [
-                60.0,
-                573.4000000000001
+                270.0,
+                313.3
             ],
             "direccion": 1,
             "modo": {
@@ -90,12 +45,54 @@
                 "temporizador": 0
             },
             "duracion_freight": 7,
-            "tiempo_freight": 6.730000000000003,
+            "tiempo_freight": 0,
             "parpadeo_freight": false,
             "contador_parpadeo": 0,
             "blanco": [
-                60,
-                560
+                270.0,
+                280
+            ]
+        },
+        {
+            "nombre": 96,
+            "posicion": [
+                230.0,
+                353.4
+            ],
+            "direccion": 1,
+            "modo": {
+                "current": 1,
+                "tiempo": null,
+                "temporizador": 0
+            },
+            "duracion_freight": 7,
+            "tiempo_freight": 0,
+            "parpadeo_freight": false,
+            "contador_parpadeo": 0,
+            "blanco": [
+                230.0,
+                340
+            ]
+        },
+        {
+            "nombre": 98,
+            "posicion": [
+                310.0,
+                353.4
+            ],
+            "direccion": 1,
+            "modo": {
+                "current": 1,
+                "tiempo": null,
+                "temporizador": 0
+            },
+            "duracion_freight": 7,
+            "tiempo_freight": 0,
+            "parpadeo_freight": false,
+            "contador_parpadeo": 0,
+            "blanco": [
+                310.0,
+                340
             ]
         }
     ],
@@ -105,6 +102,66 @@
         "temporizador": 0
     },
     "pellets": [
+        {
+            "fila": 4,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 2,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 3,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 4,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 5,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 7,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 8,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 10,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 11,
+            "tipo": 1
+        },
+        {
+            "fila": 4,
+            "columna": 12,
+            "tipo": 1
+        },
         {
             "fila": 4,
             "columna": 15,
@@ -172,6 +229,16 @@
         },
         {
             "fila": 5,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 5,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 5,
             "columna": 15,
             "tipo": 1
         },
@@ -192,6 +259,16 @@
         },
         {
             "fila": 6,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 6,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 6,
             "columna": 15,
             "tipo": 1
         },
@@ -212,6 +289,16 @@
         },
         {
             "fila": 7,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 7,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 7,
             "columna": 15,
             "tipo": 1
         },
@@ -223,6 +310,66 @@
         {
             "fila": 7,
             "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 2,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 3,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 4,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 5,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 7,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 8,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 10,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 11,
+            "tipo": 1
+        },
+        {
+            "fila": 8,
+            "columna": 12,
             "tipo": 1
         },
         {
@@ -252,26 +399,6 @@
         },
         {
             "fila": 8,
-            "columna": 18,
-            "tipo": 1
-        },
-        {
-            "fila": 8,
-            "columna": 19,
-            "tipo": 1
-        },
-        {
-            "fila": 8,
-            "columna": 20,
-            "tipo": 1
-        },
-        {
-            "fila": 8,
-            "columna": 21,
-            "tipo": 1
-        },
-        {
-            "fila": 8,
             "columna": 22,
             "tipo": 1
         },
@@ -297,12 +424,17 @@
         },
         {
             "fila": 9,
-            "columna": 18,
+            "columna": 1,
             "tipo": 1
         },
         {
             "fila": 9,
-            "columna": 21,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 9,
+            "columna": 9,
             "tipo": 1
         },
         {
@@ -312,32 +444,77 @@
         },
         {
             "fila": 10,
-            "columna": 18,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 10,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 10,
+            "columna": 9,
             "tipo": 1
         },
         {
             "fila": 10,
             "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 2,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 3,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 4,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 5,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 10,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 11,
+            "tipo": 1
+        },
+        {
+            "fila": 11,
+            "columna": 12,
             "tipo": 1
         },
         {
             "fila": 11,
             "columna": 15,
-            "tipo": 1
-        },
-        {
-            "fila": 11,
-            "columna": 16,
-            "tipo": 1
-        },
-        {
-            "fila": 11,
-            "columna": 17,
-            "tipo": 1
-        },
-        {
-            "fila": 11,
-            "columna": 18,
             "tipo": 1
         },
         {
@@ -363,6 +540,111 @@
         {
             "fila": 11,
             "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 12,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 13,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 14,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 15,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 16,
+            "columna": 6,
+            "tipo": 1
+        },
+        {
+            "fila": 18,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 19,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 20,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 21,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 22,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 2,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 3,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 4,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 5,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 7,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 8,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 10,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 11,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 12,
             "tipo": 1
         },
         {
@@ -393,6 +675,11 @@
         {
             "fila": 23,
             "columna": 20,
+            "tipo": 1
+        },
+        {
+            "fila": 23,
+            "columna": 21,
             "tipo": 1
         },
         {
@@ -422,7 +709,22 @@
         },
         {
             "fila": 24,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 24,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 24,
             "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 24,
+            "columna": 21,
             "tipo": 1
         },
         {
@@ -432,12 +734,67 @@
         },
         {
             "fila": 25,
+            "columna": 1,
+            "tipo": 1
+        },
+        {
+            "fila": 25,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 25,
             "columna": 15,
             "tipo": 1
         },
         {
             "fila": 25,
+            "columna": 21,
+            "tipo": 1
+        },
+        {
+            "fila": 25,
             "columna": 26,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 1,
+            "tipo": 2
+        },
+        {
+            "fila": 26,
+            "columna": 2,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 7,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 8,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 10,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 11,
+            "tipo": 1
+        },
+        {
+            "fila": 26,
+            "columna": 12,
             "tipo": 1
         },
         {
@@ -457,16 +814,97 @@
         },
         {
             "fila": 27,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 27,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 27,
             "columna": 24,
+            "tipo": 1
+        },
+        {
+            "fila": 28,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 28,
+            "columna": 18,
             "tipo": 1
         },
         {
             "fila": 28,
             "columna": 24,
             "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 9,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 10,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 11,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 16,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 17,
+            "tipo": 1
+        },
+        {
+            "fila": 29,
+            "columna": 18,
+            "tipo": 1
+        },
+        {
+            "fila": 30,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 30,
+            "columna": 15,
+            "tipo": 1
+        },
+        {
+            "fila": 31,
+            "columna": 12,
+            "tipo": 1
+        },
+        {
+            "fila": 31,
+            "columna": 15,
+            "tipo": 1
         }
     ],
-    "tiempo_poder": 7,
+    "tiempo_poder": 0,
     "nivel": 1,
-    "velocidad": 100
+    "velocidad": 100,
+    "pellets_comidos": 84
 }
