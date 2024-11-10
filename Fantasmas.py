@@ -4,10 +4,10 @@ from Vector import Vector1
 from Modo import Controladora_Modos
 from Constantes import *
 
+
 class Fantasma(Entidad):
     def __init__(self, nodo, pacman=None, blinky=None):
         super().__init__(nodo)
-        """Inicializa los atributos básicos del fantasma"""
         self.nombre = FANTASMA
         self.puntos = 200
         self.meta = Vector1(0, 0)
@@ -16,11 +16,14 @@ class Fantasma(Entidad):
         self.modo = Controladora_Modos(self)
         self.nodoSpawn = nodo
 
-        # Atributos de movimiento
-        self.velocidad = 100
+
+        # Velocidad base y actual
+        self.velocidad_base = 100  # Velocidad inicial
+        self.set_velocidad(self.velocidad_base)
+
         self.direccion = DERECHA
 
-        """Configura los atributos relacionados con el modo freight"""
+        # Atributos del modo freight
         self.tiempo_freight = 0
         self.intervalo_freight = 0.2
         self.indice_freight = 0
@@ -28,17 +31,15 @@ class Fantasma(Entidad):
         self.parpadeo_freight = False
         self.contador_parpadeo = 0
 
-
         self.estado_salida = "esperando"
         self.posicion_salida = None
 
-        """Configura de sonidos para cada fantasmas y animaciones"""
+        # Sonidos
         self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")
         self.sonido_freightmode.set_volume(0.2)
         self.sonidoFreightSonando = False
 
-        """Configuración de las animacionesojos,modos, skin_iniciall"""
-
+        # Configuración de animaciones
         self.cargar_animaciones()
         self.cargar_animaciones_freight()
         self.cargar_animaciones_ojos()
@@ -46,12 +47,7 @@ class Fantasma(Entidad):
         self.skin = self.skin_inicial
 
     def reset(self):
-        """Reinicia el fantasma a su estado inicial"""
-        # Reset de la entidad padre
         super().reset()
-        # Reset de atributos básicos
-        self.puntos = 200
-        self.metodo_direccion = self.direccion_meta
 
     def cargar_animaciones_freight(self):
         self.skins_freight = [
@@ -116,6 +112,13 @@ class Fantasma(Entidad):
             self.sonidoFreightSonando = True
         self._actualizar_skin_freight(dt)
 
+    def actualizar_velocidad_nivel(self, nivel):
+        """Actualiza la velocidad base según el nivel"""
+        # Aumenta la velocidad un 10% por nivel
+        factor = 1 + (nivel - 1) * 0.1
+        self.velocidad_base = 100 * factor * ANCHOCELDA / 16
+        self.set_velocidad(self.velocidad_base)
+
     def _manejar_modo_spawn(self):
         """Maneja la actualización en modo spawn"""
         self.sonidoFreightSonando = False
@@ -177,22 +180,23 @@ class Fantasma(Entidad):
 
         # self.modo.set_modo_spawn()
         if self.modo.current == SPAWN:
-            self.set_velocidad(150)
             self.metodo_direccion = self.direccion_meta
             self.spawn()
 
     def modo_Freight(self):
+
             self.modo.modo_freight()
             if self.modo.current == FREIGHT:
                 self.set_velocidad(50)
                 self.metodo_direccion = self.direccion_aleatoria
                 self.tiempo_freight = 0
                 self.duracion_freight = 7
+                self.puntos=200
                 self.tiempo_parpadeo = 0
                 self.skin = self.skins_freight[0]
 
     def modo_normal(self):
-        self.set_velocidad(100)
+        self.set_velocidad(self.velocidad_base)
         self.metodo_direccion = self.direccion_meta
         self.modo.current = CHASE
         self.nodoSpawn.denegar_acceso(ABAJO, self)
@@ -201,6 +205,12 @@ class Fantasma(Entidad):
 
     def cargar_animaciones(self):
         pass
+
+    def actualizarPuntos(self):
+        """Duplica los puntos del siguiente fantasma que será comido"""
+        for fantasma in self:
+            if fantasma.modo.current == FREIGHT:
+                fantasma.puntos *= 2
 
     def render(self, pantalla):
         if self.visible:
@@ -217,12 +227,11 @@ class Blinky(Fantasma):
     """Fantasma rojo que persigue directamente a Pac-Man"""
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
-
         self.nombre = BLINKY
         self.color = ROJO
-        self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
         self.radio_colision = 5
+
 
     def scatter(self):
         self.meta = Vector1(0, 0)
@@ -232,7 +241,6 @@ class Blinky(Fantasma):
 
     def reset(self):
         super().reset()
-
 
     def cargar_animaciones(self):
         self.skins = {
@@ -249,7 +257,6 @@ class Pinky(Fantasma):
         super().__init__(nodo, pacman)
         self.nombre = PINKY
         self.color = ROSADO
-        self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
         self.radio_colision = 5
 
@@ -262,7 +269,6 @@ class Pinky(Fantasma):
 
     def reset(self):
         super().reset()
-        self.velocidad = 100 * ANCHOCELDA / 16
 
 
     def cargar_animaciones(self):
@@ -280,7 +286,6 @@ class Inky(Fantasma):
         super().__init__(nodo, pacman, blinky)
         self.nombre = INKY
         self.color = CELESTE
-        self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
         self.radio_colision = 5
 
@@ -304,7 +309,6 @@ class Inky(Fantasma):
 
     def reset(self):
         super().reset()
-        self.velocidad = 100 * ANCHOCELDA / 16
 
     def cargar_animaciones(self):
         self.skins = {
@@ -321,7 +325,6 @@ class Clyde(Fantasma):
         super().__init__(nodo, pacman)
         self.nombre = CLYDE
         self.color = NARANJA
-        self.velocidad = 100 * ANCHOCELDA / 16
         self.radio = 10
         self.radio_colision = 5
 
@@ -343,7 +346,6 @@ class Clyde(Fantasma):
 
     def reset(self):
         super().reset()
-        self.velocidad = 100 * ANCHOCELDA / 16
 
 
     def cargar_animaciones(self):
@@ -363,12 +365,17 @@ class GrupoFantasmas(object):
         self.clyde = Clyde(nodo, pacman)
         self.fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
         self.tiempo_transcurrido = 0
-        self.tiempo_entre_fantasmas = 5  # segundos entre cada fantasma
+        self.tiempo_entre_fantasmas = 5
         self.fantasmas_liberados = 0
         self.orden_fantasmas = [self.blinky, self.pinky, self.inky, self.clyde]
 
     def __iter__(self):
         return iter(self.fantasmas)
+
+    def actualizar_velocidades_nivel(self, nivel):
+        """Actualiza las velocidades de todos los fantasmas según el nivel"""
+        for fantasma in self.fantasmas:
+            fantasma.actualizar_velocidad_nivel(nivel)
 
     def actualizar(self, dt):
         for fantasma in self.fantasmas:
@@ -377,6 +384,7 @@ class GrupoFantasmas(object):
     def modo_Freight(self):
         for fantasma in self:
             fantasma.modo_Freight()
+
         self.resetear_puntos()
 
     def modo_Chase(self):
@@ -399,7 +407,6 @@ class GrupoFantasmas(object):
         """Reset all ghosts to their initial positions"""
         for fantasma in self.fantasmas:
             fantasma.reset()
-
 
     def esconder(self):
         for fantasma in self:

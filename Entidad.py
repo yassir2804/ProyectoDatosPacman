@@ -9,13 +9,15 @@ import heapq
 import pygame
 from Vector import Vector1
 
+
+
 class Entidad(object):
     def __init__(self, nodo):
         self.nombre = None
         self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
         self.direccion = STOP
-        self.set_velocidad(200)
+        self.set_velocidad(150)
         self.radio = 10
         self.radio_colision = 5
         self.color = BLANCO
@@ -154,7 +156,6 @@ class Entidad(object):
     def reset(self):
         self.set_nodo_inicio(self.nodo_inicio)
         self.direccion = STOP
-        self.velocidad = 100
         self.visible = True
 
     #Metodo para poner a las entidades entre nodos
@@ -259,7 +260,7 @@ class Entidad(object):
 
     #Establece la velocidad de la entidad
     def set_velocidad(self, velocidad):
-        self.velocidad = velocidad * ANCHOCELDA / 16
+        self.velocidad = velocidad
 
     def render(self, pantalla):
         """Dibuja la entidad en la pantalla."""

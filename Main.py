@@ -40,6 +40,7 @@ class Controladora(object):
         self.game_over = False
         self.pausa = False
         self.reiniciar_juego = False
+        self.game_over_ganado = False
 
         # Inicialización de Pac-Man
         self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 26))
@@ -109,7 +110,7 @@ class Controladora(object):
         """Maneja la aparición y colisión con frutas"""
         # Crear fruta en momentos específicos
         if self.Pellet.numComidos in [50, 140] and self.fruta is None:
-            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20))
+            self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20), self.level_manager.nivel_actual)
 
         if self.fruta is not None:
             if self.pacman.colision_fruta(self.fruta):
@@ -144,8 +145,9 @@ class Controladora(object):
                     self.reiniciar_nivel()
                 else:
                     # El juego ha terminado (después del nivel 3)
-                    self.game_over = True
-
+                    self.game_over_ganado = True
+                    pygame.mixer.stop()
+                    self.mostrar_pantalla_victoria()
 
     def verificar_vidas(self):
         """Verifica el estado de las vidas y maneja el game over"""
@@ -154,9 +156,6 @@ class Controladora(object):
         if puntos > 0:
             self.puntaje += puntos
             self.grupo_texto.actualizarPuntaje(self.puntaje)
-
-
-
         # Actualizar display de vidas cuando cambian
         self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
@@ -196,9 +195,6 @@ class Controladora(object):
 
         dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:
-
-
-
             self.mapa_renderer.actualizar(dt, self.fantasmas.modo_freight_activo())
             if not self.pacman.muerto:
                 self.pacman.actualizar(dt)
@@ -251,9 +247,11 @@ class Controladora(object):
         pygame.mixer.stop()
         self.pacman.reset_posicion()
         self.fantasmas.reset()
+        self.fantasmas.actualizar_velocidades_nivel(self.level_manager.nivel_actual)
         self.inicializar_fantasmas()
 
         # Actualizar elementos visuales
+
         self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
         self.Pellet = GrupoPellets("mazetest.txt")
 
@@ -261,6 +259,7 @@ class Controladora(object):
         nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
         for fantasma in self.fantasmas:
             fantasma.velocidad = nueva_velocidad
+            fantasma.velocidad_base = nueva_velocidad
             fantasma.modo.current = SCATTER
             fantasma.actualizar_skin()
 
@@ -270,8 +269,10 @@ class Controladora(object):
     def reiniciar_por_muerte(self):
         """Reinicia el nivel cuando Pacman muere"""
 
-        # Mantener el mismo nivel y velocidad
+        # Actualizar velocidad de fantasmas para el nuevo nivel
+        nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
         for fantasma in self.fantasmas:
+            fantasma.velocidad = nueva_velocidad
             fantasma.modo.current = SCATTER
             fantasma.actualizar_skin()
 
@@ -282,13 +283,56 @@ class Controladora(object):
         # self.pacman.reset_posicion()
         self.fantasmas.reset()
 
+    def mostrar_pantalla_victoria(self):
+        """Muestra la pantalla de victoria cuando se completa el juego"""
+        tiempo_inicio = pygame.time.get_ticks()
+        font_grande = pygame.font.Font("Fuentes/PressStart2P-Regular.ttf", 50)
+        font_pequeña = pygame.font.Font("Fuentes/PressStart2P-Regular.ttf", 36)
+        sonido_victoria = pygame.mixer.Sound("multimedia/Efecto de Sonido de Victoria Plantas Vs  Zombies.mp3")
 
+        # Calculamos el tamaño disponible para la imagen
+        altura_imagen = int(TAMANIOPANTALLA[1] * 0.3)
+        tamanio_imagen = (altura_imagen, altura_imagen)
 
+        # Cargar y escalar la imagen al tamaño calculado
+        imagen_victoria = pygame.image.load("multimedia/premiesito.png")
+        imagen_victoria = pygame.transform.scale(imagen_victoria, tamanio_imagen)
 
+        # Crear los textos
+        texto_victoria = font_pequeña.render("¡HAS GANADO!", True, (255, 255, 0))
+        texto_tu_premio = font_pequeña.render("TU PREMIO ES", True, (255, 255, 0))
 
+        # Calculamos las posiciones para una distribución proporcional
+        espacio_vertical = TAMANIOPANTALLA[1] // 6
 
+        # Ajustamos las posiciones - victoria arriba, imagen en medio, premio abajo
+        rect_victoria = texto_victoria.get_rect(center=(TAMANIOPANTALLA[0] // 2, espacio_vertical * 1.5))
+        rect_imagen = imagen_victoria.get_rect(center=(TAMANIOPANTALLA[0] // 2, espacio_vertical * 3))
+        rect_tu_premio = texto_tu_premio.get_rect(center=(TAMANIOPANTALLA[0] // 2, espacio_vertical * 4.5))
 
+        sonido_victoria.play()
+        while pygame.time.get_ticks() - tiempo_inicio < 5000:  # 5 segundos
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    exit()
+            # Renderizar fondo negro
+            self.pantalla.fill(NEGRO)
+            # Overlay semitransparente
+            s = pygame.Surface(TAMANIOPANTALLA)
+            s.set_alpha(128)
+            s.fill(NEGRO)
+            self.pantalla.blit(s, (0, 0))
 
+            # Mostrar textos e imagen en el nuevo orden
+            self.pantalla.blit(texto_victoria, rect_victoria)
+            self.pantalla.blit(imagen_victoria, rect_imagen)
+            self.pantalla.blit(texto_tu_premio, rect_tu_premio)
+
+            pygame.display.update()
+            self.clock.tick(30)
+
+        # Al finalizar la pantalla de victoria, activar game over
+        self.game_over = True
 
     def mostrar_pantalla_nivel(self):
         """Muestra la pantalla de transición entre niveles"""
@@ -378,9 +422,11 @@ class Controladora(object):
         self.game_over = False
         self.menu_game_over = MenuGameOver(self.pantalla)
         self.reiniciar_juego = False
+        self.level_manager.nivel_actual=1
         self.fruta = None
         self.pacman.reset_vidas()
         self.grupo_texto = GrupoTexto()
+        self.mapa_renderer.color_mapa(1)
 
     def render(self):
         self.pantalla.blit(self.fondo, (0, 0))
@@ -395,7 +441,7 @@ class Controladora(object):
         for texto in self.textos_temporales:
             texto.render(self.pantalla)
         if self.game_over:
-            self.menu_game_over.dibujar()
+            self.menu_game_over.dibujar(self.game_over_ganado)
         if self.pausa:
             self.dibujar_menu_pausa()
         pygame.display.update()
@@ -421,6 +467,30 @@ class Controladora(object):
         self.puntaje += puntos_fruta
         self.grupo_texto.actualizarPuntaje(self.puntaje)
         self.fruta = None
+
+    def configurar_nivel_cargado(self):
+        """
+        Configura todos los elementos necesarios para el nivel actual cuando se carga una partida.
+        Incluye color del mapa, velocidad de fantasmas y textos UI.
+        """
+        # Actualizar color del mapa según el nivel
+        self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
+
+        if self.Pellet.numComidos >= 30:
+            self.fantasmas.inky.nodo_inicio.dar_acceso(DERECHA, self.fantasmas.inky)
+        if self.Pellet.numComidos >= 70:
+            self.fantasmas.clyde.nodo_inicio.dar_acceso(IZQUIERDA, self.fantasmas.clyde)
+
+        # Actualizar velocidades de fantasmas para el nivel actual
+        nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
+        for fantasma in self.fantasmas:
+            fantasma.velocidad = nueva_velocidad
+            fantasma.velocidad_base = nueva_velocidad
+
+        # Actualizar textos en la UI
+        self.grupo_texto.todos_los_textos[LEVELTXT].setTexto(str(self.level_manager.nivel_actual).zfill(3))
+        self.grupo_texto.actualizarPuntaje(self.puntaje)
+        self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
     def guardar_estado(self, archivo):
         estado = {
@@ -460,10 +530,14 @@ class Controladora(object):
                 {
                     'fila': pellet.posicion.y // ALTURACELDA,
                     'columna': pellet.posicion.x // ANCHOCELDA,
-                    'tipo': pellet.nombre
+                    'tipo': pellet.nombre,
+
                 } for pellet in self.Pellet.listaPellets
             ],
-            'tiempo_poder': self.tiempo_poder
+            'tiempo_poder': self.tiempo_poder,
+            'nivel': self.level_manager.nivel_actual
+            , 'velocidad': self.level_manager.velocidad_base_fantasmas,
+            'pellets_comidos': self.Pellet.numComidos  # Añadido: guardar número de pellets comidos
         }
         try:
             with open(archivo, 'w', encoding='utf-8') as f:
@@ -511,6 +585,8 @@ class Controladora(object):
                 if fantasma.nodo is None:
                     if fantasma.nombre == 98:
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(15.5, 17)
+                    if fantasma.nombre == 97:
+                        fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(13.5, 17)
                     if fantasma.nombre == 96:
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(11.5, 17)
                     # raise ValueError(f"El nodo para la posición ({columna}, {fila}) es None")
@@ -527,8 +603,11 @@ class Controladora(object):
                 if fantasma.blanco is None:
                     if fantasma.nombre == 98:
                         fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(15.5, 16)
+                    if fantasma.nombre == 97:
+                        fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(13.5, 16)
                     if fantasma.nombre == 96:
                         fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(11.5, 16)
+
 
                 # Restaurar dirección
                 if 'direccion' in datos:
@@ -556,13 +635,7 @@ class Controladora(object):
                     self.grafo.dar_acceso_a_casa(fantasma)
 
             # Restore fruit
-            if estado['fruta']['visible']:
-                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(12, 23))
-                self.fruta.visible = estado['fruta']['visible']
-                self.fruta.tiempo = estado['fruta']['tiempo']
-                self.fruta.temporizador = estado['fruta']['temporizador']
-            else:
-                self.fruta = None
+
 
             # Restore pellets
             self.Pellet.listaPellets.clear()
@@ -578,12 +651,29 @@ class Controladora(object):
                     self.Pellet.listaPellets.append(nuevo_pellet)
                     self.Pellet.pelletsPoder.append(nuevo_pellet)
 
+            self.Pellet.numComidos = estado.get('pellets_comidos', 0)
+
             self.tiempo_poder = estado['tiempo_poder']
+            self.level_manager.nivel_actual = estado['nivel']
+            self.level_manager.velocidad_base_fantasmas = estado['velocidad']
+
+            # Configurar todo lo relacionado con el nivel
 
             # Update UI
             if hasattr(self, 'grupo_texto'):
                 self.grupo_texto.actualizarPuntaje(self.puntaje)
                 self.grupo_texto.actualizarVidas(self.pacman.vidas)
+
+
+            if estado['fruta']['visible']:
+                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20),self.level_manager.nivel_actual)
+                self.fruta.visible = estado['fruta']['visible']
+                self.fruta.tiempo = estado['fruta']['tiempo']
+                self.fruta.temporizador = estado['fruta']['temporizador']
+            else:
+                self.fruta = None
+
+            self.configurar_nivel_cargado()
 
             return True
         except Exception as e:
@@ -648,7 +738,6 @@ class Controladora(object):
             print("Partida guardada")
         elif self.opciones_pausa[self.opcion_seleccionada] == "Salir":
             exit()
-
 
 
 
