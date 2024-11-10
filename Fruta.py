@@ -37,7 +37,7 @@ class Fruta(Entidad):
         self.cargar_imagenes()
 
         # 20% de probabilidad de que aparezca la pacha
-        if random() < 0.2:
+        if random() < 0.2:  # Eliminamos random.random()
             self.skin = self.pacha
             self.puntos = 500
         else:

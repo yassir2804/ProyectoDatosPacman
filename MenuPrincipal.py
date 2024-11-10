@@ -94,8 +94,8 @@ class MenuPrincipal:
         print("Cargando partida guardada...")
         self.musica_fondo.stop()
         juego = Controladora()
+        juego.empezar()  # Primero iniciamos el juego base
         if juego.cargar_estado("pacman_save.json"):
-            juego.empezar()
             while True:
                 juego.actualizar()
         else:

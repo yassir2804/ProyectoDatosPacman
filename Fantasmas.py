@@ -48,7 +48,6 @@ class Fantasma(Entidad):
 
     def reset(self):
         super().reset()
-        self.set_velocidad(self.velocidad_base)
 
     def cargar_animaciones_freight(self):
         self.skins_freight = [
@@ -117,7 +116,7 @@ class Fantasma(Entidad):
         """Actualiza la velocidad base según el nivel"""
         # Aumenta la velocidad un 10% por nivel
         factor = 1 + (nivel - 1) * 0.1
-        self.velocidad_base = 100 * factor
+        self.velocidad_base = 100 * factor * ANCHOCELDA / 16
         self.set_velocidad(self.velocidad_base)
 
     def _manejar_modo_spawn(self):
@@ -181,7 +180,6 @@ class Fantasma(Entidad):
 
         # self.modo.set_modo_spawn()
         if self.modo.current == SPAWN:
-            self.set_velocidad(150)
             self.metodo_direccion = self.direccion_meta
             self.spawn()
 
@@ -198,7 +196,7 @@ class Fantasma(Entidad):
                 self.skin = self.skins_freight[0]
 
     def modo_normal(self):
-        self.set_velocidad(self.velocidad_base)  # Usa la velocidad base actual
+        self.set_velocidad(self.velocidad_base)
         self.metodo_direccion = self.direccion_meta
         self.modo.current = CHASE
         self.nodoSpawn.denegar_acceso(ABAJO, self)
@@ -231,8 +229,6 @@ class Blinky(Fantasma):
         super().__init__(nodo, pacman)
         self.nombre = BLINKY
         self.color = ROJO
-        self.velocidad_base = 100 * ANCHOCELDA / 16
-        self.set_velocidad(self.velocidad_base)
         self.radio = 10
         self.radio_colision = 5
 
@@ -245,7 +241,6 @@ class Blinky(Fantasma):
 
     def reset(self):
         super().reset()
-
 
     def cargar_animaciones(self):
         self.skins = {
@@ -262,8 +257,6 @@ class Pinky(Fantasma):
         super().__init__(nodo, pacman)
         self.nombre = PINKY
         self.color = ROSADO
-        self.velocidad_base = 100 * ANCHOCELDA / 16
-        self.set_velocidad(self.velocidad_base)
         self.radio = 10
         self.radio_colision = 5
 
@@ -276,7 +269,6 @@ class Pinky(Fantasma):
 
     def reset(self):
         super().reset()
-        self.velocidad = 100 * ANCHOCELDA / 16
 
 
     def cargar_animaciones(self):
@@ -294,8 +286,6 @@ class Inky(Fantasma):
         super().__init__(nodo, pacman, blinky)
         self.nombre = INKY
         self.color = CELESTE
-        self.velocidad_base = 100 * ANCHOCELDA / 16
-        self.set_velocidad(self.velocidad_base)
         self.radio = 10
         self.radio_colision = 5
 
@@ -319,7 +309,6 @@ class Inky(Fantasma):
 
     def reset(self):
         super().reset()
-        self.velocidad = 100 * ANCHOCELDA / 16
 
     def cargar_animaciones(self):
         self.skins = {
@@ -336,8 +325,6 @@ class Clyde(Fantasma):
         super().__init__(nodo, pacman)
         self.nombre = CLYDE
         self.color = NARANJA
-        self.velocidad_base = 100 * ANCHOCELDA / 16
-        self.set_velocidad(self.velocidad_base)
         self.radio = 10
         self.radio_colision = 5
 
@@ -359,7 +346,6 @@ class Clyde(Fantasma):
 
     def reset(self):
         super().reset()
-        self.velocidad = 100 * ANCHOCELDA / 16
 
 
     def cargar_animaciones(self):
@@ -398,6 +384,7 @@ class GrupoFantasmas(object):
     def modo_Freight(self):
         for fantasma in self:
             fantasma.modo_Freight()
+
         self.resetear_puntos()
 
     def modo_Chase(self):
@@ -420,7 +407,6 @@ class GrupoFantasmas(object):
         """Reset all ghosts to their initial positions"""
         for fantasma in self.fantasmas:
             fantasma.reset()
-
 
     def esconder(self):
         for fantasma in self:
