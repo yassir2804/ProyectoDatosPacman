@@ -6,50 +6,56 @@ from Constantes import *
 
 
 class Fantasma(Entidad):
+    """
+        Clase que representa a los fantasmas en el juego de Pac-Man.
+        Hereda de la clase Entidad y gestiona la logica específica del comportamiento
+        de los fantasmas, incluyendo los modos de movimiento (normal y Freight),
+        la interaccion con Pac-Man, y las animaciones correspondientes.
+    """
     def __init__(self, nodo, pacman=None, blinky=None):
-        super().__init__(nodo)
-        self.nombre = FANTASMA
-        self.puntos = 200
-        self.meta = Vector1(0, 0)
-        self.pacman = pacman
-        self.blinky = blinky
-        self.modo = Controladora_Modos(self)
-        self.nodoSpawn = nodo
+        # Inicializa la entidad, en este caso un fantasma, con su nodo de inicio
+        super().__init__(nodo)  # Llama al constructor de la clase base
+        self.nombre = FANTASMA  # Nombre de la entidad
+        self.puntos = 200  # Puntos que da el fantasma cuando es comido
+        self.meta = Vector1(0, 0)  # Inicializa la meta del fantasma
+        self.pacman = pacman  # Referencia al personaje Pacman
+        self.blinky = blinky  # Referencia al fantasma Blinky
+        self.modo = Controladora_Modos(self)  # Controla el modo del fantasma
+        self.nodoSpawn = nodo  # Nodo donde el fantasma aparece inicialmente
 
-
-        # Velocidad base y actual
+        # Velocidad base y actual del fantasma
         self.velocidad_base = 100  # Velocidad inicial
-        self.set_velocidad(self.velocidad_base)
+        self.set_velocidad(self.velocidad_base)  # Establece la velocidad inicial
+        self.direccion = DERECHA  # Dirección inicial del movimiento del fantasma
 
-        self.direccion = DERECHA
+        # Atributos específicos para el modo "freight" (cuando el fantasma esta asustado)
+        self.tiempo_freight = 0  # Tiempo que ha pasado en el modo freight
+        self.intervalo_freight = 0.2  # Intervalo entre parpadeos en el modo freight
+        self.indice_freight = 0  # Indice para las animaciones en modo freight
+        self.duracion_freight = 7  # Duracion total del modo freight
+        self.parpadeo_freight = False  # Controla si el fantasma debe parpadear en freight
+        self.contador_parpadeo = 0  # Cuenta los parpadeos en freight
 
-        # Atributos del modo freight
-        self.tiempo_freight = 0
-        self.intervalo_freight = 0.2
-        self.indice_freight = 0
-        self.duracion_freight = 7
-        self.parpadeo_freight = False
-        self.contador_parpadeo = 0
+        self.estado_salida = "esperando"  # Estado de espera para salir del modo freight
+        self.posicion_salida = None  # Posicion de salida del modo freight
 
-        self.estado_salida = "esperando"
-        self.posicion_salida = None
+        # Sonidos utilizados en el modo freight
+        self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")  # Carga el sonido
+        self.sonido_freightmode.set_volume(0.2)  # Ajusta el volumen del sonido
+        self.sonidoFreightSonando = False  # Flag para saber si el sonido está sonando
 
-        # Sonidos
-        self.sonido_freightmode = pygame.mixer.Sound("multimedia/scaredsonido1.wav")
-        self.sonido_freightmode.set_volume(0.2)
-        self.sonidoFreightSonando = False
-
-        # Configuración de animaciones
-        self.cargar_animaciones()
-        self.cargar_animaciones_freight()
-        self.cargar_animaciones_ojos()
-        self.skin_inicial = self.skins[DERECHA][0]
-        self.skin = self.skin_inicial
+        # Configuracion de las animaciones
+        self.cargar_animaciones()  # Carga las animaciones normales del fantasma
+        self.cargar_animaciones_freight()  # Carga las animaciones para el modo freight
+        self.cargar_animaciones_ojos()  # Carga las animaciones de los ojos del fantasma
+        self.skin_inicial = self.skins[DERECHA][0]  # Establece el skin inicial del fantasma mirando a la derecha
+        self.skin = self.skin_inicial  # Asigna el skin inicial
 
     def reset(self):
         super().reset()
 
     def cargar_animaciones_freight(self):
+        # Cargar las dos fotos del fantasma en freight mode
         self.skins_freight = [
             pygame.image.load("multimedia/FreightAzul.png").convert_alpha(),
             pygame.image.load("multimedia/FreightBlanco.png").convert_alpha()
@@ -57,7 +63,7 @@ class Fantasma(Entidad):
 
 
     def cargar_animaciones_ojos(self):
-        """Actualiza el skin del fantasmas mientras este en modo inactivo """
+        # Actualiza la skin de los fantasmas cuando se lo hayan comido
         self.skins_ojos = {
             ARRIBA: pygame.image.load("multimedia/OjosArriba.png").convert_alpha(),
             ABAJO: pygame.image.load("multimedia/OjosAbajo.png").convert_alpha(),
@@ -66,7 +72,8 @@ class Fantasma(Entidad):
         }
 
     def actualizar_skin_freight(self, dt):
-        """Actualiza el skin durante el modo freight"""
+        # Actualiza la skin en el modo freight, se hace la logica tambien de que cuando el tiempo sea
+        # menor a 3, empiece a cambiar las imagenes rapido para indicar que esta por acabar el tiempo
         self.tiempo_freight += dt
         tiempo_restante = self.duracion_freight - self.tiempo_freight
 
@@ -81,14 +88,14 @@ class Fantasma(Entidad):
             self.contador_parpadeo = 0
 
     def actualizar(self, dt):
-        """Actualiza el estado del fantasma"""
+        # Actualiza los fantasmas
         self.modo.actualizar(dt)
         self._actualizar_modo_actual()
         self._actualizar_sonidos_y_sprites(dt)
         super().actualizar(dt)
 
     def _actualizar_modo_actual(self):
-        """Actualiza el comportamiento según el modo actual"""
+        # Dependiendo del modo del fantasma, en el current se settea su modo actual
         if self.modo.current == SCATTER:
             self.scatter()
         elif self.modo.current == CHASE:
@@ -97,7 +104,7 @@ class Fantasma(Entidad):
             self.spawn()
 
     def _actualizar_sonidos_y_sprites(self, dt):
-        """Actualiza sonidos y sprites según el modo actual"""
+        # Actualiza los sonidos y los sprites del fantasma
         if self.modo.current == FREIGHT:
             self._manejar_modo_freight(dt)
         elif self.modo.current == SPAWN:
@@ -106,21 +113,21 @@ class Fantasma(Entidad):
             self._manejar_modo_normal(dt)
 
     def _manejar_modo_freight(self, dt):
-        """Maneja la actualización en modo freight"""
+        # Maneja la actualizacion en modo freight
         if not self.sonidoFreightSonando:
             self.sonido_freightmode.play(-1)
             self.sonidoFreightSonando = True
         self._actualizar_skin_freight(dt)
 
     def actualizar_velocidad_nivel(self, nivel):
-        """Actualiza la velocidad base según el nivel"""
+        # actualiza la velocidad base segun nivel
         # Aumenta la velocidad un 10% por nivel
         factor = 1 + (nivel - 1) * 0.1
         self.velocidad_base = 100 * factor * ANCHOCELDA / 16
         self.set_velocidad(self.velocidad_base)
 
     def _manejar_modo_spawn(self):
-        """Maneja la actualización en modo spawn"""
+        # se actualiza en modo spawn
         self.sonidoFreightSonando = False
         self.sonido_freightmode.stop()
         if hasattr(self, 'direccion') and self.direccion in self.skins_ojos:
@@ -129,13 +136,13 @@ class Fantasma(Entidad):
             self.modo_normal()
 
     def _manejar_modo_normal(self, dt):
-        """Maneja la actualización en modo normal"""
+        # se actualiza en modo normal
         self.sonidoFreightSonando = False
         self.sonido_freightmode.stop()
         self.actualizar_animacion(dt)
 
     def _actualizar_skin_freight(self, dt):
-        """Actualiza el skin durante el modo freight"""
+        # se actualiza la skin del modo freighteeee
         self.tiempo_freight += dt
         tiempo_restante = self.duracion_freight - self.tiempo_freight
 
@@ -146,7 +153,7 @@ class Fantasma(Entidad):
             self.contador_parpadeo = 0
 
     def _actualizar_parpadeo_freight(self, dt):
-        """Actualiza el parpadeo durante el modo freight"""
+        # actualiza el parpadeo de las skins
         self.contador_parpadeo += dt
         if self.contador_parpadeo >= self.intervalo_freight:
             self.contador_parpadeo = 0
@@ -160,7 +167,7 @@ class Fantasma(Entidad):
         self.meta = Vector1(0, 0)
 
     def spawn(self):
-        """Comportamiento de spawn común"""
+        # comportamiento del spawn del fantasma
         if hasattr(self, 'nodoSpawn') and self.nodoSpawn is not None:
             self.meta = self.nodoSpawn.posicion
         else:
@@ -171,20 +178,19 @@ class Fantasma(Entidad):
 
     def iniciar_spawn(self):
         """Inicia el modo spawn cuando el fantasma es comido"""
-
+        # Inicia el modo spawn cuando el fantasma es comido
         self.modo.set_modo_spawn()
         self.set_velocidad(300)
         self.metodo_direccion = self.direccion_meta
         self.spawn()
-        # No resetear la skin aquí, ya que queremos mantener los ojos
 
-        # self.modo.set_modo_spawn()
         if self.modo.current == SPAWN:
             self.metodo_direccion = self.direccion_meta
             self.spawn()
 
     def modo_Freight(self):
-
+        # Este metodo activa el modo Freight para el fantasma,
+        #  cambiando su comportamiento, velocidad, direccion aleatoria y skin.
             self.modo.modo_freight()
             if self.modo.current == FREIGHT:
                 self.set_velocidad(50)
@@ -196,6 +202,8 @@ class Fantasma(Entidad):
                 self.skin = self.skins_freight[0]
 
     def modo_normal(self):
+        # Este metodo activa el modo Normal para el fantasma,
+        # cambiando su comportamiento, velocidad
         self.set_velocidad(self.velocidad_base)
         self.metodo_direccion = self.direccion_meta
         self.modo.current = CHASE
@@ -207,12 +215,13 @@ class Fantasma(Entidad):
         pass
 
     def actualizarPuntos(self):
-        """Duplica los puntos del siguiente fantasma que será comido"""
+        # Duplica los puntos del siguiente fantasma que es comido
         for fantasma in self:
             if fantasma.modo.current == FREIGHT:
                 fantasma.puntos *= 2
 
     def render(self, pantalla):
+        # Se hace visual el fantasma
         if self.visible:
             if self.skin:
                 p = self.posicion.entero()
@@ -243,6 +252,7 @@ class Blinky(Fantasma):
         super().reset()
 
     def cargar_animaciones(self):
+        # Se cargan las animaciones de Blinky en las 4 direcciones
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/BlinkyArr.png").convert_alpha()],
             ABAJO: [pygame.image.load("multimedia/BlinkyAba.png").convert_alpha()],
@@ -264,7 +274,6 @@ class Pinky(Fantasma):
         self.meta = Vector1(ANCHOCELDA * COLUMNAS, 0)
 
     def chase(self):
-        # Pinky aims 4 tiles ahead of Pacman's current direction
         self.meta = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 4
 
     def reset(self):
@@ -272,6 +281,7 @@ class Pinky(Fantasma):
 
 
     def cargar_animaciones(self):
+        # Se cargan las animaciones de Pinky en las 4 direcciones
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/PinkyArr.png").convert_alpha()],
             ABAJO: [pygame.image.load("multimedia/PinkyAba.png").convert_alpha()],
@@ -296,21 +306,19 @@ class Inky(Fantasma):
         if self.blinky is None or not hasattr(self.blinky, 'posicion'):
             self.meta = self.pacman.posicion
             return
-
-        # First, get the position 2 tiles ahead of Pacman
         vec1 = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 2
-        # Then, get the vector from Blinky to that position and double it
         try:
             vec2 = (vec1 - self.blinky.posicion) * 2
             self.meta = self.blinky.posicion + vec2
         except Exception:
-            # Si hay algún error en el cálculo, perseguir directamente a Pacman
+            # Si hay algun error en el cálculo, perseguir directamente a Pacman
             self.meta = self.pacman.posicion
 
     def reset(self):
         super().reset()
 
     def cargar_animaciones(self):
+        # Se cargan las animaciones de Inky en las 4 direcciones
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/InkyArr.png").convert_alpha()],
             ABAJO: [pygame.image.load("multimedia/InkyAba.png").convert_alpha()],
@@ -332,16 +340,11 @@ class Clyde(Fantasma):
         self.meta = Vector1(0, ANCHOCELDA * FILAS)
 
     def chase(self):
-
-        # Calculate distance to Pacman
         d = self.pacman.posicion - self.posicion
         ds = d.magnitudCuadrada()
-
-        # If Clyde is closer than 8 tiles to Pacman, go to scatter mode
         if ds <= (ANCHOCELDA * 8) ** 2:
             self.scatter()
         else:
-            # Otherwise chase Pacman like Blinky
             self.meta = self.pacman.posicion
 
     def reset(self):
@@ -349,6 +352,7 @@ class Clyde(Fantasma):
 
 
     def cargar_animaciones(self):
+        # Se cargan las animaciones de Clyde en las 4 direcciones
         self.skins = {
             ARRIBA: [pygame.image.load("multimedia/ClydeArr.png").convert_alpha()],
             ABAJO: [pygame.image.load("multimedia/ClydeAba.png").convert_alpha()],

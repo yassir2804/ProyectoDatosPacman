@@ -31,10 +31,10 @@ class Controladora(object):
         self.clock = pygame.time.Clock()
 
         # Inicialización del mapa y sus elementos
-        self.grafo = Grafo("mazetest.txt")
+        self.grafo = Grafo("mapa.txt")
         self.grafo.set_portales((0, 17), (27, 17))  # Configurar túneles
         self.mapa_renderer = MapaRenderer()
-        self.mapa_renderer.cargar_mapa("mazetest.txt")
+        self.mapa_renderer.cargar_mapa("mapa.txt")
 
         # Estados del juego
         self.game_over = False
@@ -87,7 +87,7 @@ class Controladora(object):
 
     def inicializar_elementos_juego(self):
 
-        self.Pellet = GrupoPellets("mazetest.txt")
+        self.Pellet = GrupoPellets("mapa.txt")
         self.grupo_texto = GrupoTexto()
         self.level_manager = LevelManager()
         self.menu_game_over = MenuGameOver(self.pantalla)
@@ -253,7 +253,7 @@ class Controladora(object):
         # Actualizar elementos visuales
 
         self.mapa_renderer.color_mapa(self.level_manager.nivel_actual)
-        self.Pellet = GrupoPellets("mazetest.txt")
+        self.Pellet = GrupoPellets("mapa.txt")
 
         # Actualizar velocidad de fantasmas para el nuevo nivel
         nueva_velocidad = self.level_manager.obtener_velocidad_fantasmas()
@@ -416,7 +416,7 @@ class Controladora(object):
         self.fantasmas.mostrar()
 
         # Reiniciar elementos del juego
-        self.Pellet = GrupoPellets("mazetest.txt")
+        self.Pellet = GrupoPellets("mapa.txt")
         self.puntaje = 0
         self.tiempo_poder = 0
         self.game_over = False

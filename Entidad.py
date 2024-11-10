@@ -12,44 +12,52 @@ from Vector import Vector1
 
 
 class Entidad(object):
+    """
+        Clase base para todas las entidades del juego, como los fantasmas y Pac-Man.
+        Maneja la lógica de movimiento, dirección, colisiones, y animaciones,
+        además de proporcionar métodos para actualizar y renderizar entidades en el juego.
+    """
     def __init__(self, nodo):
-        self.nombre = None
-        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+        self.nombre = None  # Nombre de la entidad
+        # Direcciones posibles (STOP, ARRIBA, ABAJO, IZQUIERDA, DERECHA)
+        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
+                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+        # Direcciones opuestas para cada direccion
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
-        self.direccion = STOP
-        self.set_velocidad(150)
-        self.radio = 10
-        self.radio_colision = 5
-        self.color = BLANCO
-        self.visible = True
-        self.desactivar_portal = False
-        self.metodo_direccion = self.direccion_meta
-        self.set_nodo_inicio(nodo)
+        self.direccion = STOP  # Direccion inicial de la entidad (detenerse)
+        self.set_velocidad(150)  # Establece la velocidad inicial de la entidad
+        self.radio = 10  # Radio visual de la entidad
+        self.radio_colision = 5  # Radio de colision de la entidad
+        self.color = BLANCO  # Color de la entidad
+        self.visible = True  # Si la entidad es visible o no
+        self.desactivar_portal = False  # Control de los portales (si se pueden usar)
+        self.metodo_direccion = self.direccion_meta  # Metodo para determinar direccion meta
+        self.set_nodo_inicio(nodo)  # Establece el nodo inicial en la entidad
 
-        # Sistema de animación mejorado
-        self.animation_timer = 0
-        self.animation_interval = 0.05
-        self.skins = {}
-        self.skin_index = 0
-        self.skin = None
-        self.usar_skin_especial = False  # Nuevo flag para control de skins especiales
-        self.skin_especial = None  # Para al
-        self.cached_paths = {}
-        self.path_timestamp = 0
-        self.max_cache_age = 30
+        # Variables para animacion
+        self.animation_timer = 0  # Temporizador para la animacion
+        self.animation_interval = 0.05  # Intervalo entre frames de la animacion
+        self.skins = {}  # Diccionario para almacenar skins (apariencias) de la entidad
+        self.skin_index = 0  # Indice de la skin actual
+        self.skin = None  # Skin actual de la entidad
+        self.usar_skin_especial = False  # Si se usa un skin especial
+        self.skin_especial = None  # Skin especial si se utiliza
+        self.cached_paths = {}  # Diccionario para almacenar los caminos calculados
+        self.path_timestamp = 0  # Marca de tiempo para la validez de los caminos almacenados
+        self.max_cache_age = 30  # Tiempo maximo de validez de los caminos en el cache
 
     def calcular_distancia_manhattan(self, pos1, pos2):
-        """Calcula la distancia Manhattan usando Vector1"""
+        #calcula la distancia manhattan utilizando vect1
         diferencia = pos2 - pos1
         return abs(diferencia.x) + abs(diferencia.y)
 
     def calcular_hash_estado(self, nodo_origen, nodo_destino):
-        """Genera un hash único aprovechando el __hash__ de Vector1"""
+        #genera un hash unico aprovechando en __hash__ de vector1
         return hash((nodo_origen.posicion.__hash__(),
                      nodo_destino.posicion.__hash__()))
 
     def encontrar_camino_optimo(self, inicio, meta):
-        """A* optimizado para usar Vector1"""
+        # A* optimizado
         if not inicio or not meta:
             return None
 
@@ -85,7 +93,7 @@ class Entidad(object):
         if meta not in vino_de:
             return None
 
-        # Recuperar la primera dirección del camino
+        # Recuperar la primera direccion del camino
         actual = meta
         while vino_de[actual][0] != inicio:
             actual = vino_de[actual][0]
@@ -106,7 +114,7 @@ class Entidad(object):
 
             # Verificar si hay un portal disponible en el siguiente nodo
             if siguiente_nodo and siguiente_nodo.vecinos[PORTAL] is not None:
-                # Si hay portal, usar la posición después del portal para el cálculo
+                # Si hay portal, usar la posicion después del portal para el cálculo
                 pos_despues_portal = siguiente_nodo.vecinos[PORTAL].posicion
                 nueva_distancia = (pos_despues_portal - self.meta.posicion).magnitudCuadrada()
             else:
@@ -124,7 +132,7 @@ class Entidad(object):
         return mejor_direccion
 
     def limpiar_cache(self):
-        """Limpia el caché de caminos antiguos"""
+        # limpia el cache de antiguos caminos
         tiempo_actual = pygame.time.get_ticks() / 1000
         self.cached_paths = {k: v for k, v in self.cached_paths.items()
                              if tiempo_actual - self.path_timestamp < self.max_cache_age}
@@ -170,7 +178,7 @@ class Entidad(object):
         self.posicion = self.nodo.posicion.copiar()
 
 
-    #Actualiza la posición y estado de la entidad.
+    #Actualiza la posicion y estado de la entidad.
     def actualizar(self, dt):
 
         self.posicion += self.direcciones[self.direccion] * self.velocidad * dt
@@ -263,28 +271,30 @@ class Entidad(object):
         self.velocidad = velocidad
 
     def render(self, pantalla):
-        """Dibuja la entidad en la pantalla."""
+       # dibuja la entidad en pantalla
         if self.visible:
             p = self.posicion.entero()
             pygame.draw.circle(pantalla,self.color, p, self.radio)
 
     def direccion_aleatoria(self, direcciones):
-        """Selecciona una dirección aleatoria de la lista de direcciones proporcionada."""
+        #selecciona una direccion aleatoria de la lista de direcciones proporcionada
+
         if not direcciones:
             return STOP
 
         return direcciones[randint(0, len(direcciones) - 1)]
 
     def direccion_meta(self, direcciones):
-        """Versión avanzada que considera múltiples factores para elegir la mejor dirección"""
+
+        # version avanzada que considera mutliples factores para elegir la mejor direccion
         if not direcciones:
             return STOP
 
-        # Pesos para diferentes factores (ajustar según necesidad)
+        # Pesos para diferentes factores (ajustar segun necesidad)
         PESOS = {
             'distancia': 1.0,  # Peso para la distancia directa
             'progreso': 1.5,  # Peso para el progreso hacia el objetivo
-            'inercia': 0.5,  # Peso para mantener la dirección actual
+            'inercia': 0.5,  # Peso para mantener la direccion actual
             'esquinas': 0.3  # Peso para evitar esquinas
         }
 
@@ -296,22 +306,22 @@ class Entidad(object):
         distancia_actual = distancia_resta.magnitudCuadrada()
 
         for direccion in direcciones:
-            # Calculamos la siguiente posición si tomamos esta dirección
+            # Calculamos la siguiente posicion si tomamos esta direccion
             siguiente_pos = self.nodo.posicion + self.direcciones[direccion] * ANCHOCELDA
             siguiente_nodo = self.nodo.vecinos[direccion]
 
-            # 1. Puntuación por distancia al objetivo
+            # 1. Puntuacion por distancia al objetivo
             nueva_distancia = (siguiente_pos - self.meta).magnitudCuadrada()
             puntuacion_distancia = nueva_distancia
 
-            # 2. Puntuación por progreso (qué tanto nos acercamos al objetivo)
+            # 2. Puntuacion por progreso (qué tanto nos acercamos al objetivo)
             # Si nueva_distancia es menor que distancia_actual, estamos progresando
             puntuacion_progreso = nueva_distancia - distancia_actual
 
-            # 3. Puntuación por inercia (preferir mantener la dirección actual)
+            # 3. Puntuacion por inercia (preferir mantener la direccion actual)
             puntuacion_inercia = 0 if direccion == self.direccion else 100
 
-            # 4. Puntuación por esquinas (evitar callejones sin salida)
+            # 4. Puntuacion por esquinas (evitar callejones sin salida)
             puntuacion_esquinas = 0
             if siguiente_nodo:
                 # Contamos cuántas salidas tiene el siguiente nodo
@@ -319,7 +329,7 @@ class Entidad(object):
                                       if siguiente_nodo.vecinos[d] is not None)
                 puntuacion_esquinas = 50 * (4 - salidas_validas)  # Penalizar nodos con pocas salidas
 
-            # Calculamos la puntuación final (menor es mejor)
+            # Calculamos la puntuacion final (menor es mejor)
             puntuacion_final = (
                     PESOS['distancia'] * puntuacion_distancia +
                     PESOS['progreso'] * puntuacion_progreso +
@@ -327,7 +337,7 @@ class Entidad(object):
                     PESOS['esquinas'] * puntuacion_esquinas
             )
 
-            # Actualizamos la mejor dirección si encontramos una mejor puntuación
+            # Actualizamos la mejor direccion si encontramos una mejor puntuacion
             if puntuacion_final < mejor_puntuacion:
                 mejor_puntuacion = puntuacion_final
                 mejor_direccion = direccion

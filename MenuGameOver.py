@@ -4,6 +4,13 @@ from Constantes import *
 
 
 class MenuGameOver:
+    """
+        Clase que representa el menu de "Game Over" en el juego de Pac-Man.
+        Permite al jugador seleccionar entre las opciones de "Nuevo Juego" o "Salir"
+        después de que termine la partida. Maneja la visualizacion del menu, la reproduccion
+        del sonido de "Game Over" y la interaccion del jugador con las opciones del menu.
+    """
+
     def __init__(self, pantalla):
         self.pantalla = pantalla
         self.opciones = ["Nuevo Juego", "Salir"]

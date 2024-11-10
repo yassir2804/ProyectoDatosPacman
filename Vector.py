@@ -3,6 +3,15 @@
 import math
 
 class Vector1(object):
+    """
+        Clase encargada de manejar los vectores bidimensionales. Esta clase proporciona metodos
+        para realizar operaciones comunes con vectores como la suma, resta, multiplicacion por un
+        escalar, y division por un escalar. Ademas, incluye metodos para calcular la magnitud del
+        vector, compararlo con otro vector, copiarlo, obtenerlo como una tupla o convertirlo a enteros.
+        La clase tambien ofrece representaciones de texto del vector y permite el uso de vectores como
+        claves en diccionarios al implementar un metodo de hash.
+    """
+
     def __init__(self, x, y):
         self.x = x
         self.y = y

@@ -33,7 +33,7 @@ class Pellet:
 class PelletPoder(Pellet):
     """
     Pellet especial que otorga a Pac-Man la habilidad de comer fantasmas.
-    Hereda de la clase Pellet pero tiene características adicionales.
+    Hereda de la clase Pellet pero tiene caracteristicas adicionales.
     """
 
     def __init__(self, fila, columna):

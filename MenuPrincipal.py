@@ -1,13 +1,18 @@
 import pygame
 from pygame.locals import *
 from Main import Controladora
-from Texto import Texto, GrupoTexto
 from Constantes import *
 
-# Definir un nuevo color azul claro
-AZUL_CLARO = (173, 216, 230)
+
 
 class MenuPrincipal:
+    """
+        Clase que representa el menú principal del juego Pac-Man.
+        Permite al jugador elegir entre comenzar un nuevo juego o cargar una partida guardada.
+        Gestiona la interacción con las teclas de flecha y el mouse, mostrando las opciones
+        de menú y reproduciendo música de fondo. Además, maneja la transición hacia el inicio
+        del juego o la carga de una partida guardada.
+    """
     def __init__(self):
         pygame.init()
         self.pantalla = pygame.display.set_mode(TAMANIOPANTALLA, 0, 32)

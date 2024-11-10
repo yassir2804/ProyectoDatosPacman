@@ -107,8 +107,8 @@ class MapaRenderer:
         for y in range(self.altura):
             for x in range(self.ancho):
                 if self.es_casa_fantasmas(x, y):
-                    px = x * ANCHOCELDA * 2 + self.OFFSET_X
-                    py = y * ALTURACELDA * 2 + self.OFFSET_Y  # Aplicamos también el offset vertical
+                    px = x * ANCHOCELDA + self.OFFSET_X
+                    py = y * ALTURACELDA + self.OFFSET_Y
                     pygame.draw.line(superficie, BLANCO,
                                      (px, py),
                                      (px + ANCHOCELDA, py),

@@ -4,6 +4,15 @@ from Vector import Vector1
 
 
 class Texto(object):
+    """
+           Clase que representa a Pacman, el personaje principal del juego. Esta clase gestiona
+           el comportamiento de Pacman en el juego, incluyendo el movimiento, las colisiones con
+           pellets y fantasmas, el manejo de vidas, la activacion de poderes, las animaciones y
+           los sonidos. Pacman puede morir, resucitar, comer pellets, y activar el modo de poder
+           para comer fantasmas. Tambien gestiona la interacción con los nodos y las animaciones
+           correspondientes en cada dirección.
+           """
+
     def __init__(self, texto, color, x, y, tamaño, tiempo=None, id=None, visible=True):
         self.id = id
         self.texto = texto

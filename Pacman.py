@@ -2,12 +2,19 @@ import pygame
 from pygame.locals import *
 
 from TextoTemporal import TextoTemporal
-from Vector import Vector1
 from Constantes import *
 from Entidad import Entidad
 
 
 class Pacman(Entidad):
+    """
+        Clase que representa a Pacman, el personaje principal del juego. Esta clase gestiona
+        el comportamiento de Pacman en el juego, incluyendo el movimiento, las colisiones con
+        pellets y fantasmas, el manejo de vidas, la activacion de poderes, las animaciones y
+        los sonidos. Pacman puede morir, resucitar, comer pellets, y activar el modo de poder
+        para comer fantasmas. También gestiona la interacción con los nodos y las animaciones
+        correspondientes en cada dirección.
+        """
     def __init__(self, nodo):
         super().__init__(nodo)  # Llamada al constructor de la clase padre
         self.animacion_muerte_completa = True

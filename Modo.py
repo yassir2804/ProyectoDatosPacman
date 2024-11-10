@@ -1,31 +1,16 @@
 from Constantes import *
 from Entidad import *
-class ModoPrincipal(object):
-    def __init__(self):
-        self.temporizador = 0
-        self.scatter()
-
-    def actualizar(self, dt):
-        self.temporizador += dt
-        if self.temporizador >= self.tiempo:
-            if self.modo is SCATTER:
-                self.chase()
-            elif self.modo is CHASE:
-                self.scatter()
-
-
-    def scatter(self):
-        self.modo = SCATTER
-        self.tiempo = 7 
-        self.temporizador = 0
-
-    def chase(self):
-        self.modo = CHASE
-        self.tiempo = 20
-        self.temporizador = 0
-
 
 class Controladora_Modos(object):
+    """
+        Clase encargada de controlar los diferentes modos de comportamiento de los fantasmas
+        en el juego Pac-Man. Maneja los modos SCATTER, CHASE, FREIGHT y SPAWN. A traves de
+        esta clase se actualiza el estado de los fantasmas, cambiando entre los modos según
+        el tiempo y las condiciones del juego. Esta clase interactua con la clase `ModoPrincipal`
+        para manejar las transiciones de los modos y también con las entidades, como los fantasmas,
+        para ejecutar las acciones correspondientes en cada modo.
+    """
+
     def __init__(self, entidad):
         self.temporizador = 0
         self.tiempo = None
@@ -64,9 +49,30 @@ class Controladora_Modos(object):
             self.temporizador = 0
 
     def set_modo_spawn(self):
-        """
-        Establece el modo SPAWN para cuando el fantasma es comido
-        """
         self.current = SPAWN
         self.temporizador = 0
-        self.tiempo = None  # El tiempo no es necesario en modo SPAWN
+        self.tiempo = None
+
+class ModoPrincipal(object):
+    def __init__(self):
+        self.temporizador = 0
+        self.scatter()
+
+    def actualizar(self, dt):
+        self.temporizador += dt
+        if self.temporizador >= self.tiempo:
+            if self.modo is SCATTER:
+                self.chase()
+            elif self.modo is CHASE:
+                self.scatter()
+
+
+    def scatter(self):
+        self.modo = SCATTER
+        self.tiempo = 7
+        self.temporizador = 0
+
+    def chase(self):
+        self.modo = CHASE
+        self.tiempo = 20
+        self.temporizador = 0
