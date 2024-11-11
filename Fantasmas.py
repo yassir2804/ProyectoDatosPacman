@@ -231,11 +231,6 @@ class Fantasma(Entidad):
     def cargar_animaciones(self):
         pass
 
-    def actualizar_puntos(self):
-        """Duplica los puntos del siguiente fantasma que será comido"""
-        for fantasma in self:
-            if fantasma.modo.current == FREIGHT:
-                fantasma.puntos *= 2
 
     def render(self, pantalla):
         if self.visible:
@@ -404,9 +399,11 @@ class GrupoFantasmas(object):
         for fantasma in self:
             fantasma.setSpawnNode(nodo)
 
-    def actualizarPuntos(self):
+    def actualizar_puntos(self):
+        """Duplica los puntos del siguiente fantasma que será comido"""
         for fantasma in self:
-            fantasma.puntos *= 2
+            if fantasma.modo.current == FREIGHT:
+                fantasma.puntos *= 2
 
     def resetear_puntos(self):
         for fantasma in self:
