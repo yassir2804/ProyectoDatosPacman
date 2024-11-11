@@ -1,6 +1,3 @@
-import pygame
-from Vector import Vector1
-from Constantes import *
 from Entidad import *
 import numpy as np
 

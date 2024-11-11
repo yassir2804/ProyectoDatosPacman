@@ -1,4 +1,3 @@
-from Constantes import *
 from Entidad import *
 class ModoPrincipal(object):
     def __init__(self):

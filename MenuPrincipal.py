@@ -1,7 +1,6 @@
 import pygame
 from pygame.locals import *
 from Main import Controladora
-from Texto import Texto, GrupoTexto
 from Constantes import *
 
 # Definir un nuevo color azul claro
@@ -56,7 +55,7 @@ class MenuPrincipal:
                     elif self.texto_seleccionado == self.texto_load:
                         self.cargar_partida()
 
-        # Manejar hover del mouse
+        # Manejar mover del mouse
         pos_mouse = pygame.mouse.get_pos()
         self.texto_start.actualizar_hover(pos_mouse)
         self.texto_load.actualizar_hover(pos_mouse)
@@ -95,7 +94,7 @@ class MenuPrincipal:
         self.musica_fondo.stop()
         juego = Controladora()
         juego.empezar()  # Primero iniciamos el juego base
-        if juego.cargar_estado("pacman_save.json"):
+        if juego.cargar_estado("pacman_save.json"):#El metodo que carga el estado retorna un booleano si lo pudo cargar bien
             while True:
                 juego.actualizar()
         else:

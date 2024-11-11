@@ -87,53 +87,7 @@ class Pacman(Entidad):
                     self.direccion = direccion
                     break
 
-    def guardar_estado(self):
-        """
-        Guarda el estado actual del Pacman incluyendo su posición entre nodos.
-        """
-        if self.direccion != STOP and self.blanco != self.nodo:
-            vec_total = self.blanco.posicion - self.nodo.posicion
-            vec_actual = self.posicion - self.nodo.posicion
-            # Calcular el porcentaje de avance
-            if vec_total.magnitudCuadrada() > 0:
-                self.porcentaje_entre_nodos = vec_actual.magnitudCuadrada() / vec_total.magnitudCuadrada()
-            else:
-                self.porcentaje_entre_nodos = 0.0
-        else:
-            self.porcentaje_entre_nodos = 0.0
 
-        return {
-            'nodo_id': id(self.nodo),
-            'blanco_id': id(self.blanco),
-            'direccion': self.direccion,
-            'porcentaje_entre_nodos': self.porcentaje_entre_nodos,
-            'vidas': self.vidas,
-            'tiene_poder': self.tiene_poder,
-            'tiempo_poder': self.tiempo_poder,
-            'direccion_deseada': self.direccion_deseada
-        }
-
-    def cargar_estado(self, estado, obtener_nodo_por_id):
-        """
-        Carga el estado del Pacman.
-        obtener_nodo_por_id: función que devuelve un nodo dado su ID
-        """
-        nodo = obtener_nodo_por_id(estado['nodo_id'])
-        blanco = obtener_nodo_por_id(estado['blanco_id'])
-
-        # Si está entre nodos
-        if estado['porcentaje_entre_nodos'] > 0:
-            self.set_posicion_entre_nodos(nodo, blanco, estado['porcentaje_entre_nodos'])
-        else:
-            self.nodo = nodo
-            self.blanco = blanco
-            self.set_posicion()
-
-        self.direccion = estado['direccion']
-        self.direccion_deseada = estado['direccion_deseada']
-        self.vidas = estado['vidas']
-        self.tiene_poder = estado['tiene_poder']
-        self.tiempo_poder = estado['tiempo_poder']
 
     def sonido_comer_pellet(self):
         """Inicia o mantiene el sonido de comer."""
@@ -180,10 +134,6 @@ class Pacman(Entidad):
         self.reset_posicion()
         self.vidas=3
 
-    def reset_vidas(self):
-        self.reset_posicion()
-        self.vidas = 3
-
     def colision_fruta(self, fruta):
         """Verifica colisiones con la fruta."""
         if fruta and fruta.visible:
@@ -195,44 +145,64 @@ class Pacman(Entidad):
                 return True
         return False
 
-    def colision_con_fantasmas(self, fantasmas,grafo,textos_temporales):
+    def colision_con_fantasmas(self, fantasmas, grafo, textos_temporales):
         """
         Verifica colisiones con los fantasmas.
         Retorna los puntos si come un fantasma asustado,
         0 si no hay colisión o si Pacman muere.
         """
+        # Itera sobre cada fantasma en el juego
         for fantasma in fantasmas:
+            # Solo verifica colisiones si el fantasma está visible
             if fantasma.visible:
+                # Colision circle to circle
+                # Calcula la distancia entre Pacman y el fantasma
                 distancia = self.posicion - fantasma.posicion
+                # Calcula el cuadrado de la distancia (más eficiente que usar raíz cuadrada)
                 distancia_cuadrada = distancia.magnitudCuadrada()
+                # Calcula el radio total de colisión al cuadrado
                 radio_total = (self.radio_colision + fantasma.radio_colision) ** 2
 
+                # Verifica si hay colisión comparando las distancias
                 if distancia_cuadrada <= radio_total:
+                    # Si el fantasma está en modo FREIGHT (asustado/vulnerable)
                     if fantasma.modo.current == FREIGHT:
+                        # Permite que el fantasma regrese a su casa
                         grafo.dar_acceso_a_casa(fantasma)
+                        # Inicia el proceso de regeneración del fantasma
                         fantasma.iniciar_spawn()
 
+                        # Reproduce el sonido de comer fantasma
                         self.sonido_comerfantasma.play()
 
+                        # Obtiene los puntos por comer el fantasma
                         puntos = fantasma.puntos
-                        fantasmas.actualizarPuntos()  # Duplica los puntos para el siguiente
+                        # Actualiza los puntos para el siguiente fantasma (duplicándolos)
+                        fantasmas.actualizarPuntos()
 
-                        pos_x = int(fantasma.posicion.x - 20)  # Ajusta estos valores según necesites
-                        pos_y = int(fantasma.posicion.y - 20)  # para centrar el texto
+                        # Calcula la posición para mostrar el texto de puntos
+                        pos_x = int(fantasma.posicion.x - 20)
+                        pos_y = int(fantasma.posicion.y - 20)
+
+                        # Crea un texto temporal que muestra los puntos ganados
                         texto = TextoTemporal(
                             texto=str(puntos),
                             posicion=(pos_x, pos_y),
-                            duracion=1000,
-                            fuente=pygame.font.Font(None, 20),  # None usa la fuente predeterminada
-                            color=(255, 255, 255)
+                            duracion=1000,  # Duración en milisegundos
+                            fuente=pygame.font.Font(None, 20),
+                            color=(255, 255, 255)  # Color blanco
                         )
+                        # Añade el texto temporal a la lista para ser mostrado
                         textos_temporales.append(texto)
 
                         return fantasma.puntos
+
+                    # Si el fantasma no está en modo SPAWN y tampoco en FREIGHT
                     elif fantasma.modo.current != SPAWN:
-                        # Pacman muerte
+                        # Pacman muere al tocar un fantasma normal
                         self.morir()
                         return 0
+        # Si no hay colisiones, retorna 0 puntos
         return 0
 
     def animacion_muerte_terminada(self):

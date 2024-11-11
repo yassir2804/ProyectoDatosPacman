@@ -376,10 +376,6 @@ class Controladora(object):
         self.grafo.denegar_acceso_entidades(2 + 11.5, 3 + 14, DERECHA, self.fantasmas)
         self.fantasmas.inky.nodo_inicio.denegar_acceso(DERECHA, self.fantasmas.inky)
         self.fantasmas.clyde.nodo_inicio.denegar_acceso(IZQUIERDA, self.fantasmas.clyde)
-        # self.grafo.denegar_acceso_entidades(12, 14, ARRIBA, self.fantasmas)
-        # self.grafo.denegar_acceso_entidades(15, 14, ARRIBA, self.fantasmas)
-        # self.grafo.denegar_acceso_entidades(12, 26, ARRIBA, self.fantasmas)
-        # self.grafo.denegar_acceso_entidades(15, 26, ARRIBA, self.fantasmas)
 
     def manejar_eventos_game_over(self, event):
         """Maneja los eventos durante la pantalla de game over"""
@@ -493,39 +489,45 @@ class Controladora(object):
         self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
     def guardar_estado(self, archivo):
+        # Crear diccionario con meto do el estado del juego
         estado = {
+            # Almacenar estado de Pac-man
             'pacman': {
                 'posicion': [self.pacman.posicion.x, self.pacman.posicion.y],
-                'direccion': self.pacman.direccion,  # Añadir la dirección actual
+                'direccion': self.pacman.direccion,  # Dirección actual de movimiento
                 'direccion_deseada': self.pacman.direccion_deseada,
-                'blanco': [self.pacman.blanco.posicion.x, self.pacman.blanco.posicion.y] if self.pacman.blanco != self.pacman.nodo else None,
+                # Guardar posición del nodo objetivo si es diferente al nodo actual
+                'blanco': [self.pacman.blanco.posicion.x,
+                           self.pacman.blanco.posicion.y] if self.pacman.blanco != self.pacman.nodo else None,
                 'vidas': self.pacman.vidas,
                 'puntos': self.puntaje
             },
-            # Guardar el estado de los fantasmas
+            # Guardar estado de cada fantasma
             'fantasmas': [
                 {
                     'nombre': fantasma.nombre,
                     'posicion': [fantasma.posicion.x, fantasma.posicion.y],
                     'direccion': fantasma.direccion,
                     'modo': {
-                        'current': fantasma.modo.current,
+                        'current': fantasma.modo.current,  # Modo actual del fantasma (SCATTER, CHASE, etc)
                         'tiempo': fantasma.modo.tiempo,
                         'temporizador': fantasma.modo.temporizador
                     },
+                    # Estados relacionados con el modo vulnerable (FREIGHT)
                     'duracion_freight': getattr(fantasma, 'duracion_freight', 7),
                     'tiempo_freight': getattr(fantasma, 'tiempo_freight', 0),
                     'parpadeo_freight': getattr(fantasma, 'parpadeo_freight', False),
                     'contador_parpadeo': getattr(fantasma, 'contador_parpadeo', 0),
-                    # Guardar la posición del nodo blanco
+                    # Guardar nodo objetivo del fantasma
                     'blanco': [fantasma.blanco.posicion.x, fantasma.blanco.posicion.y] if fantasma.blanco else None
                 } for fantasma in self.fantasmas
-            ],'fruta':
+            ], 'fruta':
                 {
                     'visible': self.fruta.visible if self.fruta else False,
                     'tiempo': self.fruta.tiempo if self.fruta else 0,
                     'temporizador': self.fruta.temporizador if self.fruta else 0
                 },
+            # Guardar estado de los pellets en el tablero
             'pellets': [
                 {
                     'fila': pellet.posicion.y // ALTURACELDA,
@@ -537,8 +539,9 @@ class Controladora(object):
             'tiempo_poder': self.tiempo_poder,
             'nivel': self.level_manager.nivel_actual
             , 'velocidad': self.level_manager.velocidad_base_fantasmas,
-            'pellets_comidos': self.Pellet.numComidos  # Añadido: guardar número de pellets comidos
+            'pellets_comidos': self.Pellet.numComidos  # Contador de pellets comidos
         }
+        # Intentar guardar el estado en archivo JSON
         try:
             with open(archivo, 'w', encoding='utf-8') as f:
                 contenido = json.dumps(estado, indent=4, ensure_ascii=False)
@@ -550,19 +553,21 @@ class Controladora(object):
 
     def cargar_estado(self, archivo):
         try:
+            # Leer el archivo JSON con el estado guardado
             with open(archivo, 'r', encoding='utf-8') as f:
                 estado = json.load(f)
 
-            # Restore Pacman
+            # Restaurar estado de Pac-man
             self.pacman.posicion = Vector1(estado['pacman']['posicion'][0], estado['pacman']['posicion'][1])
             fila = self.pacman.posicion.y // ALTURACELDA
             columna = self.pacman.posicion.x // ANCHOCELDA
             self.pacman.nodo = self.grafo.obtener_nodo_desde_tiles(columna, fila)
-            self.pacman.direccion = estado['pacman']['direccion']  # Restaurar dirección actual
+            self.pacman.direccion = estado['pacman']['direccion']
             self.pacman.direccion_deseada = estado['pacman']['direccion_deseada']
             self.pacman.vidas = estado['pacman']['vidas']
             self.puntaje = estado['pacman']['puntos']
 
+            # Restaurar nodo objetivo de Pac-man
             if estado['pacman'].get('blanco'):
                 blanco_x, blanco_y = estado['pacman']['blanco']
                 blanco_fila = blanco_y // ALTURACELDA
@@ -571,35 +576,33 @@ class Controladora(object):
             else:
                 self.pacman.blanco = self.pacman.nodo
 
-            # Restore ghosts
+            # Restaurar estado de los fantasmas
             for fantasma, datos in zip(self.fantasmas, estado['fantasmas']):
-                # Restaurar posición y nodo
+                # Restaurar posición y obtener nodo correspondiente
                 fantasma.posicion = Vector1(datos['posicion'][0], datos['posicion'][1])
-
-                # Calcular nodo basado en la posición
                 fila = fantasma.posicion.y // ALTURACELDA
                 columna = fantasma.posicion.x // ANCHOCELDA
                 fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(columna, fila)
 
-                # Asegurarse de que el nodo no sea None
+                # Manejar caso de nodo nulo asignando posición por defecto según el fantasma
                 if fantasma.nodo is None:
-                    if fantasma.nombre == 98:
+                    if fantasma.nombre == 98:  # Blinky
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(15.5, 17)
-                    if fantasma.nombre == 97:
+                    if fantasma.nombre == 97:  # Pinky
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(13.5, 17)
-                    if fantasma.nombre == 96:
+                    if fantasma.nombre == 96:  # Inky/Clyde
                         fantasma.nodo = self.grafo.obtener_nodo_desde_tiles(11.5, 17)
-                    # raise ValueError(f"El nodo para la posición ({columna}, {fila}) es None")
 
-
-                # Restaurar el nodo blanco
+                # Restaurar nodo objetivo del fantasma
                 if 'blanco' in datos and datos['blanco'] is not None:
                     blanco_x, blanco_y = datos['blanco']
                     blanco_fila = blanco_y // ALTURACELDA
-                    blanco_columna = blanco_x //ANCHOCELDA
+                    blanco_columna = blanco_x // ANCHOCELDA
                     fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(blanco_columna, blanco_fila)
                 else:
-                    fantasma.blanco = fantasma.nodo  # O el valor por defecto que prefieras
+                    fantasma.blanco = fantasma.nodo  # Si no hay blanco, usar nodo actual
+
+                # Manejar caso de nodo objetivo nulo
                 if fantasma.blanco is None:
                     if fantasma.nombre == 98:
                         fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(15.5, 16)
@@ -608,36 +611,33 @@ class Controladora(object):
                     if fantasma.nombre == 96:
                         fantasma.blanco = self.grafo.obtener_nodo_desde_tiles(11.5, 16)
 
-
-                # Restaurar dirección
+                # Restaurar dirección del fantasma
                 if 'direccion' in datos:
                     fantasma.direccion = datos['direccion']
 
-                # Restaurar modo y estados
+                # Restaurar modo y estados del fantasma
                 fantasma.modo.current = datos['modo']['current']
                 fantasma.modo.tiempo = datos['modo']['tiempo']
                 fantasma.modo.temporizador = datos['modo']['temporizador']
 
-                # Restaurar estados de freight
+                # Restaurar estados del modo vulnerable (FREIGHT)
                 fantasma.duracion_freight = datos.get('duracion_freight', 7)
                 fantasma.tiempo_freight = datos.get('tiempo_freight', 0)
                 fantasma.parpadeo_freight = datos.get('parpadeo_freight', False)
                 fantasma.contador_parpadeo = datos.get('contador_parpadeo', 0)
 
-                # Manejar el modo FREIGHT específicamente
+                # Configurar tiempo del modo FREIGHT si es necesario
                 if fantasma.modo.current == FREIGHT:
                     if fantasma.modo.tiempo is None:
                         fantasma.modo.tiempo = fantasma.duracion_freight
                     if fantasma.modo.temporizador is None:
                         fantasma.modo.temporizador = 0
 
+                # Dar acceso a la casa si está en modo SPAWN
                 if fantasma.modo.current == SPAWN:
                     self.grafo.dar_acceso_a_casa(fantasma)
 
-            # Restore fruit
-
-
-            # Restore pellets
+            # Restaurar estado de los pellets
             self.Pellet.listaPellets.clear()
             self.Pellet.pelletsPoder.clear()
             for pellet_data in estado['pellets']:
@@ -653,26 +653,26 @@ class Controladora(object):
 
             self.Pellet.numComidos = estado.get('pellets_comidos', 0)
 
+            # Restaurar estado del nivel
             self.tiempo_poder = estado['tiempo_poder']
             self.level_manager.nivel_actual = estado['nivel']
             self.level_manager.velocidad_base_fantasmas = estado['velocidad']
 
-            # Configurar todo lo relacionado con el nivel
-
-            # Update UI
+            # Actualizar interfaz de usuario si existe
             if hasattr(self, 'grupo_texto'):
                 self.grupo_texto.actualizarPuntaje(self.puntaje)
                 self.grupo_texto.actualizarVidas(self.pacman.vidas)
 
-
+            # Restaurar estado de la fruta
             if estado['fruta']['visible']:
-                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20),self.level_manager.nivel_actual)
+                self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20), self.level_manager.nivel_actual)
                 self.fruta.visible = estado['fruta']['visible']
                 self.fruta.tiempo = estado['fruta']['tiempo']
                 self.fruta.temporizador = estado['fruta']['temporizador']
             else:
                 self.fruta = None
 
+            # Configurar nivel después de cargar el estado
             self.configurar_nivel_cargado()
 
             return True
@@ -681,20 +681,31 @@ class Controladora(object):
             return False
 
     def crear_menu_pausa(self):
+        # Activar el estado de pausa
         self.pausa = True
+
+        # Definir las opciones disponibles en el menú de pausa
         self.opciones_pausa = ["Reanudar", "Guardar Partida", "Salir"]
+
+        # Inicializar la opción seleccionada en 0 (primera opción)
         self.opcion_seleccionada = 0
 
-        # Configurar la fuente personalizada
+        # Cargar la fuente personalizada si aún no está cargada
         if self.fuente_pausa is None:
-            self.configurarFuente("Fuentes/PressStart2P-Regular.ttf", 20)
+            self.configurarFuente("Fuentes/PressStart2P-Regular.ttf", 20)  # Usa la fuente PressStart2P en tamaño 20
 
-        # Configuración del menú
-        ANCHO_MENU = 320
-        ALTO_MENU = 200
+        # Definir dimensiones del menú de pausa
+        ANCHO_MENU = 320  # Ancho en píxeles del menú
+        ALTO_MENU = 200  # Alto en píxeles del menú
+
+        # Crear superficie para el menú de pausa
         self.superficie_pausa = pygame.Surface((ANCHO_MENU, ALTO_MENU))
-        self.superficie_pausa.fill(NEGRO)
+        self.superficie_pausa.fill(NEGRO)  # Rellenar el fondo con color negro
+
+        # Obtener el rectángulo de la superficie para posicionar el menú
         self.rect_pausa = self.superficie_pausa.get_rect()
+
+        # Centrar el menú en la pantalla
         self.rect_pausa.center = (TAMANIOPANTALLA[0] // 2, TAMANIOPANTALLA[1] // 2)
 
     def manejar_eventos_pausa(self, event):
@@ -731,6 +742,7 @@ class Controladora(object):
         self.pantalla.blit(self.superficie_pausa, self.rect_pausa)
 
     def ejecutar_opcion_pausa(self):
+        #Aqui simplemente manejamos las opciones del menu de pausa
         if self.opciones_pausa[self.opcion_seleccionada] == "Reanudar":
             self.pausa = False
         elif self.opciones_pausa[self.opcion_seleccionada] == "Guardar Partida":

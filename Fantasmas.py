@@ -57,7 +57,7 @@ class Fantasma(Entidad):
 
 
     def cargar_animaciones_ojos(self):
-        """Actualiza el skin del fantasmas mientras este en modo inactivo """
+        """Actualiza el skin del fantasmas mientras este en modo inactivo"""
         self.skins_ojos = {
             ARRIBA: pygame.image.load("multimedia/OjosArriba.png").convert_alpha(),
             ABAJO: pygame.image.load("multimedia/OjosAbajo.png").convert_alpha(),
@@ -67,16 +67,29 @@ class Fantasma(Entidad):
 
     def actualizar_skin_freight(self, dt):
         """Actualiza el skin durante el modo freight"""
+        # Incrementar el contador de tiempo en modo freight
         self.tiempo_freight += dt
+
+        # Calcular el tiempo restante del modo freight
         tiempo_restante = self.duracion_freight - self.tiempo_freight
 
+        # Si quedan 3 segundos o menos, activar el parpadeo
         if tiempo_restante <= 3:
+            # Incrementar el contador de parpadeo
             self.contador_parpadeo += dt
+
+            # Si se alcanzó el intervalo de parpadeo, cambiar el skin
             if self.contador_parpadeo >= self.intervalo_freight:
+                # Reiniciar el contador de parpadeo
                 self.contador_parpadeo = 0
+
+                # Avanzar al siguiente skin en el ciclo de parpadeo
                 self.indice_freight = (self.indice_freight + 1) % len(self.skins_freight)
+
+                # Actualizar el skin actual
                 self.skin = self.skins_freight[self.indice_freight]
         else:
+            # Si aún queda bastante tiempo, mantener el skin normal de freight
             self.skin = self.skins_freight[0]
             self.contador_parpadeo = 0
 
@@ -164,7 +177,7 @@ class Fantasma(Entidad):
         if hasattr(self, 'nodoSpawn') and self.nodoSpawn is not None:
             self.meta = self.nodoSpawn.posicion
         else:
-            self.meta = self.nodoInicial.posicion
+            self.meta = self.nodo_inicio.posicion
 
     def setSpawnNode(self, nodo):
         self.nodoSpawn = nodo
@@ -196,10 +209,20 @@ class Fantasma(Entidad):
                 self.skin = self.skins_freight[0]
 
     def modo_normal(self):
+        # Establece la velocidad del personaje/enemigo a su velocidad base predeterminada
         self.set_velocidad(self.velocidad_base)
+
+        # Configura el meto do de dirección para usar el sistema de búsqueda de objetivo/meta
         self.metodo_direccion = self.direccion_meta
+
+        # Cambia el modo actual a CHASE (persecución)
         self.modo.current = CHASE
+
+        # Impide que el personaje/enemigo pueda moverse hacia ABAJO desde el nodo de spawn
         self.nodoSpawn.denegar_acceso(ABAJO, self)
+
+        # Si el objeto tiene un atributo 'direccion' y existe una skin asociada a esa dirección
+        # actualiza la skin actual usando el primer sprite de la animación para esa dirección
         if hasattr(self, 'direccion') and self.direccion in self.skins:
             self.skin = self.skins[self.direccion][0]
 

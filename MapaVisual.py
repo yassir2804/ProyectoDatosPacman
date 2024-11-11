@@ -1,6 +1,5 @@
 import pygame
 import numpy as np
-from Vector import Vector1
 from Constantes import *
 
 
