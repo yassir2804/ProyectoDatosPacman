@@ -1,129 +1,200 @@
-from Constantes import *
-from random import randint
-
-import heapq
 import pygame
 from Vector import Vector1
+from Constantes import *
+from random import randint
+import heapq
 
 
-
+# Clase principal que representa una entidad en el juego
 class Entidad(object):
     def __init__(self, nodo):
+        # Inicialización de atributos básicos
         self.nombre = None
-        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+        # Diccionario de vectores de dirección (arriba, abajo, izquierda, derecha, parar)
+        self.direcciones = {STOP: Vector1(0, 0), ARRIBA: Vector1(0, -1), ABAJO: Vector1(0, 1),
+                            IZQUIERDA: Vector1(-1, 0), DERECHA: Vector1(1, 0)}
+        # Diccionario de direcciones opuestas
         self.direcciones_opuestas = {ARRIBA: ABAJO, ABAJO: ARRIBA, IZQUIERDA: DERECHA, DERECHA: IZQUIERDA, STOP: STOP}
         self.direccion = STOP
-        self.set_velocidad(150)
-        self.radio = 10
-        self.radio_colision = 5
-        self.color = BLANCO
+        self.set_velocidad(150)  # Velocidad inicial
+        self.radio = 10  # Radio visual de la entidad
+        self.radio_colision = 5  # Radio para detección de colisiones
         self.visible = True
         self.desactivar_portal = False
         self.metodo_direccion = self.direccion_meta
         self.set_nodo_inicio(nodo)
+        self.meta = Vector1(0, 0)
 
-        # Sistema de animación mejorado
+        # Atributos para animación
         self.animation_timer = 0
         self.animation_interval = 0.05
         self.skins = {}
         self.skin_index = 0
         self.skin = None
-        self.usar_skin_especial = False  # Nuevo flag para control de skins especiales
-        self.skin_especial = None  # Para al
+        self.usar_skin_especial = False
+        self.skin_especial = None
+
+        # Sistema de caché para pathfinding
         self.cached_paths = {}
         self.path_timestamp = 0
         self.max_cache_age = 30
 
+    # Calcula la distancia Manhattan entre dos posiciones
     def calcular_distancia_manhattan(self, pos1, pos2):
-        """Calcula la distancia Manhattan usando Vector1"""
         diferencia = pos2 - pos1
         return abs(diferencia.x) + abs(diferencia.y)
 
-    def calcular_hash_estado(self, nodo_origen, nodo_destino):
-        """Genera un hash único aprovechando el __hash__ de Vector1"""
-        return hash((nodo_origen.posicion.__hash__(),
-                     nodo_destino.posicion.__hash__()))
+        # ============= SISTEMA DE PATHFINDING GENERADO POR IA =============
+        # Este metodo implementa el algoritmo A* (A-star) generado por IA para encontrar el camino óptimo
+        # entre dos nodos. A* es un algoritmo de búsqueda informada que combina:
+        # - El costo real del camino desde el inicio (g_score)
+        # - Una estimación heurística hasta la meta (h_score usando distancia Manhattan)
 
     def encontrar_camino_optimo(self, inicio, meta):
-        """A* optimizado para usar Vector1"""
+        """
+        Implementación del algoritmo A* optimizada por IA para encontrar el mejor camino.
+        Utiliza una cola de prioridad (heap) para seleccionar siempre el nodo más prometedor
+        y un contador para desempatar nodos con el mismo f_score, garantizando estabilidad.
+
+        Características especiales de esta implementación IA:
+        - Uso de Vector1 para cálculos de posición y distancia
+        - Sistema de prioridad con desempate para nodos iguales
+        - Optimización de memoria usando diccionarios para trackear nodos
+        - Reconstrucción eficiente del camino almacenando solo la primera dirección
+        """
         if not inicio or not meta:
             return None
 
-        # Usar tupla (f_score, h_score, nodo) para desempate en el heap
-        frontera = [(0, self.calcular_distancia_manhattan(inicio.posicion, meta.posicion), inicio)]
+        from itertools import count
+        contador = count()
+
+        # Cola de prioridad: (f_score, contador, nodo)
+        # f_score = g_score (costo real) + h_score (heurística)
+        # contador garantiza que nodos con igual f_score se procesen en orden FIFO
+        frontera = [(0, next(contador), inicio)]
         heapq.heapify(frontera)
 
-        vino_de = {inicio: None}
+        # Diccionarios para trackear el camino y los costos
+        vino_de = {inicio: None}  # Mapea nodo -> (nodo_anterior, direccion)
         g_score = {inicio: 0}  # Costo real desde el inicio
+        f_scores = {inicio: self.calcular_distancia_manhattan(inicio.posicion, meta.posicion)}
 
         while frontera:
             _, _, actual = heapq.heappop(frontera)
 
+            # Si llegamos a la meta, terminamos
             if actual == meta:
                 break
 
+            # Explorar las cuatro direcciones posibles
             for direccion in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]:
                 if actual.vecinos[direccion] is not None and self.validar_direccion(direccion):
                     vecino = actual.vecinos[direccion]
-                    # Usar Vector1 para calcular el costo del movimiento
+
+                    # Calcular el costo real hasta el vecino
                     costo_movimiento = (vecino.posicion - actual.posicion).magnitud()
                     tentative_g_score = g_score[actual] + costo_movimiento
 
+                    # Si encontramos un mejor camino al vecino
                     if vecino not in g_score or tentative_g_score < g_score[vecino]:
                         vino_de[vecino] = (actual, direccion)
                         g_score[vecino] = tentative_g_score
 
+                        # Calcular f_score = g_score + h_score (heurística)
                         h_score = self.calcular_distancia_manhattan(vecino.posicion, meta.posicion)
                         f_score = tentative_g_score + h_score
-                        heapq.heappush(frontera, (f_score, h_score, vecino))
+                        f_scores[vecino] = f_score
 
-        # Reconstruir el camino
+                        # Añadir a la frontera con prioridad basada en f_score
+                        heapq.heappush(frontera, (f_score, next(contador), vecino))
+
+        # Si no hay camino a la meta
         if meta not in vino_de:
             return None
 
-        # Recuperar la primera dirección del camino
+        # Reconstruir el camino para obtener la primera dirección
         actual = meta
         while vino_de[actual][0] != inicio:
             actual = vino_de[actual][0]
         return vino_de[actual][1]
 
+        # Este metodo determina la mejor dirección hacia la meta usando el pathfinding A*
+        # y considera la existencia de portales como atajos en el mapa
+
     def direccion_meta(self, direcciones):
+        """
+        Sistema de navegación inteligente generado por IA que:
+        1. Utiliza caché para optimizar búsquedas repetidas
+        2. Considera portales como atajos (70% de la distancia normal)
+        3. Combina pathfinding A* con heurísticas de distancia
+        4. Implementa un sistema de fallback cuando A* no encuentra ruta
+        """
         if not direcciones:
             return STOP
 
-        mejor_distancia = float('inf')
-        mejor_direccion = direcciones[0]
+        # Comprobar si hay un camino en caché válido
+        cache_key = (id(self.nodo), self.meta.x, self.meta.y)  # Usar id() para el nodo
+        tiempo_actual = pygame.time.get_ticks() / 1000
 
+        if cache_key in self.cached_paths:
+            direccion_cached, timestamp = self.cached_paths[cache_key]
+            if tiempo_actual - timestamp < self.max_cache_age:
+                if direccion_cached in direcciones:
+                    return direccion_cached
+
+        # Encontrar el nodo meta más cercano a la posición meta
+        mejor_nodo_meta = None
+        menor_distancia = float('inf')
+
+        # Buscar en los nodos vecinos cuál está más cerca de la meta
         for direccion in direcciones:
-            # Simular el siguiente movimiento
-            vector_direccion = self.direcciones[direccion]
-            siguiente_pos = self.nodo.posicion + (vector_direccion * ANCHOCELDA)
-            siguiente_nodo = self.nodo.vecinos[direccion]
+            nodo_vecino = self.nodo.vecinos[direccion]
+            if nodo_vecino:
+                # Considerar portales
+                if nodo_vecino.vecinos[PORTAL] is not None:
+                    nodo_portal = nodo_vecino.vecinos[PORTAL]
+                    distancia = (nodo_portal.posicion - self.meta).magnitudCuadrada()
+                    # Aplicar bonus a rutas con portales
+                    distancia *= 0.7
+                else:
+                    distancia = (nodo_vecino.posicion - self.meta).magnitudCuadrada()
 
-            # Verificar si hay un portal disponible en el siguiente nodo
-            if siguiente_nodo and siguiente_nodo.vecinos[PORTAL] is not None:
-                # Si hay portal, usar la posición después del portal para el cálculo
-                pos_despues_portal = siguiente_nodo.vecinos[PORTAL].posicion
-                nueva_distancia = (pos_despues_portal - self.meta.posicion).magnitudCuadrada()
-            else:
-                # Si no hay portal, usar la distancia normal
-                nueva_distancia = (siguiente_pos - self.meta.posicion).magnitudCuadrada()
+                if distancia < menor_distancia:
+                    menor_distancia = distancia
+                    mejor_nodo_meta = nodo_vecino
 
-            # Factor de bonus para favorecer rutas con portales
-            if siguiente_nodo and siguiente_nodo.vecinos[PORTAL] is not None:
-                nueva_distancia *= 0.7  # Reducir la distancia percibida para favorecer el uso del portal
+        if mejor_nodo_meta is None:
+            return STOP
 
-            if nueva_distancia < mejor_distancia:
-                mejor_distancia = nueva_distancia
-                mejor_direccion = direccion
+        # Usar A* para encontrar la mejor dirección
+        mejor_direccion = self.encontrar_camino_optimo(self.nodo, mejor_nodo_meta)
+
+        if mejor_direccion is None or mejor_direccion not in direcciones:
+            # Si A* no encuentra camino válido, usar el metodo de distancia directa
+            mejor_direccion = direcciones[0]
+            mejor_distancia = float('inf')
+
+            for direccion in direcciones:
+                vector_direccion = self.direcciones[direccion]
+                siguiente_pos = self.nodo.posicion + (vector_direccion * ANCHOCELDA)
+                siguiente_nodo = self.nodo.vecinos[direccion]
+
+                if siguiente_nodo and siguiente_nodo.vecinos[PORTAL] is not None:
+                    pos_despues_portal = siguiente_nodo.vecinos[PORTAL].posicion
+                    nueva_distancia = (pos_despues_portal - self.meta).magnitudCuadrada()
+                    nueva_distancia *= 0.7  # Bonus para portales
+                else:
+                    nueva_distancia = (siguiente_pos - self.meta).magnitudCuadrada()
+
+                if nueva_distancia < mejor_distancia:
+                    mejor_distancia = nueva_distancia
+                    mejor_direccion = direccion
+
+        # Guardar en caché el resultado usando una clave que sea hasheable
+        self.cached_paths[cache_key] = (mejor_direccion, tiempo_actual)
+        self.path_timestamp = tiempo_actual
 
         return mejor_direccion
-
-    def limpiar_cache(self):
-        """Limpia el caché de caminos antiguos"""
-        tiempo_actual = pygame.time.get_ticks() / 1000
-        self.cached_paths = {k: v for k, v in self.cached_paths.items()
-                             if tiempo_actual - self.path_timestamp < self.max_cache_age}
 
     #Metodo que hereda a las entidades la actualizacion de skin
     def actualizar_skin(self):
@@ -258,78 +329,13 @@ class Entidad(object):
     def set_velocidad(self, velocidad):
         self.velocidad = velocidad
 
-    def render(self, pantalla):
-        """Dibuja la entidad en la pantalla."""
-        if self.visible:
-            p = self.posicion.entero()
-            pygame.draw.circle(pantalla,self.color, p, self.radio)
-
+    #Selecciona una dirección aleatoria de la lista de direcciones proporcionada
     def direccion_aleatoria(self, direcciones):
-        """Selecciona una dirección aleatoria de la lista de direcciones proporcionada."""
+
         if not direcciones:
             return STOP
 
         return direcciones[randint(0, len(direcciones) - 1)]
-
-    def direccion_meta(self, direcciones):
-        """Versión avanzada que considera múltiples factores para elegir la mejor dirección"""
-        if not direcciones:
-            return STOP
-
-        # Pesos para diferentes factores (ajustar según necesidad)
-        PESOS = {
-            'distancia': 1.0,  # Peso para la distancia directa
-            'progreso': 1.5,  # Peso para el progreso hacia el objetivo
-            'inercia': 0.5,  # Peso para mantener la dirección actual
-            'esquinas': 0.3  # Peso para evitar esquinas
-        }
-
-        mejor_puntuacion = float('inf')
-        mejor_direccion = STOP
-
-        # Calculamos la distancia actual al objetivo
-        distancia_resta = self.nodo.posicion - self.meta
-        distancia_actual = distancia_resta.magnitudCuadrada()
-
-        for direccion in direcciones:
-            # Calculamos la siguiente posición si tomamos esta dirección
-            siguiente_pos = self.nodo.posicion + self.direcciones[direccion] * ANCHOCELDA
-            siguiente_nodo = self.nodo.vecinos[direccion]
-
-            # 1. Puntuación por distancia al objetivo
-            nueva_distancia = (siguiente_pos - self.meta).magnitudCuadrada()
-            puntuacion_distancia = nueva_distancia
-
-            # 2. Puntuación por progreso (qué tanto nos acercamos al objetivo)
-            # Si nueva_distancia es menor que distancia_actual, estamos progresando
-            puntuacion_progreso = nueva_distancia - distancia_actual
-
-            # 3. Puntuación por inercia (preferir mantener la dirección actual)
-            puntuacion_inercia = 0 if direccion == self.direccion else 100
-
-            # 4. Puntuación por esquinas (evitar callejones sin salida)
-            puntuacion_esquinas = 0
-            if siguiente_nodo:
-                # Contamos cuántas salidas tiene el siguiente nodo
-                salidas_validas = sum(1 for d in [ARRIBA, ABAJO, IZQUIERDA, DERECHA]
-                                      if siguiente_nodo.vecinos[d] is not None)
-                puntuacion_esquinas = 50 * (4 - salidas_validas)  # Penalizar nodos con pocas salidas
-
-            # Calculamos la puntuación final (menor es mejor)
-            puntuacion_final = (
-                    PESOS['distancia'] * puntuacion_distancia +
-                    PESOS['progreso'] * puntuacion_progreso +
-                    PESOS['inercia'] * puntuacion_inercia +
-                    PESOS['esquinas'] * puntuacion_esquinas
-            )
-
-            # Actualizamos la mejor dirección si encontramos una mejor puntuación
-            if puntuacion_final < mejor_puntuacion:
-                mejor_puntuacion = puntuacion_final
-                mejor_direccion = direccion
-
-        return mejor_direccion
-
 
     def set_nodo_inicio(self, nodo):
         self.nodo=nodo

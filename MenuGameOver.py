@@ -15,7 +15,7 @@ class MenuGameOver:
         self.opcion_seleccionada = 0  # Índice de la opción seleccionada
 
         # Configuración visual del menú
-        self.configurarFuente("Fuentes/PressStart2P-Regular.ttf", 20)
+        self.configurar_fuente("Fuentes/PressStart2P-Regular.ttf", 20)
         ANCHO_MENU = 300
         ALTO_MENU = 200
 
@@ -32,7 +32,7 @@ class MenuGameOver:
         self.sonido_reproducido = False  # Control para reproducir el sonido solo una vez
         pygame.mixer.stop()  # Detener cualquier sonido previo
 
-    def configurarFuente(self, ruta_fuente, tamano):
+    def configurar_fuente(self, ruta_fuente, tamano):
         """
         Configura la fuente para el texto del menú.
         """

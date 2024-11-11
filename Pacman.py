@@ -178,7 +178,7 @@ class Pacman(Entidad):
                         # Obtiene los puntos por comer el fantasma
                         puntos = fantasma.puntos
                         # Actualiza los puntos para el siguiente fantasma (duplicándolos)
-                        fantasmas.actualizarPuntos()
+                        fantasmas.actualizar_puntos()
 
                         # Calcula la posición para mostrar el texto de puntos
                         pos_x = int(fantasma.posicion.x - 20)
