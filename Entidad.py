@@ -1,10 +1,6 @@
-import pygame
-from pygame.locals import *
-from Vector import Vector1
 from Constantes import *
 from random import randint
 
-from collections import defaultdict
 import heapq
 import pygame
 from Vector import Vector1
