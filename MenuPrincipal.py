@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from Main import Controladora
+from Controladora import Controladora
 from Constantes import *
 
 # Definir un nuevo color azul claro
@@ -130,9 +130,3 @@ class TextoMenu:
 
         # Dibujar el texto principal encima
         superficie.blit(texto_surf, texto_surf.get_rect(center=self.posicion))
-
-
-if __name__ == '__main__':
-    menu = MenuPrincipal()
-    while True:
-        menu.actualizar()

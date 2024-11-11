@@ -58,31 +58,31 @@ class GrupoPellets:
     Maneja la creación, actualización y renderizado de todos los pellets.
     """
 
-    def __init__(self, archivoPellets):
+    def __init__(self, archivo_pellets):
         """
         Inicializa el grupo de pellets desde un archivo.
         """
         self.listaPellets = []  # Todos los pellets (normales y poder)
         self.pelletsPoder = []  # Solo power pellets
-        self.crearListaPellets(archivoPellets)
+        self.crear_lista_pellets(archivo_pellets)
         self.numComidos = 0  # Contador de pellets comidos
 
     def actualizar(self, dt):
         for pelletPoder in self.pelletsPoder:
             pelletPoder.actualizar(dt)
 
-    def crearListaPellets(self, archivoPellets):
+    def crear_lista_pellets(self, archivo_pellets):
         """
         Crea los pellets basándose en el archivo de nivel.
 
         Args:
-            archivoPellets (str): Ruta al archivo con el layout de pellets
+            archivo_pellets (str): Ruta al archivo con el layout de pellets
 
         Símbolos del archivo:
             '.' o '+': Pellet normal
             'P' o 'p': Power Pellet
         """
-        datos = self.leerArchivoPellets(archivoPellets)
+        datos = self.leer_archivo_pellets(archivo_pellets)
         for fila in range(datos.shape[0]):
             for col in range(datos.shape[1]):
                 if datos[fila][col] in ['.', '+']:
@@ -92,13 +92,13 @@ class GrupoPellets:
                     self.listaPellets.append(pp)
                     self.pelletsPoder.append(pp)
 
-    def leerArchivoPellets(self, archivoTexto):
+    def leer_archivo_pellets(self, archivo_texto):
         """
         Lee el archivo que define la disposición de pellets.
         """
-        return np.loadtxt(archivoTexto, dtype='<U1')
+        return np.loadtxt(archivo_texto, dtype='<U1')
 
-    def estaVacio(self):
+    def esta_vacio(self):
         """
         Verifica si quedan pellets por comer.
         """
