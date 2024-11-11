@@ -16,15 +16,13 @@ class Fantasma(Entidad):
         super().__init__(nodo)
         self.nombre = FANTASMA
         self.puntos = 200
-        self.meta = Vector1(0, 0)  # Posición objetivo
         self.pacman = pacman
-        self.blinky = blinky  # Referencia a Blinky (usado por Inky)
-        self.modo = Controladora_Modos(self)  # Controlador de modos del fantasma
-        self.nodoSpawn = nodo  # Nodo de reaparición
-
+        self.blinky = blinky
+        self.modo = Controladora_Modos(self)
+        self.nodoSpawn = nodo
 
         # Velocidad base y actual
-        self.velocidad_base = 100
+        self.velocidad_base = 100  # Velocidad inicial
         self.set_velocidad(self.velocidad_base)
 
         self.direccion = DERECHA
@@ -61,9 +59,8 @@ class Fantasma(Entidad):
             pygame.image.load("multimedia/FreightBlanco.png").convert_alpha()
         ]
 
-
     def cargar_animaciones_ojos(self):
-        """Actualiza el skin del fantasmas mientras este en modo inactivo"""
+        """Actualiza el skin del fantasmas mientras este en modo inactivo """
         self.skins_ojos = {
             ARRIBA: pygame.image.load("multimedia/OjosArriba.png").convert_alpha(),
             ABAJO: pygame.image.load("multimedia/OjosAbajo.png").convert_alpha(),
@@ -73,7 +70,6 @@ class Fantasma(Entidad):
 
     def actualizar_skin_freight(self, dt):
         """Actualiza el skin durante el modo freight"""
-        # Incrementar el contador de tiempo en modo freight
         self.tiempo_freight += dt
 
         # Calcular el tiempo restante del modo freight
@@ -235,7 +231,7 @@ class Fantasma(Entidad):
     def cargar_animaciones(self):
         pass
 
-    def actualizarPuntos(self):
+    def actualizar_puntos(self):
         """Duplica los puntos del siguiente fantasma que será comido"""
         for fantasma in self:
             if fantasma.modo.current == FREIGHT:
@@ -247,9 +243,7 @@ class Fantasma(Entidad):
                 p = self.posicion.entero()
                 rect = self.skin.get_rect(center=p)
                 pantalla.blit(self.skin, rect)
-            else:
-                p = self.posicion.entero()
-                pygame.draw.circle(pantalla, self.color, p, self.radio)
+
 
 
 class Blinky(Fantasma):
@@ -257,7 +251,6 @@ class Blinky(Fantasma):
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
         self.nombre = BLINKY
-        self.color = ROJO
         self.radio = 10
         self.radio_colision = 5
 
@@ -285,7 +278,6 @@ class Pinky(Fantasma):
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
         self.nombre = PINKY
-        self.color = ROSADO
         self.radio = 10
         self.radio_colision = 5
 
@@ -293,12 +285,10 @@ class Pinky(Fantasma):
         self.meta = Vector1(ANCHOCELDA * COLUMNAS, 0)
 
     def chase(self):
-        # Pinky aims 4 tiles ahead of Pacman's current direction
         self.meta = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 4
 
     def reset(self):
         super().reset()
-
 
     def cargar_animaciones(self):
         self.skins = {
@@ -314,7 +304,6 @@ class Inky(Fantasma):
     def __init__(self, nodo, pacman=None, blinky=None):
         super().__init__(nodo, pacman, blinky)
         self.nombre = INKY
-        self.color = CELESTE
         self.radio = 10
         self.radio_colision = 5
 
@@ -326,14 +315,11 @@ class Inky(Fantasma):
             self.meta = self.pacman.posicion
             return
 
-        # First, get the position 2 tiles ahead of Pacman
         vec1 = self.pacman.posicion + self.pacman.direcciones[self.pacman.direccion] * ANCHOCELDA * 2
-        # Then, get the vector from Blinky to that position and double it
         try:
             vec2 = (vec1 - self.blinky.posicion) * 2
             self.meta = self.blinky.posicion + vec2
         except Exception:
-            # Si hay algún error en el cálculo, perseguir directamente a Pacman
             self.meta = self.pacman.posicion
 
     def reset(self):
@@ -353,7 +339,6 @@ class Clyde(Fantasma):
     def __init__(self, nodo, pacman=None):
         super().__init__(nodo, pacman)
         self.nombre = CLYDE
-        self.color = NARANJA
         self.radio = 10
         self.radio_colision = 5
 
@@ -361,21 +346,16 @@ class Clyde(Fantasma):
         self.meta = Vector1(0, ANCHOCELDA * FILAS)
 
     def chase(self):
-
-        # Calculate distance to Pacman
         d = self.pacman.posicion - self.posicion
         ds = d.magnitudCuadrada()
 
-        # If Clyde is closer than 8 tiles to Pacman, go to scatter mode
         if ds <= (ANCHOCELDA * 8) ** 2:
             self.scatter()
         else:
-            # Otherwise chase Pacman like Blinky
             self.meta = self.pacman.posicion
 
     def reset(self):
         super().reset()
-
 
     def cargar_animaciones(self):
         self.skins = {
@@ -433,7 +413,6 @@ class GrupoFantasmas(object):
             fantasma.puntos = 200
 
     def reset(self):
-        """Reset all ghosts to their initial positions"""
         for fantasma in self.fantasmas:
             fantasma.reset()
 

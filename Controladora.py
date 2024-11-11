@@ -15,16 +15,18 @@ from TextoTemporal import TextoTemporal
 from Vector import Vector1
 
 
-
 class Controladora(object):
     """
-       Clase principal que controla el flujo del juego Pac-Man.
-       Maneja la inicialización, actualización y renderizado de todos los elementos del juego.
-       """
+    Clase principal que controla el flujo del juego Pac-Man.
+    Maneja la inicialización, actualización y renderizado de todos los elementos del juego.
+    """
 
     def __init__(self):
-        """Inicializa todos los componentes necesarios para el juego"""
-        # Inicialización básica de pygame
+        """
+        Inicializa todos los componentes necesarios para el juego.
+        Configura la ventana, el mapa, los personajes y los elementos de juego.
+        """
+        # Inicialización de pygame y ventana
         pygame.init()
         self.pantalla = pygame.display.set_mode(TAMANIOPANTALLA, 0, 32)
         self.fondo = None
@@ -45,33 +47,30 @@ class Controladora(object):
         # Inicialización de Pac-Man
         self.pacman = Pacman(self.grafo.obtener_nodo_desde_tiles(14, 26))
 
-        # Configuración de la casa de los fantasmas
+        # Configuración inicial del juego
         self.configurar_casa_fantasmas()
-
-        # Inicialización de fantasmas
         self.inicializar_fantasmas()
-
-        # Configuración de audio
         self.configurar_audio()
-
-        # Inicialización de elementos del juego
         self.inicializar_elementos_juego()
-
         self.denegar_accesos()
 
     def configurar_casa_fantasmas(self):
-        """Configura la casa de los fantasmas y sus conexiones"""
+        """
+        Configura la casa de los fantasmas y establece sus conexiones en el grafo.
+        """
         self.casa = self.grafo.crear_nodos_casa(11.5, 14)
         self.grafo.conectar_nodos_casa(self.casa, (12, 14), IZQUIERDA)
         self.grafo.conectar_nodos_casa(self.casa, (15, 14), DERECHA)
 
     def inicializar_fantasmas(self):
-        """Inicializa el grupo de fantasmas y configura sus posiciones iniciales"""
-        # Crear grupo de fantasmas
+        """
+        Inicializa el grupo de fantasmas y configura sus posiciones iniciales.
+        """
+        # Crear grupo de fantasmas con nodo de spawn común
         nodo_spawn = self.grafo.obtener_nodo_desde_tiles(13.5, 17)
         self.fantasmas = GrupoFantasmas(nodo=nodo_spawn, pacman=self.pacman)
 
-        # Configurar posiciones iniciales
+        # Configurar posiciones iniciales de cada fantasma
         self.fantasmas.blinky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 14))
         self.fantasmas.pinky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(13.5, 17))
         self.fantasmas.inky.set_nodo_inicio(self.grafo.obtener_nodo_desde_tiles(11.5, 17))
@@ -81,12 +80,16 @@ class Controladora(object):
         self.fantasmas.set_nodo_spawn(nodo_spawn)
 
     def configurar_audio(self):
-        """Configura los efectos de sonido del juego"""
+        """
+        Configura los efectos de sonido utilizados en el juego.
+        """
         self.sonido_reinicio = pygame.mixer.Sound("multimedia/levelup.wav")
         self.sonido_sirena = pygame.mixer.Sound("multimedia/sonidosirena.wav")
 
     def inicializar_elementos_juego(self):
-
+        """
+        Inicializa los elementos básicos del juego como pellets, textos y contadores.
+        """
         self.Pellet = GrupoPellets("mazetest.txt")
         self.grupo_texto = GrupoTexto()
         self.level_manager = LevelManager()
@@ -103,11 +106,19 @@ class Controladora(object):
         self.fuente_pausa = None
 
     def configurarFuente(self, ruta_fuente, tamanio):
-        """Configura la fuente del menú de pausa"""
+        """
+        Configura la fuente utilizada en el menú de pausa.
+
+        Args:
+            ruta_fuente (str): Ruta al archivo de la fuente
+            tamanio (int): Tamaño de la fuente
+        """
         self.fuente_pausa = pygame.font.Font(ruta_fuente, tamanio)
 
     def verificar_fruta(self):
-        """Maneja la aparición y colisión con frutas"""
+        """
+        Maneja la aparición y colisión con frutas durante el juego.
+        """
         # Crear fruta en momentos específicos
         if self.Pellet.numComidos in [50, 140] and self.fruta is None:
             self.fruta = Fruta(self.grafo.obtener_nodo_desde_tiles(13, 20), self.level_manager.nivel_actual)
@@ -119,18 +130,29 @@ class Controladora(object):
                 self.fruta = None
 
     def verificacion_pellets(self):
+        """
+        Verifica la colisión de Pacman con los pellets y actualiza el estado del juego.
+        - Maneja el puntaje
+        - Activa el modo de poder
+        - Controla la liberación de fantasmas
+        - Verifica si se completó el nivel
+        """
         pellet = self.pacman.comer_pellets(self.Pellet.listaPellets)
         if pellet:
             self.Pellet.numComidos += 1
+            # Si es un pellet de poder
             if pellet.nombre == PELLETPODER:
                 self.puntaje += 50
                 self.fantasmas.modo_Freight()
                 self.tiempo_poder = self.duracion_poder
             else:
                 self.puntaje += 10
-            self.grupo_texto.actualizarPuntaje(self.puntaje)
+
+            # Actualizar puntaje y eliminar pellet
+            self.grupo_texto.actualizar_puntaje(self.puntaje)
             self.Pellet.listaPellets.remove(pellet)
 
+            # Liberar fantasmas según pellets comidos
             if self.Pellet.numComidos == 30:
                 self.fantasmas.inky.nodo_inicio.dar_acceso(DERECHA, self.fantasmas.inky)
             if self.Pellet.numComidos == 70:
@@ -140,32 +162,42 @@ class Controladora(object):
             if self.level_manager.verificar_nivel_completado(self.Pellet):
                 if self.level_manager.subir_nivel():
                     # Actualizar texto del nivel
-                    self.grupo_texto.todos_los_textos[LEVELTXT].setTexto(str(self.level_manager.nivel_actual).zfill(3))
-                    # Reiniciar el nivel con la nueva velocidad
+                    self.grupo_texto.todos_los_textos[LEVELTXT].set_texto(str(self.level_manager.nivel_actual).zfill(3))
                     self.reiniciar_nivel()
                 else:
-                    # El juego ha terminado (después del nivel 3)
+                    # Victoria del juego (después del nivel 3)
                     self.game_over_ganado = True
                     pygame.mixer.stop()
                     self.mostrar_pantalla_victoria()
 
     def verificar_vidas(self):
-        """Verifica el estado de las vidas y maneja el game over"""
+        """
+        Verifica el estado de las vidas y maneja el game over.
+        - Controla colisiones con fantasmas
+        - Actualiza el puntaje y vidas
+        - Maneja el estado de game over
+        """
         # Verificar colisiones con fantasmas
-        puntos = self.pacman.colision_con_fantasmas(self.fantasmas,self.grafo,self.textos_temporales)
+        puntos = self.pacman.colision_con_fantasmas(self.fantasmas, self.grafo, self.textos_temporales)
         if puntos > 0:
             self.puntaje += puntos
-            self.grupo_texto.actualizarPuntaje(self.puntaje)
-        # Actualizar display de vidas cuando cambian
-        self.grupo_texto.actualizarVidas(self.pacman.vidas)
+            self.grupo_texto.actualizar_puntaje(self.puntaje)
+
+        # Actualizar display de vidas
+        self.grupo_texto.actualizar_vidas(self.pacman.vidas)
 
         # Verificar game over
         if self.pacman.vidas <= 0 and not self.game_over:
             self.game_over = True
-            self.fantasmas.esconder()  # Ocultar fantasmas
+            self.fantasmas.esconder()
 
     def verificar_eventos(self):
-        """Maneja los eventos del juego"""
+        """
+        Maneja los eventos del juego (teclado, cierre de ventana, etc.)
+        - Procesa eventos de pygame
+        - Maneja estados de game over y pausa
+        - Controla sonidos del juego
+        """
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
@@ -181,14 +213,20 @@ class Controladora(object):
             self.sonido_sirena.play(-1)
 
     def verificar_fatasmas(self):
+        """
+        Verifica colisiones entre Pacman y los fantasmas en modo vulnerable
+        """
         for fantasma in self.fantasmas:
             if self.pacman.colision_fruta(fantasma):
                 if fantasma.modo.current is FREIGHT:
                     fantasma.iniciar_spawn()
 
     def actualizar(self):
-        """Méto do principal de actualización del juego"""
-        # Si hay una señal de reinicio, reiniciar el juego
+        """
+        Metodo principal de actualización del juego.
+        Maneja la lógica principal del bucle del juego.
+        """
+        # Verificar señal de reinicio
         if self.reiniciar_juego:
             self.reiniciar()
             return
@@ -196,7 +234,9 @@ class Controladora(object):
         dt = self.clock.tick(30) / 1000.0
         if not self.game_over and not self.pausa:
             self.mapa_renderer.actualizar(dt, self.fantasmas.modo_freight_activo())
+
             if not self.pacman.muerto:
+                # Actualizar elementos del juego
                 self.pacman.actualizar(dt)
                 self.fantasmas.actualizar(dt)
                 self.Pellet.actualizar(dt)
@@ -205,6 +245,7 @@ class Controladora(object):
 
                 self.verificacion_pellets()
             else:
+                # Actualizar estado cuando Pacman está muerto
                 self.grupo_texto.actualizar(dt)
                 self.verificar_vidas()
                 self.verificar_eventos()
@@ -214,12 +255,13 @@ class Controladora(object):
                 if self.pacman.animacion_muerte_terminada():
                     self.reiniciar_nivel()
 
-
+            # Actualizaciones generales
             self.grupo_texto.actualizar(dt)
             self.verificar_vidas()
             self.verificar_eventos()
             self.verificar_fruta()
 
+            # Actualizar textos temporales
             self.textos_temporales = [texto for texto in self.textos_temporales if texto.actualizar()]
 
             self.render()
@@ -361,12 +403,12 @@ class Controladora(object):
             sonido_pasa_nivel.play()
             pygame.display.update()
             self.clock.tick(30)
-    def setFondo(self):
+    def set_fondo(self):
         self.fondo = pygame.surface.Surface(TAMANIOPANTALLA).convert()
         self.fondo.fill(NEGRO)
 
     def empezar(self):
-        self.setFondo()
+        self.set_fondo()
         #self.denegar_accesos()
 
     def denegar_accesos(self):
@@ -461,7 +503,7 @@ class Controladora(object):
 
         # Actualizar puntaje
         self.puntaje += puntos_fruta
-        self.grupo_texto.actualizarPuntaje(self.puntaje)
+        self.grupo_texto.actualizar_puntaje(self.puntaje)
         self.fruta = None
 
     def configurar_nivel_cargado(self):
@@ -484,9 +526,9 @@ class Controladora(object):
             fantasma.velocidad_base = nueva_velocidad
 
         # Actualizar textos en la UI
-        self.grupo_texto.todos_los_textos[LEVELTXT].setTexto(str(self.level_manager.nivel_actual).zfill(3))
-        self.grupo_texto.actualizarPuntaje(self.puntaje)
-        self.grupo_texto.actualizarVidas(self.pacman.vidas)
+        self.grupo_texto.todos_los_textos[LEVELTXT].set_texto(str(self.level_manager.nivel_actual).zfill(3))
+        self.grupo_texto.actualizar_puntaje(self.puntaje)
+        self.grupo_texto.actualizar_vidas(self.pacman.vidas)
 
     def guardar_estado(self, archivo):
         # Crear diccionario con meto do el estado del juego
@@ -660,8 +702,8 @@ class Controladora(object):
 
             # Actualizar interfaz de usuario si existe
             if hasattr(self, 'grupo_texto'):
-                self.grupo_texto.actualizarPuntaje(self.puntaje)
-                self.grupo_texto.actualizarVidas(self.pacman.vidas)
+                self.grupo_texto.actualizar_puntaje(self.puntaje)
+                self.grupo_texto.actualizar_vidas(self.pacman.vidas)
 
             # Restaurar estado de la fruta
             if estado['fruta']['visible']:
@@ -750,11 +792,3 @@ class Controladora(object):
             print("Partida guardada")
         elif self.opciones_pausa[self.opcion_seleccionada] == "Salir":
             exit()
-
-
-
-if __name__ == '__main__':
-    juego = Controladora()
-    juego.empezar()
-    while True:
-        juego.actualizar()
