@@ -6,19 +6,25 @@ from Constantes import *
 
 
 class Fantasma(Entidad):
+    """
+       Clase base para todos los fantasmas del juego Pacman.
+       Maneja el comportamiento común de todos los fantasmas, incluyendo movimiento,
+       modos de juego (Chase, Scatter, Freight), animaciones y sonidos.
+       Hereda de la clase Entidad.
+       """
     def __init__(self, nodo, pacman=None, blinky=None):
         super().__init__(nodo)
         self.nombre = FANTASMA
         self.puntos = 200
-        self.meta = Vector1(0, 0)
+        self.meta = Vector1(0, 0)  # Posición objetivo
         self.pacman = pacman
-        self.blinky = blinky
-        self.modo = Controladora_Modos(self)
-        self.nodoSpawn = nodo
+        self.blinky = blinky  # Referencia a Blinky (usado por Inky)
+        self.modo = Controladora_Modos(self)  # Controlador de modos del fantasma
+        self.nodoSpawn = nodo  # Nodo de reaparición
 
 
         # Velocidad base y actual
-        self.velocidad_base = 100  # Velocidad inicial
+        self.velocidad_base = 100
         self.set_velocidad(self.velocidad_base)
 
         self.direccion = DERECHA
