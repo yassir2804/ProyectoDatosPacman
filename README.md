@@ -1,217 +1,217 @@
 
 # 🎮 Pac-Man Game
 
-Un juego clásico de Pac-Man desarrollado en Python usando Pygame, con características modernas como sistema de guardado, múltiples niveles y efectos de sonido.
+A classic Pac-Man game developed in Python using Pygame, featuring modern characteristics like save system, multiple levels, and sound effects.
 
-## 📋 Tabla de Contenidos
+## 📋 Table of Contents
 
-- [Características](#-características)
-- [Requisitos](#-requisitos)
-- [Instalación](#-instalación)
-- [Cómo Jugar](#-cómo-jugar)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Controles](#-controles)
-- [Sistema de Puntuación](#-sistema-de-puntuación)
-- [Niveles](#-niveles)
-- [Autores](#-autores)
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [How to Play](#-how-to-play)
+- [Project Structure](#-project-structure)
+- [Controls](#-controls)
+- [Scoring System](#-scoring-system)
+- [Levels](#-levels)
+- [Authors](#-authors)
 
-## ✨ Características
+## ✨ Features
 
-### 🎯 Jugabilidad Principal
-- **Pac-Man clásico**: Navega por el laberinto comiendo pellets y evitando fantasmas
-- **4 fantasmas únicos**: Cada uno con su propia inteligencia artificial y comportamiento
-- **Power Pellets**: Come pellets especiales para volver a los fantasmas vulnerables
-- **Sistema de vidas**: Comienza con 3 vidas
-- **Frutas especiales**: Aparecen periódicamente para puntos extra
+### 🎯 Core Gameplay
+- **Classic Pac-Man**: Navigate through the maze eating pellets while avoiding ghosts
+- **4 unique ghosts**: Each with their own artificial intelligence and behavior
+- **Power Pellets**: Eat special pellets to make ghosts vulnerable
+- **Lives system**: Start with 3 lives
+- **Special fruits**: Appear periodically for extra points
 
-### 🎨 Sistema Visual
-- **Animaciones fluidas**: Sprites animados para Pac-Man y fantasmas
-- **Efectos visuales**: Parpadeo del laberinto en modo power, transiciones de nivel
-- **Múltiples niveles visuales**: Colores del laberinto cambian con cada nivel
-- **Interfaz completa**: Contador de puntos, vidas, nivel actual
+### 🎨 Visual System
+- **Smooth animations**: Animated sprites for Pac-Man and ghosts
+- **Visual effects**: Maze blinking in power mode, level transitions
+- **Multiple visual levels**: Maze colors change with each level
+- **Complete interface**: Score counter, lives, current level
 
 ### 🎵 Audio
-- **Efectos de sonido**: Sonidos para comer pellets, fantasmas, muerte, etc.
-- **Música de fondo**: Música temática en el menú principal
-- **Audio dinámico**: Los sonidos cambian según el estado del juego
+- **Sound effects**: Sounds for eating pellets, ghosts, death, etc.
+- **Background music**: Thematic music in the main menu
+- **Dynamic audio**: Sounds change according to game state
 
-### 💾 Funciones Avanzadas
-- **Sistema de guardado**: Guarda y carga partidas completas
-- **Menú principal**: Interfaz gráfica para iniciar o cargar juegos
-- **Menú de pausa**: Pausa el juego y accede a opciones
-- **Múltiples niveles**: Progresión a través de 3 niveles con dificultad creciente
+### 💾 Advanced Features
+- **Save system**: Save and load complete games
+- **Main menu**: Graphical interface to start or load games
+- **Pause menu**: Pause the game and access options
+- **Multiple levels**: Progress through 3 levels with increasing difficulty
 
-## 📋 Requisitos
+## 📋 Requirements
 
-### Software Necesario
-- Python 3.7 o superior
-- Pygame 2.0 o superior
+### Required Software
+- Python 3.7 or higher
+- Pygame 2.0 or higher
 - NumPy
 
-### Archivos Requeridos
-El juego necesita los siguientes archivos en sus respectivas carpetas:
+### Required Files
+The game needs the following files in their respective folders:
 ```
 multimedia/
-├── sprites de Pac-Man (1_Arr.png, 1_Der.png, etc.)
-├── sprites de fantasmas (BlinkyArr.png, PinkyDer.png, etc.)
-├── sprites de frutas (comodin_fres.png, comodin_vai.png, etc.)
-├── efectos de sonido (.wav)
-└── imagen de fondo (fototigrepacman.png)
+├── Pac-Man sprites (1_Arr.png, 1_Der.png, etc.)
+├── ghost sprites (BlinkyArr.png, PinkyDer.png, etc.)
+├── fruit sprites (comodin_fres.png, comodin_vai.png, etc.)
+├── sound effects (.wav)
+└── background image (fototigrepacman.png)
 
 Fuentes/
 └── PressStart2P-Regular.ttf
 ```
 
-## 🚀 Instalación
+## 🚀 Installation
 
-1. **Clona el repositorio**:
+1. **Clone the repository**:
    ```bash
-   git clone [URL_DEL_REPOSITORIO]
+   git clone [REPOSITORY_URL]
    cd ProyectoDatosPacman
    ```
 
-2. **Instala las dependencias**:
+2. **Install dependencies**:
    ```bash
    pip install pygame numpy
    ```
 
-3. **Ejecuta el juego**:
+3. **Run the game**:
    ```bash
    python Ejecutable.py
    ```
 
-## 🎮 Cómo Jugar
+## 🎮 How to Play
 
-### Objetivo
-Come todos los pellets del laberinto mientras evitas a los fantasmas. Completa los 3 niveles para ganar el juego.
+### Objective
+Eat all the pellets in the maze while avoiding ghosts. Complete all 3 levels to win the game.
 
-### Mecánicas Básicas
-- **Pellets normales**: 10 puntos cada uno
-- **Power Pellets**: 50 puntos + vuelve vulnerables a los fantasmas por 7 segundos
-- **Fantasmas vulnerables**: 200, 400, 800, 1600 puntos (se duplican)
-- **Frutas**: 100-500 puntos según el tipo
+### Basic Mechanics
+- **Normal pellets**: 10 points each
+- **Power Pellets**: 50 points + makes ghosts vulnerable for 7 seconds
+- **Vulnerable ghosts**: 200, 400, 800, 1600 points (doubling)
+- **Fruits**: 100-500 points depending on type
 
-### Fantasmas
-- **Blinky (Rojo)**: Persigue directamente a Pac-Man
-- **Pinky (Rosa)**: Intenta emboscar a Pac-Man moviéndose hacia donde va
-- **Inky (Azul)**: Comportamiento impredecible basado en Blinky
-- **Clyde (Naranja)**: Alterna entre perseguir y huir
+### Ghosts
+- **Blinky (Red)**: Directly chases Pac-Man
+- **Pinky (Pink)**: Tries to ambush Pac-Man by moving toward where he's going
+- **Inky (Blue)**: Unpredictable behavior based on Blinky
+- **Clyde (Orange)**: Alternates between chasing and fleeing
 
-## 🎯 Controles
+## 🎯 Controls
 
-| Acción | Tecla |
-|--------|-------|
-| Mover Arriba | ↑ |
-| Mover Abajo | ↓ |
-| Mover Izquierda | ← |
-| Mover Derecha | → |
-| Pausa | ESC |
-| Confirmar | ENTER |
-| Navegar menús | ↑/↓ |
+| Action | Key |
+|--------|-----|
+| Move Up | ↑ |
+| Move Down | ↓ |
+| Move Left | ← |
+| Move Right | → |
+| Pause | ESC |
+| Confirm | ENTER |
+| Navigate menus | ↑/↓ |
 
-### Controles del Menú de Pausa
-- **Reanudar**: Continúa el juego
-- **Guardar Partida**: Guarda el progreso actual
-- **Salir**: Cierra el juego
+### Pause Menu Controls
+- **Resume**: Continue the game
+- **Save Game**: Save current progress
+- **Exit**: Close the game
 
-## 📊 Sistema de Puntuación
+## 📊 Scoring System
 
-### Elementos Base
-- **Pellet normal**: 10 puntos
-- **Power Pellet**: 50 puntos
-- **Fantasma (1º)**: 200 puntos
-- **Fantasma (2º)**: 400 puntos
-- **Fantasma (3º)**: 800 puntos
-- **Fantasma (4º)**: 1600 puntos
+### Base Elements
+- **Normal pellet**: 10 points
+- **Power Pellet**: 50 points
+- **Ghost (1st)**: 200 points
+- **Ghost (2nd)**: 400 points
+- **Ghost (3rd)**: 800 points
+- **Ghost (4th)**: 1600 points
 
-### Frutas por Nivel
-- **Nivel 1**: Fresa (100 puntos)
-- **Nivel 2**: Uva (200 puntos)
-- **Nivel 3**: Chocolate (300 puntos)
-- **Especial**: Pacha (500 puntos) - 20% probabilidad
+### Fruits by Level
+- **Level 1**: Strawberry (100 points)
+- **Level 2**: Grape (200 points)
+- **Level 3**: Chocolate (300 points)
+- **Special**: Pacha (500 points) - 20% probability
 
-## 🎯 Niveles
+## 🎯 Levels
 
-### Progresión de Dificultad
-- **Nivel 1**: Velocidad base de fantasmas
-- **Nivel 2**: Fantasmas 20% más rápidos + laberinto rojo
-- **Nivel 3**: Fantasmas 44% más rápidos + laberinto amarillo
+### Difficulty Progression
+- **Level 1**: Base ghost speed
+- **Level 2**: Ghosts 20% faster + red maze
+- **Level 3**: Ghosts 44% faster + yellow maze
 
-### Mecánicas por Nivel
-- Los fantasmas se liberan gradualmente (30 y 70 pellets comidos)
-- Las frutas aparecen en momentos específicos (50 y 140 pellets)
-- Colores del laberinto cambian para indicar progreso
+### Level Mechanics
+- Ghosts are released gradually (30 and 70 pellets eaten)
+- Fruits appear at specific moments (50 and 140 pellets)
+- Maze colors change to indicate progress
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 ProyectoDatosPacman/
-├── Ejecutable.py           # Punto de entrada principal
-├── Controladora.py         # Lógica principal del juego
-├── MenuPrincipal.py        # Menú de inicio
-├── Pacman.py              # Clase del jugador
-├── Fantasmas.py           # Clases de los fantasmas
-├── Grafo.py               # Sistema de navegación del laberinto
-├── Pellet.py              # Sistema de pellets
-├── Fruta.py               # Sistema de frutas bonus
-├── MapaVisual.py          # Renderizado del laberinto
-├── Texto.py               # Sistema de UI y textos
-├── Vector.py              # Matemáticas de vectores
-├── Constantes.py          # Configuraciones globales
-├── LevelManager.py        # Gestión de niveles
-├── Modo.py                # Estados de los fantasmas
-├── Entidad.py             # Clase base para elementos móviles
-├── TextoTemporal.py       # Textos temporales (puntos)
-├── MenuGameOver.py        # Pantalla de fin de juego
-├── mazetest.txt           # Layout del laberinto
-└── pacman_save.json       # Archivo de guardado (generado)
+├── Ejecutable.py           # Main entry point
+├── Controladora.py         # Main game logic
+├── MenuPrincipal.py        # Start menu
+├── Pacman.py              # Player class
+├── Fantasmas.py           # Ghost classes
+├── Grafo.py               # Maze navigation system
+├── Pellet.py              # Pellet system
+├── Fruta.py               # Bonus fruit system
+├── MapaVisual.py          # Maze rendering
+├── Texto.py               # UI and text system
+├── Vector.py              # Vector mathematics
+├── Constantes.py          # Global configurations
+├── LevelManager.py        # Level management
+├── Modo.py                # Ghost states
+├── Entidad.py             # Base class for moving elements
+├── TextoTemporal.py       # Temporary texts (points)
+├── MenuGameOver.py        # Game over screen
+├── mazetest.txt           # Maze layout
+└── pacman_save.json       # Save file (generated)
 ```
 
-### Carpetas de Assets
+### Asset Folders
 ```
-multimedia/               # Imágenes y sonidos
-Fuentes/                 # Archivos de fuentes
+multimedia/               # Images and sounds
+Fuentes/                 # Font files
 ```
 
-## 🔧 Características Técnicas
+## 🔧 Technical Features
 
-### Algoritmos Implementados
-- **Pathfinding A***: Los fantasmas usan A* para navegación óptima
-- **Sistema de caché**: Optimización de rutas calculadas
-- **Detección de colisiones**: Círculo a círculo para precisión
-- **Máquina de estados**: Gestión de modos de fantasmas
+### Implemented Algorithms
+- **A* Pathfinding**: Ghosts use A* for optimal navigation
+- **Cache system**: Optimization of calculated routes
+- **Collision detection**: Circle to circle for precision
+- **State machine**: Ghost mode management
 
-### Persistencia
-- **Formato JSON**: Guardado completo del estado del juego
-- **Datos guardados**: Posiciones, estados, puntuación, nivel, pellets restantes
+### Persistence
+- **JSON format**: Complete game state saving
+- **Saved data**: Positions, states, score, level, remaining pellets
 
-## 👥 Autores
+## 👥 Authors
 
-Desarrollado por:
+Developed by:
 - Saul
 - Yassir
 - Manuel
 - Angel
 
-## 📝 Notas de Desarrollo
+## 📝 Development Notes
 
-### Archivos Importantes
-- **mazetest.txt**: Define la estructura del laberinto
-- **pacman_save.json**: Archivo de guardado automático
-- **Constantes.py**: Configuraciones modificables del juego
+### Important Files
+- **mazetest.txt**: Defines the maze structure
+- **pacman_save.json**: Automatic save file
+- **Constantes.py**: Modifiable game configurations
 
-### Personalización
-Puedes modificar fácilmente:
-- Velocidades en `Constantes.py`
-- Colores del laberinto en `MapaVisual.py`
-- Puntuaciones en `Pellet.py` y `Fruta.py`
-- Comportamiento de fantasmas en `Fantasmas.py`
+### Customization
+You can easily modify:
+- Speeds in `Constantes.py`
+- Maze colors in `MapaVisual.py`
+- Scores in `Pellet.py` and `Fruta.py`
+- Ghost behavior in `Fantasmas.py`
 
-### Resolución de Problemas
-- **Archivos faltantes**: Asegúrate de tener todos los assets en `multimedia/`
-- **Errores de sonido**: Verifica que los archivos `.wav` estén presentes
-- **Problemas de guardado**: El juego creará `pacman_save.json` automáticamente
+### Troubleshooting
+- **Missing files**: Make sure you have all assets in `multimedia/`
+- **Sound errors**: Verify that `.wav` files are present
+- **Save problems**: The game will create `pacman_save.json` automatically
 
 ---
 
-¡Disfruta jugando! 🎮👾
+Enjoy playing! 🎮👾
